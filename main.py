@@ -40,7 +40,7 @@ class SNBot(commands.Bot):
 
         super().__init__(command_prefix=get_prefix,
                          description="Bot Developed by @Extra_Random#2564\n"
-                                     "Source code: Github Soon",
+                                     "Source code: https://github.com/ExtraRandom/SNBot",
                          pm_help=False)
 
     def execute_query(self, query):
@@ -95,44 +95,9 @@ class SNBot(commands.Bot):
         bot_msg = message.author.bot
         if bot_msg is True:
             return
-        """
-        query = 'INSERT OR REPLACE INTO tracking(user_id, message_last_time, message_last_url)' \
-                'VALUES({}, {}, "{}")'.format(message.author.id, message.created_at.timestamp(), message.jump_url)
 
-        eq = self.execute_query(query)
-        """
         await self.process_commands(message)
 
-    """
-    async def on_message_edit(self, old, new):
-        if new.author.bot is True:
-            return
-        print(old.content, new.content)
-
-    async def on_member_remove(self, member):
-        if member.guild.id == 750689226382901288:
-            async for entry in member.guild.audit_logs(limit=5):
-                if entry.action == discord.AuditLogAction.kick and entry.target.name == member.name:
-                    channel = discord.utils.get(member.guild.text_channels, id=761212419388604477)
-                    user = entry.target
-                    msg = discord.Embed(title="{} kicked".format(user),
-                                        description="**Offender:** {}\n"
-                                                    "**Reason:** {}\n"
-                                                    "**Responsible admin:** {}"
-                                                    "".format(entry.target, entry.reason, entry.user))
-                    await channel.send(embed=msg)
-                    return
-                elif entry.action == discord.AuditLogAction.ban and entry.target.name == member.name:
-                    channel = discord.utils.get(member.guild.text_channels, id=761212419388604477)
-                    user = entry.target
-                    msg = discord.Embed(title="{} banned".format(user),
-                                        description="**Offender:** {}\n"
-                                                    "**Reason:** {}\n"
-                                                    "**Responsible admin:** {}"
-                                                    "".format(entry.target, entry.reason, entry.user))
-                    await channel.send(embed=msg)
-                    return
-    """
     async def on_command_error(self, ctx, error):
         channel = ctx.message.channel
         cmd = ctx.command

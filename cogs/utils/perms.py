@@ -33,7 +33,7 @@ def is_admin():
 
     return commands.check(predicate)
 
-
+# TODO see what is actually useful out of the stuff below and remove whatever isn't
 
 """
 taken from

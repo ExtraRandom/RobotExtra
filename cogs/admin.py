@@ -18,7 +18,7 @@ class Admin(commands.Cog):
 
     @commands.command(hidden=True, aliases=["random"])
     @perms.is_dev()
-    # @perms.is_in_somewhere_nice()
+    @perms.is_in_somewhere_nice()
     async def rndmem(self, ctx):
         """pick a member at random (ignores bots)"""
         all_members = ctx.message.guild.members
@@ -40,7 +40,7 @@ class Admin(commands.Cog):
     @perms.is_dev()
     @perms.is_in_somewhere_nice()
     async def memchk(self, ctx):
-        """this is not a helpful help message"""
+        """list all users in server who don't have the member role"""
         is_not_member = []
 
         all_members = ctx.message.guild.members
@@ -57,7 +57,7 @@ class Admin(commands.Cog):
                     if role.name == "Member":
                         add = False
                         continue
-                if add == True:
+                if add is True:
                     is_not_member.append(member)
 
         msg = ""
@@ -322,19 +322,16 @@ WHERE
         await ctx.send(timefmt.timestamp_to_time_ago(time_inp))
 
     @commands.command(hidden=True)
+    @perms.is_dev()
     async def embed(self, ctx):
         await ctx.send(embed=discord.Embed(title="Test", description="Test", color=discord.Color.dark_red(),
                                            timestamp=datetime.utcnow()))
 
-    @commands.command()
+    @commands.command(hidden=True)
+    @perms.is_dev()
     async def now(self, ctx):
         await ctx.send(datetime.utcnow())
 
-    @commands.command()
-    @perms.is_dev()
-    async def asdf(self, ctx):
-        t = self.bot.get_emoji(685573187903422464)
-        print(t)
 
 
 def setup(bot):

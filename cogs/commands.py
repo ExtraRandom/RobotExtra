@@ -14,12 +14,13 @@ class Commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    """
     @commands.command(hidden=True)
     @perms.is_dev()
     async def asdfasdfasdfasdf(self, ctx):
         print("")
         return
-
+    """
 
 def setup(bot):
     bot.add_cog(Commands(bot))

@@ -71,8 +71,8 @@ def setup(bot):
     b = Logging(bot)
     bot.add_cog(b)
     bot.add_listener(b.on_message, "on_message")
-    bot.add_listener(b.on_message_edit, "on_message_edit")
+    # bot.add_listener(b.on_message_edit, "on_message_edit")
     bot.add_listener(b.on_member_remove, "on_member_remove")
-    bot.add_listener(b.on_member_update, "on_member_update")
+    # bot.add_listener(b.on_member_update, "on_member_update")
 
 
