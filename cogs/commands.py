@@ -24,12 +24,12 @@ class Commands(commands.Cog):
                 return
 
             now = datetime.now().timestamp()
+            tfmt = '%Y-%m-%d %H:%M:%S.%f'
+            start = datetime.strptime(data['info']['start-time'], tfmt)
+            rc = datetime.strptime(data['info']['reconnect-time'], tfmt)
 
-            start = datetime.strptime(data['info']['start-time'], '%Y-%m-%d %H:%M:%S.%f')
-            rc = datetime.strptime(data['info']['reconnect-time'], '%Y-%m-%d %H:%M:%S.%f')
-
-            await ctx.send("Bot Uptime: {} ago\n"
-                           "Last Reconnect Time: {} ago"
+            await ctx.send("Bot Uptime: {}\n"
+                           "Last Reconnect Time: {}"
                            "".format(timefmt.timestamp_to_time_ago(now - start.timestamp()),
                                      timefmt.timestamp_to_time_ago(now - rc.timestamp())))
 
