@@ -1,0 +1,4 @@
+/logs/*.txt
+/db/*.sqlite
+/configs/settings.json
+/.idea
