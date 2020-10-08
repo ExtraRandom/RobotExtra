@@ -99,7 +99,7 @@ class Admin(commands.Cog):
     @commands.command(aliases=["steal", "emoteplease"])
     @perms.is_admin()
     async def emotepls(self, ctx, *, message_id: str):
-        """Returns a list of all emotes in/reacted to on a given message
+        """Steal emotes from a message
 
         Input must be a message id"""
         msg_channel = ctx.channel
@@ -331,7 +331,6 @@ WHERE
     @perms.is_dev()
     async def now(self, ctx):
         await ctx.send(datetime.utcnow())
-
 
 
 def setup(bot):

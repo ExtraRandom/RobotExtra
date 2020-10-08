@@ -14,13 +14,28 @@ class Commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    """
-    @commands.command(hidden=True)
-    @perms.is_dev()
-    async def asdfasdfasdfasdf(self, ctx):
-        print("")
-        return
-    """
+    @commands.command()
+    async def uptime(self, ctx):
+        """Shows the bots current uptime"""
+        try:
+            data = IO.read_settings_as_json()
+            if data is None:
+                await ctx.send(IO.settings_fail_read)
+                return
+
+            now = datetime.now().timestamp()
+
+            start = datetime.strptime(data['info']['start-time'], '%Y-%m-%d %H:%M:%S.%f')
+            rc = datetime.strptime(data['info']['reconnect-time'], '%Y-%m-%d %H:%M:%S.%f')
+
+            await ctx.send("Bot Uptime: {} ago\n"
+                           "Last Reconnect Time: {} ago"
+                           "".format(timefmt.timestamp_to_time_ago(now - start.timestamp()),
+                                     timefmt.timestamp_to_time_ago(now - rc.timestamp())))
+
+        except Exception as e:
+            await ctx.send("Error getting bot uptime. Reason: {}".format(type(e).__name__))
+
 
 def setup(bot):
     bot.add_cog(Commands(bot))
