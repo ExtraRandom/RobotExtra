@@ -35,6 +35,7 @@ def is_admin():
 
 # TODO see what is actually useful out of the stuff below and remove whatever isn't
 
+
 """
 taken from
 https://github.com/ExtraRandom/Discord-Bot/blob/2aee29b05becd612757197d76777e05b807cacb6/helpers/checks.py

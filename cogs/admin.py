@@ -1,20 +1,24 @@
 from discord.ext import commands
-import discord
 from time import time
 from datetime import datetime
-import os
 from cogs.utils import perms, IO
+from cogs.utils import time_formatting as timefmt
 from cogs.utils.logger import Logger
+import discord
 import random
 import re
-from cogs.utils import time_formatting as timefmt
+import os
 
 
 class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.ignore_channels = ["join-leave-log", "message-log", "changes-log", "discord-updates", "rules",
-                                "roles", "announcements", "joins-and-leaves", "suggestions"]
+        self.ignore_categories = [758500155207974983,  # ADMIN LOGS
+                                  750690307191865445,  # SERVER
+                                  761526935200595988]  # ARCHIVED CHANNELS
+
+        # self.ignore_channels = ["join-leave-log", "message-log", "changes-log", "discord-updates", "rules",
+        #                        "roles", "announcements", "joins-and-leaves", "suggestions"]
 
     @commands.command(hidden=True, aliases=["random"])
     @perms.is_dev()
@@ -120,7 +124,7 @@ class Admin(commands.Cog):
 
         if message is None:
             for channel in channels:
-                if channel.name in self.ignore_channels:
+                if channel.category_id in self.ignore_categories:
                     continue
                 if channel == msg_channel:
                     continue
@@ -179,11 +183,13 @@ class Admin(commands.Cog):
         await ctx.send("started at {}".format(start_time))
 
         for channel in ctx.guild.text_channels:
-            if channel.name in self.ignore_channels:
+            if channel.category_id in self.ignore_categories:
                 continue
-            print(channel)
+            # if channel.name in self.ignore_channels:
+            #    continue
+            # print(channel)
 
-            after = datetime(2020, 10, 7)
+            # after = datetime(2020, 10, 7)
 
             async for msg in channel.history(limit=40000):
                 if msg.author.bot is True:
@@ -212,15 +218,6 @@ VALUES
         """Check when a given user last spoke
 
         Input must be a Users ID"""
-        query = """
-SELECT
-    *
-FROM
-    tracking
-WHERE
-    user_id = "{}"
-        """.format(user_id)
-        erq = self.bot.execute_read_query(query)
 
         try:
             user_id = int(user_id)
@@ -243,6 +240,16 @@ WHERE
             result.colour = discord.Color.blue()
             await ctx.send(embed=result)
             return
+
+        query = """
+SELECT
+    *
+FROM
+    tracking
+WHERE
+    user_id = "{}"
+        """.format(user_id)
+        erq = self.bot.execute_read_query(query)
 
         if len(erq) == 0:
             result.add_field(name="Last Message Time:",
