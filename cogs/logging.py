@@ -45,7 +45,8 @@ class Logging(commands.Cog):
                                                     "**Reason:** {}\n"
                                                     "**Responsible admin:** {}"
                                                     "".format(entry.target, entry.reason, entry.user))
-                    msg.set_footer()
+                    msg.set_footer(text="ID: {}".format(user.id))
+                    msg.timestamp = datetime.utcnow()
                     await channel.send(embed=msg)
                     return
                 elif entry.action == discord.AuditLogAction.ban and entry.target.name == member.name:
@@ -57,6 +58,8 @@ class Logging(commands.Cog):
                                                     "**Reason:** {}\n"
                                                     "**Responsible admin:** {}"
                                                     "".format(entry.target, entry.reason, entry.user))
+                    msg.set_footer(text="ID: {}".format(user.id))
+                    msg.timestamp = datetime.utcnow()
                     await channel.send(embed=msg)
                     return
 

@@ -56,6 +56,6 @@ WHERE
 def setup(bot):
     n = Levels(bot)
     bot.add_cog(n)
-    bot.add_listener(n.do_leveling_stuff, "on_message")
+    # bot.add_listener(n.do_leveling_stuff, "on_message")
 
 

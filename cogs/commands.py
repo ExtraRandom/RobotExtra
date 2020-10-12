@@ -1,13 +1,12 @@
 from discord.ext import commands
-import discord
-from time import time
-from datetime import datetime
-import os
-from cogs.utils import perms, IO
-from cogs.utils.logger import Logger
-import random
-import re
 from cogs.utils import time_formatting as timefmt
+from PIL import Image
+from datetime import datetime
+from cogs.utils import perms, IO
+import os
+import io
+import discord
+import requests
 
 
 class Commands(commands.Cog):
@@ -35,6 +34,24 @@ class Commands(commands.Cog):
 
         except Exception as e:
             await ctx.send("Error getting bot uptime. Reason: {}".format(type(e).__name__))
+
+    @commands.command()
+    @commands.cooldown(1, 20, commands.BucketType.guild)
+    async def why(self, ctx, emote: discord.Emoji):
+        """Why does this emote exist?
+
+        Input emote must be a discord custom emoji.
+        Doesn't work with animated emoji or default emoji."""
+
+        BASE = Image.open(os.path.join(self.bot.base_directory, "cogs", "data", "memes", "emote_why.png"))
+        res = requests.get(emote.url)
+        EMOTE = Image.open(io.BytesIO(res.content)).convert("RGBA")
+        EMOTE = EMOTE.resize((400, 400))
+        BASE.paste(EMOTE, (69, 420), EMOTE)
+        file = io.BytesIO()
+        BASE.save(file, format="PNG")
+        file.seek(0)
+        await ctx.send(file=discord.File(file, "why.png"))
 
 
 def setup(bot):

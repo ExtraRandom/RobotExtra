@@ -107,6 +107,9 @@ class SNBot(commands.Bot):
             return
         elif isinstance(error, commands.CommandNotFound):
             return
+        elif isinstance(error, commands.DisabledCommand):
+            await ctx.send("This command ('{}') is currently disabled.".format(cmd.name))
+            return
         elif isinstance(error, commands.CheckFailure):
             if type(error) == errors.WrongGuild:
                 await ctx.send("This command can not be used in this server.")
