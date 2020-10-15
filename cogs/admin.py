@@ -20,7 +20,38 @@ class Admin(commands.Cog):
         # self.ignore_channels = ["join-leave-log", "message-log", "changes-log", "discord-updates", "rules",
         #                        "roles", "announcements", "joins-and-leaves", "suggestions"]
 
-    @commands.command(hidden=True, aliases=["random"])
+    async def find_member_from_id_or_mention(self, ctx, user):
+        target = None
+
+        if user is None:
+            target = ctx.author
+        else:
+            # Check for mention
+            try:
+                mentions = ctx.message.mentions
+                if len(mentions) == 1:
+                    target = mentions[0]
+                elif len(mentions) > 1:
+                    # await ctx.send("Please only mention **one** user")
+                    return None
+            except AttributeError:
+                pass
+
+            # Check for id
+            if target is None:
+                try:
+                    user_id = int(user)
+                    user_find = ctx.message.guild.get_member(user_id)
+                    # user_find = discord.utils.find(lambda m: m.id == user_id, ctx.guild.members)
+                    if user_find is not None:
+                        target = user_find
+                except Exception as e:
+                    pass
+
+        return target
+
+
+    @commands.command(hidden=True, aliases=["random"], enabled=False)
     @perms.is_dev()
     @perms.is_in_somewhere_nice()
     async def rndmem(self, ctx):
@@ -34,9 +65,6 @@ class Admin(commands.Cog):
 
         random.seed()
         t = random.randint(0, len(non_bot_members) - 1)
-
-        print(non_bot_members[t].name)
-        print(non_bot_members[t].display_name)
 
         await ctx.send(non_bot_members[t].name)
 
@@ -70,9 +98,6 @@ class Admin(commands.Cog):
             msg += "{}#{}   ".format(user.name, user.discriminator)
             test += "{}   ".format(user.mention)
 
-        # print(is_not_member)
-        # print(msg)
-
         if len(is_not_member) is 0:
             await ctx.send("no users missing member role")
             return
@@ -80,7 +105,7 @@ class Admin(commands.Cog):
         await ctx.send(msg)
         await ctx.send(test)
 
-    @commands.command(hidden=True, aliases=["memsch"])
+    @commands.command(hidden=True, aliases=["memsch"], enabled=False)
     @perms.is_admin()
     async def search(self, ctx, *, search: str):
         """not really sure what the point of this one is"""
@@ -92,7 +117,6 @@ class Admin(commands.Cog):
                 continue
             if search.lower() in str(member.name).lower():
                 peoples.append(member.name)
-                # await ctx.send(member.name)
 
         res = ", ".join(peoples)
         if len(res) is 0:
@@ -176,6 +200,72 @@ class Admin(commands.Cog):
                 await ctx.send(embed=reacts)
 
     @commands.command(hidden=True)
+    @perms.is_admin()
+    async def info(self, ctx, *, user=None):
+        """Show info of a member
+
+        Optional Argument: Mention or User ID
+        No Argument will return your own info"""
+        # https://discordpy.readthedocs.io/en/latest/api.html#member
+        # target = None
+        target = await Admin.find_member_from_id_or_mention(self, ctx, user)
+
+        if target is None:
+            await ctx.send("Couldn't find that user")
+            return
+
+        name = str(target)
+        if target.nick:
+            name += " (aka '{}')".format(target.nick)
+
+        result = discord.Embed(title="",
+                               description="[Avatar]({}) - {}".format(target.avatar_url, target.mention),
+                               colour=target.colour)
+        result.set_author(name="{}".format(name), icon_url=target.avatar_url)
+
+        role_list = target.roles
+        roles = []
+        for role in role_list:
+            if role.name == "@everyone":
+                continue
+            roles.append(role.mention)
+
+        roles.reverse()
+
+        if len(roles) is not 0:
+            result.add_field(name="Roles",
+                             value="{}".format(" ".join(roles)))
+        else:
+            result.add_field(name="Roles",
+                             value="No Roles")
+
+        result.add_field(name="Created Account at:",
+                         value="{}\n({} ago)".format(target.created_at,
+                                                     timefmt.datetime_to_time_ago(target.created_at)))
+
+        result.add_field(name="Joined Server at:",
+                         value="{}\n({} ago)".format(target.joined_at,
+                                                     timefmt.datetime_to_time_ago(target.joined_at)))
+        result.set_footer(text="ID: {}".format(target.id))
+
+        await ctx.send(embed=result)
+
+    @commands.command(enabled=True, hidden=True)
+    @perms.is_dev()
+    async def song(self, ctx):
+        # did work but is currently broken for some reason
+        spotify_url = "https://open.spotify.com/track/"
+        test = ctx.author.activities
+
+        for t in test:  # print(t)
+            if type(t) is discord.Spotify:
+                await ctx.send("{}{}".format(spotify_url, t.track_id))
+                return
+
+        await ctx.send("{}, You are not listening to a song???".format(ctx.author.mention))
+        # await ctx.send(test)
+
+    @commands.command(hidden=True, enabled=False)
     @perms.is_dev()
     async def idk(self, ctx):
         added = []
@@ -308,7 +398,7 @@ WHERE
 
         await ctx.send("\n".join(users))
 
-    @commands.command(hidden=True)
+    @commands.command(hidden=True, enabled=False)
     @perms.is_dev()
     async def lazy(self, ctx):
         message_id = 763670004162887721
@@ -328,7 +418,7 @@ WHERE
     async def time(self, ctx, *, time_inp: int):
         await ctx.send(timefmt.timestamp_to_time_ago(time_inp))
 
-    @commands.command(hidden=True)
+    @commands.command(hidden=True, enabled=False)
     @perms.is_dev()
     async def embed(self, ctx):
         await ctx.send(embed=discord.Embed(title="Test", description="Test", color=discord.Color.dark_red(),

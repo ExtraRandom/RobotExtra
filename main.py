@@ -60,7 +60,7 @@ class SNBot(commands.Bot):
 
     def execute_read_query(self, query):
         cursor = self.connection.cursor()
-        result = None
+        # result = None
         try:
             cursor.execute(query)
             result = cursor.fetchall()
@@ -111,7 +111,7 @@ class SNBot(commands.Bot):
         elif isinstance(error, commands.CommandNotFound):
             return
         elif isinstance(error, commands.DisabledCommand):
-            await ctx.send("This command ('{}') is currently disabled.".format(cmd.name))
+            await ctx.send("The command '{}' is currently disabled.".format(cmd.name))
             return
         elif isinstance(error, commands.CheckFailure):
             if type(error) == errors.WrongGuild:
