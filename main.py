@@ -38,10 +38,13 @@ class SNBot(commands.Bot):
         cursor.executescript(sql_as_string)
         # print("Database setup done")
 
+        self.d_intents = discord.Intents.all()
+
         super().__init__(command_prefix=get_prefix,
                          description="Bot Developed by @Extra_Random#2564\n"
                                      "Source code: https://github.com/ExtraRandom/SNBot",
-                         pm_help=False)
+                         pm_help=False,
+                         intents=self.d_intents)
 
     def execute_query(self, query):
         cursor = self.connection.cursor()
