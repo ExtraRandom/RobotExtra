@@ -33,6 +33,13 @@ def is_admin():
 
     return commands.check(predicate)
 
+
+def is_admin_or_mod():
+    def predicate(ctx):
+        return ctx.message.author.id in [735446137489719307, 750341810873696316, 92562410493202432, 309514963037192204]
+
+    return commands.check(predicate)
+
 # TODO see what is actually useful out of the stuff below and remove whatever isn't
 
 
