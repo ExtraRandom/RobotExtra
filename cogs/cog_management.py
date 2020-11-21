@@ -97,7 +97,7 @@ class CogManagement(commands.Cog):
             await ctx.send("Successfully reloaded cog '{}'".format(cog))
         except Exception as e:
             Logger.write(e)
-            await ctx.send("Failed to reload cog '{}'")
+            await ctx.send("Failed to reload cog '{}'".format(cog))
             return
 
     @commands.command(hidden=True, name="cogs")
