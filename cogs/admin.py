@@ -67,7 +67,7 @@ class Admin(commands.Cog):
 
         await ctx.send(non_bot_members[t].name)
 
-    @commands.command(hidden=True, aliases=["members", "memchk", "checkmem"])
+    @commands.command(aliases=["members", "memchk", "checkmem"])
     @perms.is_dev()
     @perms.is_in_somewhere_nice()
     async def checkmember(self, ctx):
@@ -200,7 +200,7 @@ class Admin(commands.Cog):
             if len(reacts.fields) >= 1:
                 await ctx.send(embed=reacts)
 
-    @commands.command(hidden=True)
+    @commands.command(enabled=False, hidden=True)
     @perms.is_admin()
     async def info(self, ctx, *, user=None):
         """Show info of a member
@@ -365,7 +365,7 @@ WHERE
 
         await ctx.send(embed=result)
 
-    @commands.command(hidden=True)
+    @commands.command()
     @perms.is_dev()
     async def checkall(self, ctx):
         """List all server members who have never spoken"""
@@ -396,7 +396,7 @@ WHERE
         await ctx.send("Members who have never spoken: ")
         await ctx.send("\n".join(users))
 
-    @commands.command(hidden=True)
+    @commands.command()
     @perms.is_dev()
     async def checkactive(self, ctx):
         """List server members who haven't spoken for 4 weeks or more"""

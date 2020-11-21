@@ -7,6 +7,7 @@ import os
 import io
 import discord
 import requests
+import pytz
 
 
 class Commands(commands.Cog):
@@ -52,6 +53,28 @@ class Commands(commands.Cog):
         BASE.save(file, format="PNG")
         file.seek(0)
         await ctx.send(file=discord.File(file, "why.png"))
+
+    @commands.command()
+    @perms.is_admin_or_mod()
+    async def times(self, ctx):
+        extra_time = datetime.now(tz=pytz.timezone('Europe/London'))
+        john_time = datetime.now(tz=pytz.timezone('Europe/Copenhagen'))
+        nat_time = datetime.now(tz=pytz.timezone('Australia/Victoria'))
+        jacob_time = datetime.now(tz=pytz.timezone('US/Central'))
+
+        fmt = "%a %d %b\n%H:%M:%S\n%z %Z"
+
+        results = discord.Embed(title="Admin/Mod Current Times")
+        results.add_field(name="Jacob",
+                          value="{}".format(jacob_time.strftime(fmt)))
+        results.add_field(name="Extra",
+                          value="{}".format(extra_time.strftime(fmt)))
+        results.add_field(name="JohnDoe",
+                          value="{}".format(john_time.strftime(fmt)))
+        results.add_field(name="Natalie",
+                          value="{}".format(nat_time.strftime(fmt)))
+
+        await ctx.send(embed=results)
 
 
 def setup(bot):
