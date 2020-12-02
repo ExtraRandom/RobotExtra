@@ -8,7 +8,7 @@ class CogManagement(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(hidden=True)
+    @commands.command()
     @perms.is_dev()
     async def load(self, ctx, *, cog: str):
         """Load a cog"""
@@ -42,7 +42,7 @@ class CogManagement(commands.Cog):
             await ctx.send(IO.settings_fail_write)
             return
 
-    @commands.command(hidden=True)
+    @commands.command()
     @perms.is_dev()
     async def unload(self, ctx, *, cog: str):
         """Unload a cog"""
@@ -73,7 +73,7 @@ class CogManagement(commands.Cog):
             await ctx.send(IO.settings_fail_write)
             return
 
-    @commands.command(hidden=True)
+    @commands.command()
     @perms.is_dev()
     async def reload(self, ctx, *, cog: str):
         """Reload a cog"""
@@ -100,7 +100,7 @@ class CogManagement(commands.Cog):
             await ctx.send("Failed to reload cog '{}'".format(cog))
             return
 
-    @commands.command(hidden=True, name="cogs")
+    @commands.command(name="cogs")
     @perms.is_dev()
     async def the_cog_list(self, ctx):
         """List all loaded and unloaded cogs"""

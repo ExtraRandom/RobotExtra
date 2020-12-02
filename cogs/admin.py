@@ -67,11 +67,95 @@ class Admin(commands.Cog):
 
         await ctx.send(non_bot_members[t].name)
 
+    @commands.command(hidden=True, aliases=["memsch"], enabled=False)
+    @perms.is_admin()
+    async def search(self, ctx, *, search: str):
+        """not really sure what the point of this one is"""
+        peoples = []
+
+        all_members = ctx.message.guild.members
+        for member in all_members:
+            if member.bot:
+                continue
+            if search.lower() in str(member.name).lower():
+                peoples.append(member.name)
+
+        res = ", ".join(peoples)
+        if len(res) is 0:
+            await ctx.send("no results")
+        else:
+            await ctx.send(res)
+
+    @commands.command()
+    @perms.is_admin()
+    @perms.is_in_somewhere_nice()
+    async def check(self, ctx, *, user_id: str):
+        """Check when a given user last spoke
+
+        Input must be a Users ID"""
+
+        # TODO update to allow metions via the function
+
+        try:
+            user_id = int(user_id)
+        except ValueError:
+            await ctx.send("Invalid user ID: '{}'".format(user_id))
+            return
+
+        user_data = discord.utils.find(lambda m: m.id == user_id, ctx.guild.members)
+        try:
+            result = discord.Embed(title="{}#{}".format(user_data.name, user_data.discriminator),
+                                   description="{}".format(user_data.mention),
+                                   colour=discord.Color.green())
+        except AttributeError:
+            await ctx.send("The user with the ID '{}' is not part of this server.".format(user_id))
+            return
+
+        if user_data.bot:
+            result.add_field(name="Bot",
+                             value="The user ID provided is for a bot.")
+            result.colour = discord.Color.blue()
+            await ctx.send(embed=result)
+            return
+
+        query = """
+    SELECT
+        *
+    FROM
+        tracking
+    WHERE
+        user_id = "{}"
+            """.format(user_id)
+        erq = self.bot.execute_read_query(query)
+
+        if len(erq) == 0:
+            result.add_field(name="Last Message Time:",
+                             value="Never")
+            result.colour = discord.Color.red()
+            await ctx.send(embed=result)
+            return
+
+        user, m_time, m_url = erq[0]
+        n_time = str(datetime.fromtimestamp(m_time)).split(".")[0]
+
+        a_time = datetime.utcnow().timestamp() - m_time
+
+        result.add_field(name="Last Message Time:",
+                         value="{} UTC".format(n_time))
+        result.add_field(name="Time Ago:",
+                         value="{} ago".format(timefmt.timestamp_to_time_ago(a_time)))
+        result.add_field(name="URL:",
+                         value="{}".format(m_url))
+
+        await ctx.send(embed=result)
+
     @commands.command(aliases=["members", "memchk", "checkmem"])
-    @perms.is_dev()
+    @perms.is_admin()
     @perms.is_in_somewhere_nice()
     async def checkmember(self, ctx):
-        """List all users in server who don't have the member role"""
+        """List users who didn't read the rules
+
+        Lists all users in server who don't have the member role (i.e. didn't read the rules)"""
         is_not_member = []
 
         all_members = ctx.message.guild.members
@@ -106,24 +190,84 @@ class Admin(commands.Cog):
         await ctx.send("Server members who do not have the member role (didn't read rules): ")
         await ctx.send("\n".join(users))
 
-    @commands.command(hidden=True, aliases=["memsch"], enabled=False)
+    @commands.command()
     @perms.is_admin()
-    async def search(self, ctx, *, search: str):
-        """not really sure what the point of this one is"""
-        peoples = []
-
-        all_members = ctx.message.guild.members
-        for member in all_members:
-            if member.bot:
+    @perms.is_in_somewhere_nice()
+    async def checkall(self, ctx):
+        """List all server members who have never spoken"""
+        users = []
+        for member in ctx.guild.members:
+            user_id = member.id
+            query = """
+    SELECT
+        *
+    FROM
+        tracking
+    WHERE
+        user_id = "{}"
+                """.format(user_id)
+            erq = self.bot.execute_read_query(query)
+            user_data = discord.utils.find(lambda m: m.id == user_id, ctx.guild.members)
+            if user_data.bot:
                 continue
-            if search.lower() in str(member.name).lower():
-                peoples.append(member.name)
 
-        res = ", ".join(peoples)
-        if len(res) is 0:
-            await ctx.send("no results")
-        else:
-            await ctx.send(res)
+            if len(erq) == 0:
+                ago = datetime.utcnow().timestamp() - user_data.joined_at.timestamp()
+                new = "{} - Joined: {}".format(user_data.mention,
+                                               timefmt.timestamp_to_time_ago(ago)
+                                               )
+                users.append(new)
+                continue
+
+        await ctx.send("Members who have never spoken: ")
+        await ctx.send("\n".join(users))
+
+    @commands.command()
+    @perms.is_admin()
+    @perms.is_in_somewhere_nice()
+    async def checkactive(self, ctx):
+        """List inactive members
+
+        Lists server members who haven't spoken for 4 weeks or more"""
+
+        await ctx.send("Members who haven't spoken for 4 weeks or more:")
+
+        for member in ctx.guild.members:
+            user_id = member.id
+            query = """
+        SELECT
+            *
+        FROM
+            tracking
+        WHERE
+            user_id = "{}"
+                    """.format(user_id)
+            erq = self.bot.execute_read_query(query)
+            user_data = discord.utils.find(lambda m: m.id == user_id, ctx.guild.members)
+            if user_data.bot:
+                continue
+
+            if len(erq) == 0:
+                continue
+            else:
+                last_id, last_time, last_url = erq[0]
+                total_time = datetime.utcnow().timestamp() - last_time
+                if total_time >= 2419200:
+                    result = discord.Embed(title="{}#{}".format(user_data.name, user_data.discriminator),
+                                           description="{}".format(user_data.mention),
+                                           colour=discord.Color.green())
+
+                    n_time = str(datetime.fromtimestamp(last_time)).split(".")[0]
+
+                    a_time = datetime.utcnow().timestamp() - last_time
+
+                    result.add_field(name="Last Message Time:",
+                                     value="{} UTC".format(n_time))
+                    result.add_field(name="Time Ago:",
+                                     value="{} ago".format(timefmt.timestamp_to_time_ago(a_time)))
+                    result.add_field(name="URL:",
+                                     value="{}".format(last_url))
+                    await ctx.send(embed=result)
 
     @commands.command(aliases=["steal", "emoteplease"])
     @perms.is_admin()
@@ -302,144 +446,6 @@ VALUES
         end_time = time()
         await ctx.send("ended at {}".format(end_time))
         await ctx.send("took {}".format(end_time - start_time))
-
-    @commands.command()
-    @perms.is_admin()
-    async def check(self, ctx, *, user_id: str):
-        """Check when a given user last spoke
-
-        Input must be a Users ID"""
-
-        # TODO update to allow metions via the function
-
-        try:
-            user_id = int(user_id)
-        except ValueError:
-            await ctx.send("Invalid user ID: '{}'".format(user_id))
-            return
-
-        user_data = discord.utils.find(lambda m: m.id == user_id, ctx.guild.members)
-        try:
-            result = discord.Embed(title="{}#{}".format(user_data.name, user_data.discriminator),
-                                   description="{}".format(user_data.mention),
-                                   colour=discord.Color.green())
-        except AttributeError:
-            await ctx.send("The user with the ID '{}' is not part of this server.".format(user_id))
-            return
-
-        if user_data.bot:
-            result.add_field(name="Bot",
-                             value="The user ID provided is for a bot.")
-            result.colour = discord.Color.blue()
-            await ctx.send(embed=result)
-            return
-
-        query = """
-SELECT
-    *
-FROM
-    tracking
-WHERE
-    user_id = "{}"
-        """.format(user_id)
-        erq = self.bot.execute_read_query(query)
-
-        if len(erq) == 0:
-            result.add_field(name="Last Message Time:",
-                             value="Never")
-            result.colour = discord.Color.red()
-            await ctx.send(embed=result)
-            return
-
-        user, m_time, m_url = erq[0]
-        n_time = str(datetime.fromtimestamp(m_time)).split(".")[0]
-
-        a_time = datetime.utcnow().timestamp() - m_time
-
-        result.add_field(name="Last Message Time:",
-                         value="{} UTC".format(n_time))
-        result.add_field(name="Time Ago:",
-                         value="{} ago".format(timefmt.timestamp_to_time_ago(a_time)))
-        result.add_field(name="URL:",
-                         value="{}".format(m_url))
-
-        await ctx.send(embed=result)
-
-    @commands.command()
-    @perms.is_dev()
-    async def checkall(self, ctx):
-        """List all server members who have never spoken"""
-        users = []
-        for member in ctx.guild.members:
-            user_id = member.id
-            query = """
-SELECT
-    *
-FROM
-    tracking
-WHERE
-    user_id = "{}"
-            """.format(user_id)
-            erq = self.bot.execute_read_query(query)
-            user_data = discord.utils.find(lambda m: m.id == user_id, ctx.guild.members)
-            if user_data.bot:
-                continue
-
-            if len(erq) == 0:
-                ago = datetime.utcnow().timestamp() - user_data.joined_at.timestamp()
-                new = "{} - Joined: {}".format(user_data.mention,
-                                               timefmt.timestamp_to_time_ago(ago)
-                                               )
-                users.append(new)
-                continue
-
-        await ctx.send("Members who have never spoken: ")
-        await ctx.send("\n".join(users))
-
-    @commands.command()
-    @perms.is_dev()
-    async def checkactive(self, ctx):
-        """List server members who haven't spoken for 4 weeks or more"""
-
-        await ctx.send("Members who haven't spoken for 4 weeks or more:")
-
-        for member in ctx.guild.members:
-            user_id = member.id
-            query = """
-    SELECT
-        *
-    FROM
-        tracking
-    WHERE
-        user_id = "{}"
-                """.format(user_id)
-            erq = self.bot.execute_read_query(query)
-            user_data = discord.utils.find(lambda m: m.id == user_id, ctx.guild.members)
-            if user_data.bot:
-                continue
-
-            if len(erq) == 0:
-                continue
-            else:
-                last_id, last_time, last_url = erq[0]
-                total_time = datetime.utcnow().timestamp() - last_time
-                if total_time >= 2419200:
-
-                    result = discord.Embed(title="{}#{}".format(user_data.name, user_data.discriminator),
-                                           description="{}".format(user_data.mention),
-                                           colour=discord.Color.green())
-
-                    n_time = str(datetime.fromtimestamp(last_time)).split(".")[0]
-
-                    a_time = datetime.utcnow().timestamp() - last_time
-
-                    result.add_field(name="Last Message Time:",
-                                     value="{} UTC".format(n_time))
-                    result.add_field(name="Time Ago:",
-                                     value="{} ago".format(timefmt.timestamp_to_time_ago(a_time)))
-                    result.add_field(name="URL:",
-                                     value="{}".format(last_url))
-                    await ctx.send(embed=result)
 
     @commands.command(hidden=True, enabled=False)
     @perms.is_dev()
