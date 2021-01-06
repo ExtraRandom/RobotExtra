@@ -8,6 +8,7 @@ import io
 import discord
 import requests
 import pytz
+# import re
 
 
 class Commands(commands.Cog):
@@ -57,6 +58,7 @@ class Commands(commands.Cog):
     @commands.command()
     @perms.is_admin_or_mod()
     async def times(self, ctx):
+        """Get the current time for admins/mods"""
         extra_time = datetime.now(tz=pytz.timezone('Europe/London'))
         john_time = datetime.now(tz=pytz.timezone('Europe/Copenhagen'))
         nat_time = datetime.now(tz=pytz.timezone('Australia/Victoria'))
@@ -75,6 +77,12 @@ class Commands(commands.Cog):
                           value="{}".format(nat_time.strftime(fmt)))
 
         await ctx.send(embed=results)
+
+    @commands.command(enabled=False)
+    @perms.is_dev()
+    async def ye(self, ctx):
+        await ctx.send(ctx.guild.created_at)
+        await ctx.send(timefmt.datetime_to_time_ago(ctx.guild.created_at))
 
 
 def setup(bot):
