@@ -48,7 +48,7 @@ class Logging(commands.Cog):
                                                "".format(member.mention, member.guild.member_count,
                                                          timefmt.datetime_to_time_ago(member.created_at)))
 
-            result.set_author(name="{}".format(member.name), icon_url=member.avatar_url)
+            result.set_author(name="{}#{}".format(member.name, member.discriminator), icon_url=member.avatar_url)
             result.timestamp = datetime.utcnow()
             result.set_footer(text="ID: {}".format(member.id))
 
@@ -102,7 +102,7 @@ class Logging(commands.Cog):
                                                "**Roles:** {}"
                                                "".format(member.mention, timefmt.datetime_to_time_ago(member.joined_at),
                                                          " ".join(roles)))
-            result.set_author(name="{}".format(member.name), icon_url=member.avatar_url)
+            result.set_author(name="{}#{}".format(member.name, member.discriminator), icon_url=member.avatar_url)
             result.timestamp = datetime.utcnow()
 
             channel = discord.utils.get(member.guild.text_channels, id=796381270799024150)
