@@ -14,8 +14,19 @@ class Logging(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        # self.sn_server_id = 750689226382901288
-        # self.sn_joinleave_log =
+        somewhere_nice = {
+            "server": 750689226382901288,
+            "join_leave_log": 796381270799024150,
+            "kick_ban_log": 761212419388604477
+        }
+
+        dev = {
+            "server": 223132558609612810,
+            "join_leave_log": 796547566509621260,
+            "kick_ban_log": 796547635485343784
+        }
+
+        self.ids = somewhere_nice
 
     async def on_message(self, message):
         bot_msg = message.author.bot
@@ -37,8 +48,8 @@ class Logging(commands.Cog):
         print("old: ", old.content, "\nnew: ", new.content)
 
     async def on_member_join(self, member):
-        if member.guild.id == 750689226382901288:
-            channel = discord.utils.get(member.guild.text_channels, id=796381270799024150)
+        if member.guild.id == self.ids["server"]:
+            channel = discord.utils.get(member.guild.text_channels, id=self.ids["join_leave_log"])
 
             result = discord.Embed(title="User Joined",
                                    colour=discord.Colour.green(),
@@ -56,10 +67,10 @@ class Logging(commands.Cog):
             # await channel.send("User {} joined at {} UTC".format(member.name, datetime.utcnow()))
 
     async def on_member_remove(self, member):
-        if member.guild.id == 750689226382901288:
+        if member.guild.id == self.ids["server"]:
             async for entry in member.guild.audit_logs(limit=5):
                 if entry.action == discord.AuditLogAction.kick and entry.target.name == member.name:
-                    channel = discord.utils.get(member.guild.text_channels, id=761212419388604477)
+                    channel = discord.utils.get(member.guild.text_channels, id=self.ids["kick_ban_log"])
                     user = entry.target
                     msg = discord.Embed(title="{} kicked".format(user),
                                         colour=discord.Colour.dark_gold(),
@@ -104,18 +115,19 @@ class Logging(commands.Cog):
                                                          " ".join(roles)))
             result.set_author(name="{}#{}".format(member.name, member.discriminator), icon_url=member.avatar_url)
             result.timestamp = datetime.utcnow()
+            result.set_footer(text="ID: {}".format(member.id))
 
-            channel = discord.utils.get(member.guild.text_channels, id=796381270799024150)
+            channel = discord.utils.get(member.guild.text_channels, id=self.ids["join_leave_log"])
 
             # await channel.send("User {} left at {} UTC".format(member.name, datetime.utcnow()))
             await channel.send(embed=result)
 
     async def on_member_ban(self, guild, user):
         # print("guild", guild.name, " just banned", user.name)
-        if guild.id == 750689226382901288:
+        if guild.id == self.ids["server"]:
             async for entry in guild.audit_logs(limit=5):
                 if entry.action == discord.AuditLogAction.ban and entry.target.name == user.name:
-                    channel = discord.utils.get(guild.text_channels, id=761212419388604477)
+                    channel = discord.utils.get(guild.text_channels, id=self.ids["kick_ban_log"])
                     user = entry.target
                     msg = discord.Embed(title="{} banned".format(user),
                                         colour=discord.Colour.dark_red(),
@@ -129,10 +141,10 @@ class Logging(commands.Cog):
                     return
 
     async def on_member_unban(self, guild, user):
-        if guild.id == 750689226382901288:
+        if guild.id == self.ids["server"]:
             async for entry in guild.audit_logs(limit=5):
                 if entry.action == discord.AuditLogAction.unban and entry.target.name == user.name:
-                    channel = discord.utils.get(guild.text_channels, id=761212419388604477)
+                    channel = discord.utils.get(guild.text_channels, id=self.ids["kick_ban_log"])
                     user = entry.target
                     msg = discord.Embed(title="{} unbanned".format(user),
                                         colour=discord.Colour.green(),
