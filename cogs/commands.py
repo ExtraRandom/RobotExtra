@@ -31,8 +31,8 @@ class Commands(commands.Cog):
 
             await ctx.send("Bot Uptime: {}\n"
                            "Last Reconnect Time: {}"
-                           "".format(timefmt.timestamp_to_time_ago(now - start.timestamp()),
-                                     timefmt.timestamp_to_time_ago(now - rc.timestamp())))
+                           "".format(timefmt.time_ago(now - start.timestamp()),
+                                     timefmt.time_ago(now - rc.timestamp())))
 
         except Exception as e:
             await ctx.send("Error getting bot uptime. Reason: {}".format(type(e).__name__))

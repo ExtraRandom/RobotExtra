@@ -1,12 +1,12 @@
 from discord.ext import commands
 import discord
-from time import time
+# from time import time
 from datetime import datetime
-import os
-from cogs.utils import perms, IO
-from cogs.utils.logger import Logger
-import random
-import re
+# import os
+# from cogs.utils import perms, IO
+# from cogs.utils.logger import Logger
+# import random
+# import re
 from cogs.utils import time_formatting as timefmt
 
 
@@ -14,19 +14,19 @@ class Logging(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        somewhere_nice = {
+        self.somewhere_nice = {
             "server": 750689226382901288,
             "join_leave_log": 796381270799024150,
             "kick_ban_log": 761212419388604477
         }
 
-        dev = {
+        self.dev = {
             "server": 223132558609612810,
             "join_leave_log": 796547566509621260,
             "kick_ban_log": 796547635485343784
         }
 
-        self.ids = somewhere_nice
+        self.ids = self.somewhere_nice
 
     async def on_message(self, message):
         bot_msg = message.author.bot
@@ -51,20 +51,26 @@ class Logging(commands.Cog):
         if member.guild.id == self.ids["server"]:
             channel = discord.utils.get(member.guild.text_channels, id=self.ids["join_leave_log"])
 
+            account_age = timefmt.datetime_to_time_ago(member.created_at)
+            age_stamp = datetime.utcnow().timestamp() - member.created_at.timestamp()
+            if age_stamp < (60 * 60 * 24):
+                account_age_msg = ":warning: {} :warning:".format(account_age)
+            else:
+                account_age_msg = account_age
+
             result = discord.Embed(title="User Joined",
                                    colour=discord.Colour.green(),
                                    description="**User:** {}\n"
                                                "**Member Count:** {}\n"
                                                "**Created:** {}"
                                                "".format(member.mention, member.guild.member_count,
-                                                         timefmt.datetime_to_time_ago(member.created_at)))
+                                                         account_age_msg))
 
             result.set_author(name="{}#{}".format(member.name, member.discriminator), icon_url=member.avatar_url)
             result.timestamp = datetime.utcnow()
             result.set_footer(text="ID: {}".format(member.id))
 
             await channel.send(embed=result)
-            # await channel.send("User {} joined at {} UTC".format(member.name, datetime.utcnow()))
 
     async def on_member_remove(self, member):
         if member.guild.id == self.ids["server"]:
@@ -119,11 +125,9 @@ class Logging(commands.Cog):
 
             channel = discord.utils.get(member.guild.text_channels, id=self.ids["join_leave_log"])
 
-            # await channel.send("User {} left at {} UTC".format(member.name, datetime.utcnow()))
             await channel.send(embed=result)
 
     async def on_member_ban(self, guild, user):
-        # print("guild", guild.name, " just banned", user.name)
         if guild.id == self.ids["server"]:
             async for entry in guild.audit_logs(limit=5):
                 if entry.action == discord.AuditLogAction.ban and entry.target.name == user.name:
@@ -158,9 +162,9 @@ class Logging(commands.Cog):
 
     async def on_member_update(self, before, after):
         return
-        print(before.name)
-        print(before.status)
-        print(after.status)
+        # print(before.name)
+        # print(before.status)
+        # print(after.status)
 
     async def on_message_delete(self, message):
         print("DELETED", message.content)
@@ -183,5 +187,3 @@ def setup(bot):
     # bot.add_listener(b.on_member_update, "on_member_update")
     # bot.add_listener(b.on_message_delete, "on_message_delete")
     # bot.add_listener(b.on_bulk_message_delete, "on_bulk_message_delete")
-
-

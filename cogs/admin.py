@@ -143,7 +143,7 @@ class Admin(commands.Cog):
         result.add_field(name="Last Message Time:",
                          value="{} UTC".format(n_time))
         result.add_field(name="Time Ago:",
-                         value="{} ago".format(timefmt.timestamp_to_time_ago(a_time)))
+                         value="{} ago".format(timefmt.time_ago(a_time)))
         result.add_field(name="URL:",
                          value="{}".format(m_url))
 
@@ -179,7 +179,7 @@ class Admin(commands.Cog):
         for user in is_not_member:
             ago = datetime.utcnow().timestamp() - user.joined_at.timestamp()
             new = "{} - Joined: {}".format(user.mention,
-                                           timefmt.timestamp_to_time_ago(ago)
+                                           timefmt.time_ago(ago)
                                            )
             users.append(new)
 
@@ -214,7 +214,7 @@ class Admin(commands.Cog):
             if len(erq) == 0:
                 ago = datetime.utcnow().timestamp() - user_data.joined_at.timestamp()
                 new = "{} - Joined: {}".format(user_data.mention,
-                                               timefmt.timestamp_to_time_ago(ago)
+                                               timefmt.time_ago(ago)
                                                )
                 users.append(new)
                 continue
@@ -264,7 +264,7 @@ class Admin(commands.Cog):
                     result.add_field(name="Last Message Time:",
                                      value="{} UTC".format(n_time))
                     result.add_field(name="Time Ago:",
-                                     value="{} ago".format(timefmt.timestamp_to_time_ago(a_time)))
+                                     value="{} ago".format(timefmt.time_ago(a_time)))
                     result.add_field(name="URL:",
                                      value="{}".format(last_url))
                     await ctx.send(embed=result)
@@ -465,7 +465,7 @@ VALUES
     @commands.command(hidden=True)
     @perms.is_dev()
     async def time(self, ctx, *, time_inp: int):
-        await ctx.send(timefmt.timestamp_to_time_ago(time_inp))
+        await ctx.send(timefmt.time_ago(time_inp))
 
     @commands.command(hidden=True, enabled=False)
     @perms.is_dev()
