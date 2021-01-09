@@ -92,7 +92,9 @@ def timestamp_breakdown(timestamp):
         "days": days,
         "hours": hours,
         "minutes": minutes,
-        "seconds": seconds
+        "seconds": seconds,
+        "total_days": t.days,
+        "total_seconds": t.total_seconds()
     }
 
     return result

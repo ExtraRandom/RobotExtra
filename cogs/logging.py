@@ -33,14 +33,14 @@ class Logging(commands.Cog):
         if bot_msg is True:
             return
 
-        query = """
-        INSERT OR REPLACE INTO
-            tracking(user_id, message_last_time, message_last_url)
-        VALUES
-            ({}, {}, "{}")    
-                """.format(message.author.id, message.created_at.timestamp(), message.jump_url)
-
-        eq = self.bot.execute_query(query)
+        if message.guild == self.ids["server"]:
+            query = """
+INSERT OR REPLACE INTO
+    tracking(user_id, message_last_time, message_last_url)
+VALUES
+    ({}, {}, "{}")
+""".format(message.author.id, message.created_at.timestamp(), message.jump_url)
+            eq = self.bot.execute_query(query)
 
     async def on_message_edit(self, old, new):
         if new.author.bot is True:
@@ -66,7 +66,7 @@ class Logging(commands.Cog):
                                                "".format(member.mention, member.guild.member_count,
                                                          account_age_msg))
 
-            result.set_author(name="{}#{}".format(member.name, member.discriminator), icon_url=member.avatar_url)
+            result.set_author(name="{}".format(member), icon_url=member.avatar_url)
             result.timestamp = datetime.utcnow()
             result.set_footer(text="ID: {}".format(member.id))
 
@@ -119,7 +119,7 @@ class Logging(commands.Cog):
                                                "**Roles:** {}"
                                                "".format(member.mention, timefmt.datetime_to_time_ago(member.joined_at),
                                                          " ".join(roles)))
-            result.set_author(name="{}#{}".format(member.name, member.discriminator), icon_url=member.avatar_url)
+            result.set_author(name="{}".format(member), icon_url=member.avatar_url)
             result.timestamp = datetime.utcnow()
             result.set_footer(text="ID: {}".format(member.id))
 
