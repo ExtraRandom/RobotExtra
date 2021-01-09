@@ -1,12 +1,8 @@
 from discord.ext import commands
 import discord
-# from time import time
 from datetime import datetime
-# import os
 # from cogs.utils import perms, IO
 # from cogs.utils.logger import Logger
-# import random
-# import re
 from cogs.utils import time_formatting as timefmt
 
 
@@ -33,7 +29,7 @@ class Logging(commands.Cog):
         if bot_msg is True:
             return
 
-        if message.guild == self.ids["server"]:
+        if message.guild.id == self.ids["server"]:
             query = """
 INSERT OR REPLACE INTO
     tracking(user_id, message_last_time, message_last_url)
