@@ -412,10 +412,8 @@ class Admin(commands.Cog):
     @commands.command(hidden=True, name="updatedb")
     @perms.is_dev()
     async def update_db(self, ctx, days_ago: int = 2):
-        """Use to update the message time db.
-        Input hours is how many days back to start from. Defaults to 2
-        So this would only check messages sent in the last 12 hours and update the db accordingly"""
-        added = []
+        """Used to update the message time db.
+        Kinda janky"""
         start_time = time()
         h_msg = await ctx.send("Updating DB with messages from the last {} days. Started at {}"
                                "".format(days_ago, start_time))
@@ -424,22 +422,28 @@ class Admin(commands.Cog):
             if channel.category_id in self.ignore_categories:
                 continue
 
-            async for msg in channel.history(after=datetime.utcnow() - timedelta(days=days_ago)):
+            async for msg in channel.history(limit=50000,
+                                             after=datetime.utcnow() - timedelta(days=days_ago)):
                 if msg.author.bot is True:
                     continue
-                if msg.author.id in added:
-                    continue
-                else:
-                    added.append(msg.author.id)
 
                 query = """
-INSERT OR REPLACE INTO 
+INSERT OR IGNORE INTO 
     tracking (user_id, message_last_time, message_last_url)
 VALUES
-    ({}, {}, "{}")
+    ({0}, {1}, "{2}")
                 """.format(msg.author.id, msg.created_at.timestamp(), msg.jump_url)
 
+                query_2 = """
+UPDATE
+    tracking
+SET
+    message_last_time = {1}, message_last_url = "{2}"
+WHERE
+    user_id = {0} AND message_last_time < {1}""".format(msg.author.id, msg.created_at.timestamp(), msg.jump_url)
+
                 eq = self.bot.execute_query(query)
+                eq2 = self.bot.execute_query(query_2)
 
         end_time = time()
         await h_msg.edit(content="DB updated with messages from the last {} hours. Time taken {}"
