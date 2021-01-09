@@ -417,7 +417,7 @@ class Admin(commands.Cog):
         So this would only check messages sent in the last 12 hours and update the db accordingly"""
         added = []
         start_time = time()
-        msg = await ctx.send("Updating DB with messages from the last {} hours. Started at {}"
+        h_msg = await ctx.send("Updating DB with messages from the last {} hours. Started at {}"
                              "".format(hours, start_time))
 
         for channel in ctx.guild.text_channels:
@@ -442,8 +442,8 @@ VALUES
                 eq = self.bot.execute_query(query)
 
         end_time = time()
-        await msg.edit("DB updated with messages from the last {} hours. Time taken {}"
-                       "".format(hours, end_time - start_time))
+        await h_msg.edit(content="DB updated with messages from the last {} hours. Time taken {}"
+                               "".format(hours, end_time - start_time))
 
     @commands.command(hidden=True, enabled=False)
     @perms.is_dev()
