@@ -411,20 +411,20 @@ class Admin(commands.Cog):
 
     @commands.command(hidden=True, name="updatedb")
     @perms.is_dev()
-    async def update_db(self, ctx, hours: int = 12):
+    async def update_db(self, ctx, days_ago: int = 2):
         """Use to update the message time db.
         Input hours is how many hours back to start from. Defaults to 12
         So this would only check messages sent in the last 12 hours and update the db accordingly"""
         added = []
         start_time = time()
         h_msg = await ctx.send("Updating DB with messages from the last {} hours. Started at {}"
-                             "".format(hours, start_time))
+                               "".format(days_ago, start_time))
 
         for channel in ctx.guild.text_channels:
             if channel.category_id in self.ignore_categories:
                 continue
 
-            async for msg in channel.history(after=datetime.utcnow() - timedelta(hours=hours), oldest_first=True):
+            async for msg in channel.history(after=datetime.utcnow() - timedelta(days=days_ago), oldest_first=True):
                 if msg.author.bot is True:
                     continue
                 # if msg.author.id in added:
@@ -443,7 +443,7 @@ VALUES
 
         end_time = time()
         await h_msg.edit(content="DB updated with messages from the last {} hours. Time taken {}"
-                               "".format(hours, end_time - start_time))
+                                 "".format(days_ago, end_time - start_time))
 
     @commands.command(hidden=True, enabled=False)
     @perms.is_dev()
