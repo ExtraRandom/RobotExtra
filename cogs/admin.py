@@ -427,10 +427,10 @@ class Admin(commands.Cog):
             async for msg in channel.history(after=datetime.utcnow() - timedelta(hours=hours), oldest_first=True):
                 if msg.author.bot is True:
                     continue
-                if msg.author.id in added:
-                    continue
-                else:
-                    added.append(msg.author.id)
+                # if msg.author.id in added:
+                #    continue
+                # else:
+                #    added.append(msg.author.id)
 
                 query = """
 INSERT OR REPLACE INTO 
