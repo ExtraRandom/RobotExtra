@@ -62,6 +62,18 @@ class Logger:
             return False
 
     @staticmethod
+    def log_read():
+        try:
+            with open(os.path.join(os.path.join(Logger.get_cwd(), "logs", Logger.get_filename())), "r") as lr:
+                data = lr.read()
+                return data
+
+        except Exception as e:
+            print("Error reading log file. Reason {}".format(type(e).__name__))
+            return None
+
+
+    @staticmethod
     def write(to_write):
         if Logger.check_for_folder() is False:
             return False

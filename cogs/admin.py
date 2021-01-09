@@ -1,13 +1,12 @@
 from discord.ext import commands
 from time import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from cogs.utils import perms, IO
 from cogs.utils import time_formatting as timefmt
-from cogs.utils.logger import Logger
+# from cogs.utils.logger import Logger
 import discord
 import random
 import re
-import os
 
 
 class Admin(commands.Cog):
@@ -410,7 +409,7 @@ class Admin(commands.Cog):
         await ctx.send("{}, You are not listening to a song???".format(ctx.author.mention))
         # await ctx.send(test)
 
-    @commands.command(hidden=True, enabled=False)
+    @commands.command(hidden=True, enabled=True)
     @perms.is_dev()
     async def idk(self, ctx):
         added = []
@@ -426,7 +425,7 @@ class Admin(commands.Cog):
 
             # after = datetime(2020, 10, 7)
 
-            async for msg in channel.history(limit=40000):
+            async for msg in channel.history(after=datetime.utcnow() - timedelta(hours=8)):  # limit=40000
                 if msg.author.bot is True:
                     continue
                 if msg.author.id in added:

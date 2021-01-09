@@ -8,7 +8,6 @@ import io
 import discord
 import requests
 import pytz
-# import re
 
 
 class Commands(commands.Cog):
