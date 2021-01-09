@@ -413,24 +413,24 @@ class Admin(commands.Cog):
     @perms.is_dev()
     async def update_db(self, ctx, days_ago: int = 2):
         """Use to update the message time db.
-        Input hours is how many hours back to start from. Defaults to 12
+        Input hours is how many days back to start from. Defaults to 2
         So this would only check messages sent in the last 12 hours and update the db accordingly"""
         added = []
         start_time = time()
-        h_msg = await ctx.send("Updating DB with messages from the last {} hours. Started at {}"
+        h_msg = await ctx.send("Updating DB with messages from the last {} days. Started at {}"
                                "".format(days_ago, start_time))
 
         for channel in ctx.guild.text_channels:
             if channel.category_id in self.ignore_categories:
                 continue
 
-            async for msg in channel.history(after=datetime.utcnow() - timedelta(days=days_ago), oldest_first=True):
+            async for msg in channel.history(after=datetime.utcnow() - timedelta(days=days_ago)):
                 if msg.author.bot is True:
                     continue
-                # if msg.author.id in added:
-                #    continue
-                # else:
-                #    added.append(msg.author.id)
+                if msg.author.id in added:
+                    continue
+                else:
+                    added.append(msg.author.id)
 
                 query = """
 INSERT OR REPLACE INTO 
