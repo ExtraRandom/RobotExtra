@@ -424,7 +424,7 @@ class Admin(commands.Cog):
             if channel.category_id in self.ignore_categories:
                 continue
 
-            async for msg in channel.history(after=datetime.utcnow() - timedelta(hours=hours)):  # limit=40000
+            async for msg in channel.history(after=datetime.utcnow() - timedelta(hours=hours), oldest_first=True):
                 if msg.author.bot is True:
                     continue
                 if msg.author.id in added:
