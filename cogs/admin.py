@@ -1,7 +1,7 @@
 from discord.ext import commands
 from time import time
 from datetime import datetime, timedelta
-from cogs.utils import perms, IO
+from cogs.utils import perms  # , IO
 from cogs.utils import time_formatting as timefmt
 # from cogs.utils.logger import Logger
 import discord
@@ -409,23 +409,22 @@ class Admin(commands.Cog):
         await ctx.send("{}, You are not listening to a song???".format(ctx.author.mention))
         # await ctx.send(test)
 
-    @commands.command(hidden=True, enabled=True)
+    @commands.command(hidden=True, name="updatedb")
     @perms.is_dev()
-    async def idk(self, ctx):
+    async def update_db(self, ctx, hours: int = 12):
+        """Use to update the message time db.
+        Input hours is how many hours back to start from. Defaults to 12
+        So this would only check messages sent in the last 12 hours and update the db accordingly"""
         added = []
         start_time = time()
-        await ctx.send("started at {}".format(start_time))
+        msg = await ctx.send("Updating DB with messages from the last {} hours. Started at {}"
+                             "".format(hours, start_time))
 
         for channel in ctx.guild.text_channels:
             if channel.category_id in self.ignore_categories:
                 continue
-            # if channel.name in self.ignore_channels:
-            #    continue
-            # print(channel)
 
-            # after = datetime(2020, 10, 7)
-
-            async for msg in channel.history(after=datetime.utcnow() - timedelta(hours=8)):  # limit=40000
+            async for msg in channel.history(after=datetime.utcnow() - timedelta(hours=hours)):  # limit=40000
                 if msg.author.bot is True:
                     continue
                 if msg.author.id in added:
@@ -434,7 +433,7 @@ class Admin(commands.Cog):
                     added.append(msg.author.id)
 
                 query = """
-INSERT INTO 
+INSERT OR REPLACE INTO 
     tracking (user_id, message_last_time, message_last_url)
 VALUES
     ({}, {}, "{}")
@@ -443,8 +442,8 @@ VALUES
                 eq = self.bot.execute_query(query)
 
         end_time = time()
-        await ctx.send("ended at {}".format(end_time))
-        await ctx.send("took {}".format(end_time - start_time))
+        await msg.edit("DB updated with messages from the last {} hours. Time taken {}"
+                       "".format(hours, end_time - start_time))
 
     @commands.command(hidden=True, enabled=False)
     @perms.is_dev()
