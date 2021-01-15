@@ -28,7 +28,6 @@ class Fun(commands.Cog):
         await ctx.reply(response)
 
     @commands.command(name="pick", aliases=["choose", "choice", "select"])
-    @perms.is_dev()
     async def pick_random(self, ctx, *, choices: str):
         """Pick a random choice
 
