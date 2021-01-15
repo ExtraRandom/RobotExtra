@@ -38,11 +38,6 @@ VALUES
 """.format(message.author.id, message.created_at.timestamp(), message.jump_url)
             eq = self.bot.execute_query(query)
 
-    async def on_message_edit(self, old, new):
-        if new.author.bot is True:
-            return
-        print("old: ", old.content, "\nnew: ", new.content)
-
     async def on_member_join(self, member):
         if member.guild.id == self.ids["server"]:
             channel = discord.utils.get(member.guild.text_channels, id=self.ids["join_leave_log"])
@@ -70,6 +65,7 @@ VALUES
 
     async def on_member_remove(self, member):
         if member.guild.id == self.ids["server"]:
+            # Log kick/ban if applicable
             async for entry in member.guild.audit_logs(limit=5):
                 if entry.action == discord.AuditLogAction.kick and entry.target.name == member.name:
                     channel = discord.utils.get(member.guild.text_channels, id=self.ids["kick_ban_log"])
@@ -83,23 +79,8 @@ VALUES
                     msg.set_footer(text="User ID: {}".format(user.id))
                     msg.timestamp = datetime.utcnow()
                     await channel.send(embed=msg)
-                    # return
-                """
-                elif entry.action == discord.AuditLogAction.ban and entry.target.name == member.name:
-                    channel = discord.utils.get(member.guild.text_channels, id=761212419388604477)
-                    user = entry.target
-                    msg = discord.Embed(title="{} banned".format(user),
-                                        colour=discord.Colour.red(),
-                                        description="**Offender:** {}\n"
-                                                    "**Reason:** {}\n"
-                                                    "**Responsible admin:** {}"
-                                                    "".format(entry.target, entry.reason, entry.user))
-                    msg.set_footer(text="User ID: {}".format(user.id))
-                    msg.timestamp = datetime.utcnow()
-                    await channel.send(embed=msg)
-                    return
-                """
 
+            # Log leave
             role_list = member.roles
             roles = []
             for role in role_list:
@@ -161,6 +142,11 @@ VALUES
         # print(before.name)
         # print(before.status)
         # print(after.status)
+
+    async def on_message_edit(self, old, new):
+        if new.author.bot is True:
+            return
+        print("old: ", old.content, "\nnew: ", new.content)
 
     async def on_message_delete(self, message):
         print("DELETED", message.content)

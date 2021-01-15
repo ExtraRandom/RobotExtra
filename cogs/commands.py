@@ -77,9 +77,14 @@ class Commands(commands.Cog):
 
         await ctx.send(embed=results)
 
+    @commands.command(hidden=True)
+    @perms.is_dev()
+    async def invite(self, ctx):
+        await ctx.send("https://discord.com/oauth2/authorize?client_id=571947888662413313&scope=bot")
+
     @commands.command(enabled=False)
     @perms.is_dev()
-    async def ye(self, ctx):
+    async def server(self, ctx):
         await ctx.send(ctx.guild.created_at)
         await ctx.send(timefmt.datetime_to_time_ago(ctx.guild.created_at))
 
