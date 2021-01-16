@@ -1,6 +1,6 @@
+from cogs.utils.logger import Logger
 import os
 import json
-from cogs.utils.logger import Logger
 
 # Logger IO is handled in logger.py
 

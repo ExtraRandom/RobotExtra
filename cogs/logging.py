@@ -1,9 +1,9 @@
 from discord.ext import commands
-import discord
 from datetime import datetime
 # from cogs.utils import perms, IO
 # from cogs.utils.logger import Logger
 from cogs.utils import time_formatting as timefmt
+import discord
 
 
 class Logging(commands.Cog):

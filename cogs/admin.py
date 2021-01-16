@@ -1,3 +1,4 @@
+from asyncio import TimeoutError as Timeout
 from discord.ext import commands
 from time import time
 from datetime import datetime, timedelta
@@ -206,13 +207,12 @@ class Admin(commands.Cog):
         user_id = "{}"
                 """.format(user_id)
             erq = self.bot.execute_read_query(query)
-            user_data = discord.utils.find(lambda m: m.id == user_id, ctx.guild.members)
-            if user_data.bot:
+            if member.bot:
                 continue
 
             if len(erq) == 0:
-                ago = datetime.utcnow().timestamp() - user_data.joined_at.timestamp()
-                new = "{} - Joined: {}".format(user_data.mention,
+                ago = datetime.utcnow().timestamp() - member.joined_at.timestamp()
+                new = "{} - Joined: {}".format(member.mention,
                                                timefmt.time_ago(ago)
                                                )
                 users.append(new)
@@ -242,8 +242,7 @@ class Admin(commands.Cog):
             user_id = "{}"
                     """.format(user_id)
             erq = self.bot.execute_read_query(query)
-            user_data = discord.utils.find(lambda m: m.id == user_id, ctx.guild.members)
-            if user_data.bot:
+            if member.bot:
                 continue
 
             if len(erq) == 0:
@@ -252,8 +251,8 @@ class Admin(commands.Cog):
                 last_id, last_time, last_url = erq[0]
                 total_time = datetime.utcnow().timestamp() - last_time
                 if total_time >= 2419200:
-                    result = discord.Embed(title="{}#{}".format(user_data.name, user_data.discriminator),
-                                           description="{}".format(user_data.mention),
+                    result = discord.Embed(title="{}#{}".format(member.name, member.discriminator),
+                                           description="{}".format(member.mention),
                                            colour=discord.Color.green())
 
                     n_time = str(datetime.fromtimestamp(last_time)).split(".")[0]
@@ -267,6 +266,108 @@ class Admin(commands.Cog):
                     result.add_field(name="URL:",
                                      value="{}".format(last_url))
                     await ctx.send(embed=result)
+
+    @commands.command()
+    @perms.is_dev()
+    @perms.is_in_somewhere_nice()
+    async def purge(self, ctx):
+        for member in ctx.guild.members:
+            if member.bot:
+                continue
+
+            user_id = member.id
+            query = """
+        SELECT
+            *
+        FROM
+            tracking
+        WHERE
+            user_id = "{}"
+                    """.format(user_id)
+            erq = self.bot.execute_read_query(query)
+
+            if len(erq) == 0:
+                kick_reason = "never spoke"
+                kick_info = member.joined_at.timestamp()
+            else:
+                last_id, last_time, last_url = erq[0]
+                total_time = datetime.utcnow().timestamp() - last_time
+                if total_time >= 2419200:
+                    kick_reason = "inactive"
+                    kick_info = last_time
+                else:
+                    continue
+
+            yes = "✅"
+            no = "❌"
+            stop = "🛑"
+            timeout_length = 60
+
+            result = discord.Embed(title="Kick User?",
+                                   description="{}".format(member.mention),
+                                   colour=discord.Color.gold())
+            if kick_reason == "inactive":
+                result.add_field(name="Kick Reason:",
+                                 value="Inactivity")
+                result.add_field(name="Time ago:",
+                                 value=timefmt.time_ago(datetime.fromtimestamp(float(kick_info))))
+                result.add_field(name="Last Message Time:",
+                                 value="{} UTC".format(datetime.fromtimestamp(float(kick_info))))
+                result.add_field(name="Last Message Link:",
+                                 value=last_url)
+
+            else:
+                result.add_field(name="Kick Reason:",
+                                 value="Never spoken")
+                result.add_field(name="Time ago:",
+                                 value=timefmt.time_ago(datetime.fromtimestamp(float(kick_info))))
+                result.add_field(name="Joined Server:",
+                                 value="{} UTC".format(datetime.fromtimestamp(float(kick_info))))
+
+            result.set_author(name="{}".format(member), icon_url=member.avatar_url)
+
+            result.set_footer(text="Waiting {} seconds before cancelling".format(timeout_length))
+
+            role_list = member.roles
+            roles = []
+            for role in role_list:
+                if role.name == "@everyone":
+                    continue
+                roles.append(role.mention)
+
+            roles.reverse()
+            if len(roles) is not 0:
+                result.add_field(name="Roles",
+                                 value="{}".format(" ".join(roles)))
+            else:
+                result.add_field(name="Roles",
+                                 value="No Roles")
+
+            msg = await ctx.send(embed=result)
+
+            await msg.add_reaction(yes)
+            await msg.add_reaction(no)
+            await msg.add_reaction(stop)
+
+            def check(reaction, user):
+                return user == ctx.author and reaction.message == msg \
+                       and reaction.emoji in [yes, no, stop]
+
+            try:
+                reaction, user = await self.bot.wait_for('reaction_add', timeout=timeout_length, check=check)
+            except Timeout:
+                await msg.reply("No response within {} seconds, stopping purge :octagonal_sign:")
+                return
+
+            else:
+                if reaction.emoji == yes:
+                    await member.kick(reason="{} - kicked in purge".format(kick_reason))
+                    await ctx.send(":wave: Kicked {}".format(member))
+                elif reaction.emoji == no:
+                    continue
+                elif reaction.emoji == stop:
+                    await ctx.send(":octagonal_sign: Stopped purge :octagonal_sign:")
+                    return
 
     @commands.command(aliases=["steal", "emoteplease"])
     @perms.is_admin()
