@@ -218,8 +218,11 @@ class Admin(commands.Cog):
                 users.append(new)
                 continue
 
-        await ctx.send("Members who have never spoken: ")
-        await ctx.send("\n".join(users))
+        if len(users) >= 1:
+            await ctx.send("Members who have never spoken: ")
+            await ctx.send("\n".join(users))
+        else:
+            await ctx.send("Every member has spoken at least once")
 
     @commands.command()
     @perms.is_admin()
@@ -271,6 +274,7 @@ class Admin(commands.Cog):
     @perms.is_dev()
     @perms.is_in_somewhere_nice()
     async def checkpurge(self, ctx):
+        """Check how many members a purge may kick"""
         count = 0
         for member in ctx.guild.members:
             if member.bot:
@@ -305,6 +309,7 @@ class Admin(commands.Cog):
     @perms.is_dev()
     @perms.is_in_somewhere_nice()
     async def purge(self, ctx):
+        """Purge inactive members"""
         yes = "✅"
         no = "❌"
         stop = "🛑"
