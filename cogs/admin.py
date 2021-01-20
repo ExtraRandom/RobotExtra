@@ -270,7 +270,46 @@ class Admin(commands.Cog):
     @commands.command()
     @perms.is_dev()
     @perms.is_in_somewhere_nice()
+    async def checkpurge(self, ctx):
+        count = 0
+        for member in ctx.guild.members:
+            if member.bot:
+                continue
+
+            user_id = member.id
+            query = """
+        SELECT
+            *
+        FROM
+            tracking
+        WHERE
+            user_id = "{}"
+                    """.format(user_id)
+            erq = self.bot.execute_read_query(query)
+
+            if len(erq) == 0:
+                count += 1
+                continue
+            else:
+                last_id, last_time, last_url = erq[0]
+                total_time = datetime.utcnow().timestamp() - last_time
+                if total_time >= 2419200:
+                    count += 1
+                    continue
+                else:
+                    continue
+
+        await ctx.send("{} members have been inactive or have never spoken.".format(count))
+
+    @commands.command()
+    @perms.is_dev()
+    @perms.is_in_somewhere_nice()
     async def purge(self, ctx):
+        yes = "✅"
+        no = "❌"
+        stop = "🛑"
+        timeout_length = 60
+
         for member in ctx.guild.members:
             if member.bot:
                 continue
@@ -298,11 +337,6 @@ class Admin(commands.Cog):
                 else:
                     continue
 
-            yes = "✅"
-            no = "❌"
-            stop = "🛑"
-            timeout_length = 60
-
             result = discord.Embed(title="Kick User?",
                                    description="{}".format(member.mention),
                                    colour=discord.Color.gold())
@@ -318,7 +352,7 @@ class Admin(commands.Cog):
 
             else:
                 result.add_field(name="Kick Reason:",
-                                 value="Never spoken")
+                                 value="Never spoke")
                 result.add_field(name="Time ago:",
                                  value=timefmt.time_ago(datetime.fromtimestamp(float(kick_info))))
                 result.add_field(name="Joined Server:",
