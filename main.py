@@ -20,7 +20,7 @@ class SNBot(commands.Bot):
         self.base_directory = os.path.dirname(os.path.realpath(__file__))
 
         self.path = os.path.join(self.base_directory, "db", "testing.sqlite")
-        s_connection = None
+        # s_connection = None
         try:
             s_connection = sqlite3.connect(self.path)
             # print("Connected to the DB")

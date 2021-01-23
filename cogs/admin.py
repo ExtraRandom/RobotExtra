@@ -13,12 +13,10 @@ import re
 class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.ignore_categories = [758500155207974983,  # ADMIN LOGS
+        self.ignore_categories = [758500155207974983,  # STAFF LOGS
                                   750690307191865445,  # SERVER
-                                  761526935200595988]  # ARCHIVED CHANNELS
-
-        # self.ignore_channels = ["join-leave-log", "message-log", "changes-log", "discord-updates", "rules",
-        #                        "roles", "announcements", "joins-and-leaves", "suggestions"]
+                                  761526935200595988,  # ARCHIVED CHANNELS
+                                  766643538900811816]  # ADMIN (ARCHIVED)
 
     async def find_member_from_id_or_mention(self, ctx, user):
         target = None
@@ -45,7 +43,7 @@ class Admin(commands.Cog):
                     # user_find = discord.utils.find(lambda m: m.id == user_id, ctx.guild.members)
                     if user_find is not None:
                         target = user_find
-                except Exception as e:
+                except Exception:
                     pass
 
         return target
@@ -86,15 +84,14 @@ class Admin(commands.Cog):
         else:
             await ctx.send(res)
 
-    @commands.command()
+    @commands.group(name="check", invoke_without_command=True, aliases=['chk'])
     @perms.is_admin()
-    @perms.is_in_somewhere_nice()
-    async def check(self, ctx, *, user_id: str):
-        """Check when a given user last spoke
+    async def _check(self, ctx, *, user_id: str):
+        """Check member activity
 
-        Input must be a Users ID"""
-
-        # TODO update to allow metions via the function
+        Use with a user id to check when a member last spoke.
+        Use with one of the below subcommands to list multiple users
+        """
 
         try:
             user_id = int(user_id)
@@ -119,12 +116,12 @@ class Admin(commands.Cog):
             return
 
         query = """
-    SELECT
-        *
-    FROM
-        tracking
-    WHERE
-        user_id = "{}"
+SELECT
+    *
+FROM
+    tracking
+WHERE
+    user_id = "{}"
             """.format(user_id)
         erq = self.bot.execute_read_query(query)
 
@@ -149,10 +146,10 @@ class Admin(commands.Cog):
 
         await ctx.send(embed=result)
 
-    @commands.command(aliases=["members", "memchk", "checkmem"])
+    @_check.command(name="member", aliases=["members", "mems", "mem"])
     @perms.is_admin()
     @perms.is_in_somewhere_nice()
-    async def checkmember(self, ctx):
+    async def check_member(self, ctx):
         """List users who didn't read the rules
 
         Lists all users in server who don't have the member role (i.e. didn't read the rules)"""
@@ -184,16 +181,16 @@ class Admin(commands.Cog):
             users.append(new)
 
         if len(is_not_member) is 0:
-            await ctx.send("no users missing member role")
+            await ctx.send("No users missing member role.")
             return
 
         await ctx.send("Server members who do not have the member role (didn't read rules): ")
         await ctx.send("\n".join(users))
 
-    @commands.command()
+    @_check.command(name="all")
     @perms.is_admin()
     @perms.is_in_somewhere_nice()
-    async def checkall(self, ctx):
+    async def check_all(self, ctx):
         """List all server members who have never spoken"""
         users = []
         for member in ctx.guild.members:
@@ -224,10 +221,10 @@ class Admin(commands.Cog):
         else:
             await ctx.send("Every member has spoken at least once")
 
-    @commands.command()
+    @_check.command(name="active")
     @perms.is_admin()
     @perms.is_in_somewhere_nice()
-    async def checkactive(self, ctx):
+    async def check_active(self, ctx):
         """List inactive members
 
         Lists server members who haven't spoken for 4 weeks or more"""
@@ -270,10 +267,50 @@ class Admin(commands.Cog):
                                      value="{}".format(last_url))
                     await ctx.send(embed=result)
 
-    @commands.command()
+    @_check.command(name="new")
+    @perms.is_admin()
+    @perms.is_in_somewhere_nice()
+    async def check_new(self, ctx):
+        """List newest server members"""
+        users = []
+        for member in ctx.guild.members:
+            users.append((member.joined_at, member))
+
+        newest = sorted(users, key=lambda tup: tup[0])[-5:]
+        msg = ""
+        for join_time, member in newest:
+            msg += "{} - Joined server {} ago\n".format(member.mention, timefmt.time_ago(join_time))
+
+        if len(newest) >= 1:
+            await ctx.send("The five newest server members: ")
+            await ctx.send(msg)
+        else:
+            await ctx.send("No members detected (something broke)")
+
+    @_check.command(name="young")
+    @perms.is_admin()
+    @perms.is_in_somewhere_nice()
+    async def check_young(self, ctx):
+        """List youngest server members"""
+        users = []
+        for member in ctx.guild.members:
+            users.append((member.created_at, member))
+
+        newest = sorted(users, key=lambda tup: tup[0])[-5:]
+        msg = ""
+        for join_time, member in newest:
+            msg += "{} - Joined Discord {} ago\n".format(member.mention, timefmt.time_ago(join_time))
+
+        if len(newest) >= 1:
+            await ctx.send("The five youngest server members: ")
+            await ctx.send(msg)
+        else:
+            await ctx.send("No members detected (something broke)")
+
+    @commands.command(name="checkpurge")
     @perms.is_dev()
     @perms.is_in_somewhere_nice()
-    async def checkpurge(self, ctx):
+    async def check_purge(self, ctx):
         """Check how many members a purge may kick"""
         count = 0
         for member in ctx.guild.members:
@@ -315,6 +352,9 @@ class Admin(commands.Cog):
         stop = "🛑"
         timeout_length = 60
 
+        total_count = 0
+        kicked_count = 0
+
         for member in ctx.guild.members:
             if member.bot:
                 continue
@@ -330,41 +370,37 @@ class Admin(commands.Cog):
                     """.format(user_id)
             erq = self.bot.execute_read_query(query)
 
+            result = discord.Embed(title="Kick User?",
+                                   description="{}".format(member.mention),
+                                   colour=discord.Color.gold())
             if len(erq) == 0:
+                total_count += 1
+                join_time = member.joined_at.timestamp()
                 kick_reason = "never spoke"
-                kick_info = member.joined_at.timestamp()
+                result.add_field(name="Kick Reason:",
+                                 value="Never spoke")
+                result.add_field(name="Time ago:",
+                                 value=timefmt.time_ago(datetime.fromtimestamp(float(join_time))))
+                result.add_field(name="Joined Server:",
+                                 value="{} UTC".format(datetime.fromtimestamp(float(join_time))))
             else:
                 last_id, last_time, last_url = erq[0]
                 total_time = datetime.utcnow().timestamp() - last_time
                 if total_time >= 2419200:
                     kick_reason = "inactive"
-                    kick_info = last_time
+                    total_count += 1
+                    result.add_field(name="Kick Reason:",
+                                     value="Inactivity")
+                    result.add_field(name="Time ago:",
+                                     value=timefmt.time_ago(datetime.fromtimestamp(float(last_time))))
+                    result.add_field(name="Last Message Time:",
+                                     value="{} UTC".format(datetime.fromtimestamp(float(last_time))))
+                    result.add_field(name="Last Message Link:",
+                                     value=last_url)
                 else:
                     continue
 
-            result = discord.Embed(title="Kick User?",
-                                   description="{}".format(member.mention),
-                                   colour=discord.Color.gold())
-            if kick_reason == "inactive":
-                result.add_field(name="Kick Reason:",
-                                 value="Inactivity")
-                result.add_field(name="Time ago:",
-                                 value=timefmt.time_ago(datetime.fromtimestamp(float(kick_info))))
-                result.add_field(name="Last Message Time:",
-                                 value="{} UTC".format(datetime.fromtimestamp(float(kick_info))))
-                result.add_field(name="Last Message Link:",
-                                 value=last_url)
-
-            else:
-                result.add_field(name="Kick Reason:",
-                                 value="Never spoke")
-                result.add_field(name="Time ago:",
-                                 value=timefmt.time_ago(datetime.fromtimestamp(float(kick_info))))
-                result.add_field(name="Joined Server:",
-                                 value="{} UTC".format(datetime.fromtimestamp(float(kick_info))))
-
             result.set_author(name="{}".format(member), icon_url=member.avatar_url)
-
             result.set_footer(text="Waiting {} seconds before cancelling".format(timeout_length))
 
             role_list = member.roles
@@ -402,11 +438,13 @@ class Admin(commands.Cog):
                 if reaction.emoji == yes:
                     await member.kick(reason="{} - kicked in purge".format(kick_reason))
                     await ctx.send(":wave: Kicked {}".format(member))
+                    kicked_count += 1
                 elif reaction.emoji == no:
                     continue
                 elif reaction.emoji == stop:
                     await ctx.send(":octagonal_sign: Stopped purge :octagonal_sign:")
-                    return
+                    break
+        await ctx.send("Finished Purge:\nOut of {} users, {} were kicked".format(total_count, kicked_count))
 
     @commands.command(aliases=["steal", "emoteplease"])
     @perms.is_admin()
@@ -589,31 +627,10 @@ WHERE
         await h_msg.edit(content="DB updated with messages from the last {} hours. Time taken {}"
                                  "".format(days_ago, end_time - start_time))
 
-    @commands.command(hidden=True, enabled=False)
-    @perms.is_dev()
-    async def lazy(self, ctx):
-        message_id = 763670004162887721
-        channel = 750974858820583474
-
-        channel = discord.utils.get(ctx.guild.text_channels, id=channel)
-
-        data = await channel.fetch_message(message_id)
-        e = data.embeds[0]
-        print(e.title)
-        print(e.description)
-        print(e.footer)
-        print(e.timestamp)
-
     @commands.command(hidden=True)
     @perms.is_dev()
     async def time(self, ctx, *, time_inp: int):
         await ctx.send(timefmt.time_ago(time_inp))
-
-    @commands.command(hidden=True, enabled=False)
-    @perms.is_dev()
-    async def embed(self, ctx):
-        await ctx.send(embed=discord.Embed(title="Test", description="Test", color=discord.Color.dark_red(),
-                                           timestamp=datetime.utcnow()))
 
     @commands.command(hidden=True)
     @perms.is_dev()
