@@ -2,11 +2,38 @@ from discord.ext import commands
 from cogs.utils import perms
 import discord
 import random
+import json
+import os
 
 
 class Fun(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.command()
+    async def fortune(self, ctx):
+        """Fortune Cookie"""
+        # https://github.com/larryprice/fortune-cookie-api/tree/master/data]
+        folder = os.path.join(self.bot.base_directory, "cogs", "data", "fortune",)
+        path = os.path.join(folder, "proverbs.json")
+
+        with open(path, "r") as f:
+            r_data = f.read()
+            data = json.loads(r_data)
+        random.seed()
+        proverb = random.choice(list(data.keys()))
+
+        numbers = []
+        for i in range(6):
+            numbers.append(random.randrange(1, 60))
+        numbers = sorted(numbers)
+
+        img = discord.File(os.path.join(folder, "cookie.png"), filename="image.png")
+        resp = discord.Embed(title="{}".format(proverb),
+                             description="Lucky Lotto Numbers: {}".format(" ".join(str(x) for x in numbers)))
+        resp.set_author(name="Your Fortune...",
+                        icon_url="attachment://image.png")
+        await ctx.reply(embed=resp, file=img)
 
     @commands.command(name="8ball")
     async def eight_ball(self, ctx, *, question: str):

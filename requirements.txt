@@ -1,9 +1,9 @@
 discord.py[voice]
 requests
 pytz
+Pillow
 
 # git+https://github.com/Rapptz/discord.py
 # git+git://github.com/ExtraRandom/Game_Stores_API
-# Pillow
 # mcstatus
 # beautifulsoup4
