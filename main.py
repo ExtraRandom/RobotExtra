@@ -20,12 +20,10 @@ class SNBot(commands.Bot):
         self.base_directory = os.path.dirname(os.path.realpath(__file__))
 
         self.path = os.path.join(self.base_directory, "db", "testing.sqlite")
-        # s_connection = None
         try:
-            s_connection = sqlite3.connect(self.path)
-            # print("Connected to the DB")
+            s_connection = sqlite3.connect(self.path)  # print("Connected to the DB")
         except Error as e:
-            print(f"Error connecting to DB: {e}")  # s_connection = None
+            print(f"Error connecting to DB: {e}")
             raise Exception("shits fucked oh dear god please fix")
 
         self.connection = s_connection
@@ -50,8 +48,7 @@ class SNBot(commands.Bot):
         cursor = self.connection.cursor()
         try:
             cursor.execute(query)
-            self.connection.commit()
-            # print("Query executed successfully")
+            self.connection.commit()  # print("Query executed successfully")
             return True
 
         except Error as e:
@@ -60,7 +57,6 @@ class SNBot(commands.Bot):
 
     def execute_read_query(self, query):
         cursor = self.connection.cursor()
-        # result = None
         try:
             cursor.execute(query)
             result = cursor.fetchall()
@@ -70,29 +66,12 @@ class SNBot(commands.Bot):
             return None
 
     async def on_ready(self):
-        # https://discordpy.readthedocs.io/en/latest/api.html#discord.on_connect
         self.update_json_time(update_reconnect_time=True)
         login_msg = "Bot Connected at {}".format(str(datetime.now()))
         Logger.log_write("----------------------------------------------------------\n"
                          "{}\n"
                          "".format(login_msg))
         print(login_msg)
-
-    """
-    async def on_disconnect(self):
-        dc_time = datetime.now()
-        dc_msg = "Bot Disconnected at {}".format(dc_time)
-        Logger.log_write("----------------------------------------------------------\n"
-                         "{}\n"
-                         "".format(dc_msg))
-        print(dc_msg)
-
-    """
-
-    """
-    async def on_connect(self):
-        print("bot reconnected")
-    """
 
     async def on_message(self, message):
         bot_msg = message.author.bot
