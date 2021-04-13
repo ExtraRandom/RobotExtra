@@ -55,7 +55,7 @@ class Commands(commands.Cog):
         await ctx.send(file=discord.File(file, "why.png"))
 
     @commands.command()
-    @perms.is_admin_or_mod()
+    @perms.is_admin()
     async def times(self, ctx):
         """Get the current time for admins/mods"""
         extra_time = datetime.now(tz=pytz.timezone('Europe/London'))
@@ -82,11 +82,22 @@ class Commands(commands.Cog):
     async def invite(self, ctx):
         await ctx.send("https://discord.com/oauth2/authorize?client_id=571947888662413313&scope=bot")
 
-    @commands.command(enabled=False)
-    @perms.is_dev()
+    @commands.command(enabled=True)
+    @perms.is_admin()
     async def server(self, ctx):
-        await ctx.send(ctx.guild.created_at)
-        await ctx.send(timefmt.datetime_to_time_ago(ctx.guild.created_at))
+        dt = ctx.guild.created_at
+        year = dt.year
+        month = f'{dt.month:02}'
+        day = f'{dt.day:02}'
+        hour = f'{dt.hour:02}'
+        minute = f'{dt.minute:02}'
+        second = f'{dt.second:02}'
+
+        res = discord.Embed(title="Server Creation Time", description="Time in UTC (yyyy/mm/dd)")
+        res.add_field(name="Date", value="{}/{}/{}".format(year, month, day))
+        res.add_field(name="Time", value="{}:{}:{}".format(hour, minute, second))
+
+        await ctx.send(embed=res)
 
 
 def setup(bot):
