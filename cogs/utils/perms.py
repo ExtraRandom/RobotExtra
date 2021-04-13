@@ -29,7 +29,7 @@ def is_in_somewhere_nice():
 
 def is_admin():
     def predicate(ctx):
-        return ctx.message.author.id in [735446137489719307, 750341810873696316, 92562410493202432]
+        return ctx.message.author.id in [735446137489719307, 750341810873696316, 92562410493202432, 309514963037192204]
 
     return commands.check(predicate)
 
