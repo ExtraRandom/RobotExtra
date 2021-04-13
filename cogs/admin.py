@@ -86,11 +86,12 @@ class Admin(commands.Cog):
 
     @commands.group(name="check", invoke_without_command=True, aliases=['chk'])
     @perms.is_admin()
+    @perms.is_in_somewhere_nice()
     async def _check(self, ctx, *, user_id: str):
         """Check member activity
 
         Use with a user id to check when a member last spoke.
-        Use with one of the below subcommands to list multiple users
+        Use with one of the below subcommands to list multiple users.
         """
 
         try:
@@ -303,6 +304,27 @@ WHERE
 
         if len(newest) >= 1:
             await ctx.send("The five youngest server members: ")
+            await ctx.send(msg)
+        else:
+            await ctx.send("No members detected (something broke)")
+
+    @_check.command(name="old")
+    @perms.is_admin()
+    @perms.is_in_somewhere_nice()
+    async def check_old(self, ctx):
+        """List oldest server members"""
+        users = []
+        for member in ctx.guild.members:
+            if member.bot == False:
+                users.append((member.joined_at, member))
+
+        newest = sorted(users, key=lambda tup: tup[0])[:5]
+        msg = ""
+        for join_time, member in newest:
+            msg += "{} - Joined server {} ago\n".format(member.mention, timefmt.time_ago(join_time))
+
+        if len(newest) >= 1:
+            await ctx.send("The five oldest server members: ")
             await ctx.send(msg)
         else:
             await ctx.send("No members detected (something broke)")
@@ -574,17 +596,40 @@ WHERE
 
     @commands.command(enabled=False, hidden=True)
     @perms.is_dev()
-    async def song(self, ctx):
-        """Fetch song the user is currently listening to on Spotify"""
-        spotify_url = "https://open.spotify.com/track/"
-        test = ctx.author.activities
+    async def act(self, ctx, *, user=None):
+        """activity info"""
+        # """Fetch song the user is currently listening to on Spotify"""
+        # spotify_url = "https://open.spotify.com/track/"
+
+        target = await Admin.find_member_from_id_or_mention(self, ctx, user)
+
+        test = target.activities
+        # test = ctx.author.activities
 
         for t in test:  # print(t)
-            if type(t) is discord.Spotify:
-                await ctx.send("{}{}".format(spotify_url, t.track_id))
-                return
+            await ctx.send("activity type: {}\n"
+                           "name: {}\n"
+                           "".format(type(t), t.name))
+            if type(t) == discord.Activity:
+                await ctx.send("id: {}\n"
+                               "details: {}\n"
+                               "party: {}\n"
+                               "large img: <{}>\n"
+                               "small img: <{}>\n"
+                               "large img text: {}\n"
+                               "small img text: {}\n"
+                               "".format(t.application_id,
+                                         t.details,
+                                         t.party,
+                                         t.large_image_url,
+                                         t.small_image_url,
+                                         t.large_image_text,
+                                         t.small_image_text))
 
-        await ctx.send("{}, You are not listening to a song???".format(ctx.author.mention))
+            # if type(t) is discord.Spotify:
+            #    await ctx.send("{}{}".format(spotify_url, t.track_id))
+            #    return
+        # await ctx.send("{}, You are not listening to a song???".format(ctx.author.mention))
         # await ctx.send(test)
 
     @commands.command(hidden=True, name="updatedb")
