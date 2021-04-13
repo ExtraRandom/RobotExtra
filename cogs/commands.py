@@ -83,7 +83,6 @@ class Commands(commands.Cog):
         await ctx.send("https://discord.com/oauth2/authorize?client_id=571947888662413313&scope=bot")
 
     @commands.command(enabled=True)
-    @perms.is_admin()
     async def server(self, ctx):
         dt = ctx.guild.created_at
         year = dt.year
