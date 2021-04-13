@@ -84,6 +84,7 @@ class Commands(commands.Cog):
 
     @commands.command(enabled=True)
     async def server(self, ctx):
+        """Server Info"""
         dt = ctx.guild.created_at
         year = dt.year
         month = f'{dt.month:02}'
