@@ -413,9 +413,9 @@ WHERE
                     join_time = member.joined_at.timestamp()
                     kick_reason = "Never Spoke"
 
-                    fw.write("User: {}\n"
-                             "Purge Reason: {}\n"
-                             "Join Time: {}\n"
+                    fw.write("User: {0} (ID: {0.id})\n"
+                             "Purge Reason: {1}\n"
+                             "Join Time: {2}\n"
                              "\n".format(member, kick_reason, datetime.fromtimestamp(float(join_time))))
 
                 else:
@@ -423,9 +423,9 @@ WHERE
                     total_time = datetime.utcnow().timestamp() - last_time
                     if total_time >= 2419200:
                         kick_reason = "Inactive"
-                        fw.write("User: {}\n"
-                                 "Purge Reason: {}\n"
-                                 "Last message time: {}\n"
+                        fw.write("User: {0} (ID: {0.id})\n"
+                                 "Purge Reason: {1}\n"
+                                 "Last message time: {2}\n"
                                  "\n".format(member, kick_reason, datetime.fromtimestamp(float(last_time))))
                     else:
                         continue
