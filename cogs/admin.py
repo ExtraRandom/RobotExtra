@@ -8,6 +8,7 @@ from cogs.utils import time_formatting as timefmt
 import discord
 import random
 import re
+import os
 
 
 class Admin(commands.Cog):
@@ -268,7 +269,9 @@ WHERE
                                      value="{}".format(last_url))
                     await ctx.send(embed=result)
 
-    @_check.command(name="new")
+    # TODO fix these 4 commands and give them names that make sense
+
+    @_check.command(name="new", enabled=False)  # TODO FIX
     @perms.is_admin()
     @perms.is_in_somewhere_nice()
     async def check_new(self, ctx):
@@ -288,7 +291,27 @@ WHERE
         else:
             await ctx.send("No members detected (something broke)")
 
-    @_check.command(name="young")
+    @_check.command(name="old", enabled=False)  # TODO FIX
+    @perms.is_admin()
+    @perms.is_in_somewhere_nice()
+    async def check_oldest(self, ctx):
+        """List oldest server members"""
+        users = []
+        for member in ctx.guild.members:
+            users.append((member.joined_at, member))
+
+        oldest = sorted(users, key=lambda tup: tup[0])[:5]
+        msg = ""
+        for join_time, member in oldest:
+            msg += "{} - Joined server {} ago\n".format(member.mention, timefmt.time_ago(join_time))
+
+        if len(oldest) >= 1:
+            await ctx.send("The five oldest server members: ")
+            await ctx.send(msg)
+        else:
+            await ctx.send("No members detected (something broke)")
+
+    @_check.command(name="young", enabled=False)  # TODO FIX
     @perms.is_admin()
     @perms.is_in_somewhere_nice()
     async def check_young(self, ctx):
@@ -308,11 +331,11 @@ WHERE
         else:
             await ctx.send("No members detected (something broke)")
 
-    @_check.command(name="old")
+    @_check.command(name="earliest", enabled=False)  # TODO FIX
     @perms.is_admin()
     @perms.is_in_somewhere_nice()
-    async def check_old(self, ctx):
-        """List oldest server members"""
+    async def check_early(self, ctx):
+        """List earliest remaining members"""
         users = []
         for member in ctx.guild.members:
             if member.bot == False:
@@ -324,7 +347,7 @@ WHERE
             msg += "{} - Joined server {} ago\n".format(member.mention, timefmt.time_ago(join_time))
 
         if len(newest) >= 1:
-            await ctx.send("The five oldest server members: ")
+            await ctx.send("The five earliest remaining server members: ")
             await ctx.send(msg)
         else:
             await ctx.send("No members detected (something broke)")
@@ -363,6 +386,51 @@ WHERE
                     continue
 
         await ctx.send("{} members have been inactive or have never spoken.".format(count))
+
+    @commands.command(hidden=True)
+    @perms.is_dev()
+    @perms.is_in_somewhere_nice()
+    async def purgetxt(self, ctx):
+        """purgetxt"""
+        purge_file = os.path.join(self.bot.base_directory, "cogs", "data", "purge.txt")
+        with open(purge_file, "w", encoding="utf-8") as fw:
+            for member in ctx.guild.members:
+                if member.bot:
+                    continue
+
+                user_id = member.id
+                query = """
+            SELECT
+                *
+            FROM
+                tracking
+            WHERE
+                user_id = "{}"
+                        """.format(user_id)
+                erq = self.bot.execute_read_query(query)
+
+                if len(erq) == 0:
+                    join_time = member.joined_at.timestamp()
+                    kick_reason = "Never Spoke"
+
+                    fw.write("User: {}\n"
+                             "Purge Reason: {}\n"
+                             "Join Time: {}\n"
+                             "\n".format(member, kick_reason, datetime.fromtimestamp(float(join_time))))
+
+                else:
+                    last_id, last_time, last_url = erq[0]
+                    total_time = datetime.utcnow().timestamp() - last_time
+                    if total_time >= 2419200:
+                        kick_reason = "Inactive"
+                        fw.write("User: {}\n"
+                                 "Purge Reason: {}\n"
+                                 "Last message time: {}\n"
+                                 "\n".format(member, kick_reason, datetime.fromtimestamp(float(last_time))))
+                    else:
+                        continue
+
+        await ctx.send(file=discord.File(purge_file))
 
     @commands.command()
     @perms.is_dev()
