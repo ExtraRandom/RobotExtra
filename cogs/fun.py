@@ -4,6 +4,7 @@ import discord
 import random
 import json
 import os
+import re
 
 
 class Fun(commands.Cog):
@@ -77,11 +78,25 @@ class Fun(commands.Cog):
         random.seed()
         await ctx.reply("{}".format(random.choice(choice_list)))
 
-    @commands.command(enabled=False)
-    @perms.is_dev()
-    async def ship(self, ctx, first=None, second=None):
+    @commands.command()
+    async def ship(self, ctx, first=None, *, second=None):
+        pattern = "(?<=\<@!)(.*?)(?=\>)"
+        ids = []
 
-        print(type(first), type(second))
+        if first is not None:
+            is_first_a_mention = re.search(pattern, first)  # returns either id or none
+            if is_first_a_mention is not None:
+                first_mem = ctx.message.guild.get_member(int(is_first_a_mention[0]))
+                print(first_mem)
+                first = first_mem.display_name
+                ids.append(first_mem.id)
+
+        if second is not None:
+            is_second_a_mention = re.search(pattern, second)  # returns either id or none
+            if is_second_a_mention is not None:
+                second_mem = ctx.message.guild.get_member(int(is_second_a_mention[0]))
+                second = second_mem.display_name
+                ids.append(second_mem.id)
 
         if second is None and first is not None:
             second = first
@@ -89,24 +104,32 @@ class Fun(commands.Cog):
 
         if first is None:  # then second is also none
             first = ctx.author.display_name
-            second = "random user"
+
+            all_members = ctx.message.guild.members
+            non_bot_members = []
+            for member in all_members:
+                if member.bot:
+                    continue
+                non_bot_members.append(member)
+
+            random.seed()
+            rndmem = random.randint(0, len(non_bot_members) - 1)
+            second = non_bot_members[rndmem].display_name
 
         ship_name = str(first)[:len(first) // 2] + str(second)[len(second) // 2:]
-        # print(ship_name)
 
-        # print(first, second)
         first_value = 0
         for f_char in first.lower():
             first_value += ord(f_char)
-        # print(first_value)
 
         second_value = 0
         for s_char in second.lower():
             second_value += ord(s_char)
-        # print(second_value)
-        # print(first_value + second_value)
 
         value = int(str(first_value + second_value)[-2:])
+
+        if 92562410493202432 in ids and 287420218651967518 in ids:
+            value = 100
 
         await ctx.send("{}\n"
                        ":small_red_triangle_down:{}\n"
