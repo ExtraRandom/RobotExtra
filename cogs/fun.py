@@ -80,20 +80,20 @@ class Fun(commands.Cog):
 
     @commands.command()
     async def ship(self, ctx, first=None, *, second=None):
-        pattern = "(?<=\<@!)(.*?)(?=\>)"
+        pattern = "(?<=\<@)(.*?)(?=\>)"
         ids = []
 
         if first is not None:
             is_first_a_mention = re.search(pattern, first)  # returns either id or none
             if is_first_a_mention is not None:
-                first_mem = ctx.message.guild.get_member(int(is_first_a_mention[0]))
+                first_mem = ctx.message.guild.get_member(int(is_first_a_mention[0].replace("!", "")))
                 first = first_mem.display_name
                 ids.append(first_mem.id)
 
         if second is not None:
             is_second_a_mention = re.search(pattern, second)  # returns either id or none
             if is_second_a_mention is not None:
-                second_mem = ctx.message.guild.get_member(int(is_second_a_mention[0]))
+                second_mem = ctx.message.guild.get_member(int(is_second_a_mention[0].replace("!", "")))
                 second = second_mem.display_name
                 ids.append(second_mem.id)
 
