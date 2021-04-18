@@ -100,9 +100,11 @@ class Fun(commands.Cog):
         if second is None and first is not None:
             second = first
             first = ctx.author.display_name
+            ids.append(ctx.author.id)
 
         if first is None:  # then second is also none
             first = ctx.author.display_name
+            ids.append(ctx.author.id)
 
             all_members = ctx.message.guild.members
             non_bot_members = []
