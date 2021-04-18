@@ -87,7 +87,6 @@ class Fun(commands.Cog):
             is_first_a_mention = re.search(pattern, first)  # returns either id or none
             if is_first_a_mention is not None:
                 first_mem = ctx.message.guild.get_member(int(is_first_a_mention[0]))
-                print(first_mem)
                 first = first_mem.display_name
                 ids.append(first_mem.id)
 
