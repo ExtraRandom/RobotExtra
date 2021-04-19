@@ -116,6 +116,7 @@ class Fun(commands.Cog):
             random.seed()
             rndmem = random.randint(0, len(non_bot_members) - 1)
             second = non_bot_members[rndmem].display_name
+            ids.append(non_bot_members[rndmem].id)
 
         ship_name = str(first)[:len(first) // 2] + str(second)[len(second) // 2:]
 

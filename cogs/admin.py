@@ -49,42 +49,6 @@ class Admin(commands.Cog):
 
         return target
 
-    @commands.command(hidden=True, aliases=["random"], enabled=False)
-    @perms.is_dev()
-    @perms.is_in_somewhere_nice()
-    async def rndmem(self, ctx):
-        """pick a member at random (ignores bots)"""
-        all_members = ctx.message.guild.members
-        non_bot_members = []
-        for member in all_members:
-            if member.bot:
-                continue
-            non_bot_members.append(member)
-
-        random.seed()
-        t = random.randint(0, len(non_bot_members) - 1)
-
-        await ctx.send(non_bot_members[t].name)
-
-    @commands.command(hidden=True, aliases=["memsch"], enabled=False)
-    @perms.is_admin()
-    async def search(self, ctx, *, search: str):
-        """not really sure what the point of this one is"""
-        peoples = []
-
-        all_members = ctx.message.guild.members
-        for member in all_members:
-            if member.bot:
-                continue
-            if search.lower() in str(member.name).lower():
-                peoples.append(member.name)
-
-        res = ", ".join(peoples)
-        if len(res) is 0:
-            await ctx.send("no results")
-        else:
-            await ctx.send(res)
-
     @commands.group(name="check", invoke_without_command=True, aliases=['chk'])
     @perms.is_admin()
     @perms.is_in_somewhere_nice()
@@ -352,7 +316,7 @@ WHERE
         else:
             await ctx.send("No members detected (something broke)")
 
-    @commands.command(name="checkpurge")
+    @commands.command(name="checkpurge", hidden=True)
     @perms.is_dev()
     @perms.is_in_somewhere_nice()
     async def check_purge(self, ctx):
@@ -432,7 +396,7 @@ WHERE
 
         await ctx.send(file=discord.File(purge_file))
 
-    @commands.command()
+    @commands.command(hidden=True)
     @perms.is_dev()
     @perms.is_in_somewhere_nice()
     async def purge(self, ctx):
@@ -661,44 +625,6 @@ WHERE
         result.set_footer(text="ID: {}".format(target.id))
 
         await ctx.send(embed=result)
-
-    @commands.command(enabled=False, hidden=True)
-    @perms.is_dev()
-    async def act(self, ctx, *, user=None):
-        """activity info"""
-        # """Fetch song the user is currently listening to on Spotify"""
-        # spotify_url = "https://open.spotify.com/track/"
-
-        target = await Admin.find_member_from_id_or_mention(self, ctx, user)
-
-        test = target.activities
-        # test = ctx.author.activities
-
-        for t in test:  # print(t)
-            await ctx.send("activity type: {}\n"
-                           "name: {}\n"
-                           "".format(type(t), t.name))
-            if type(t) == discord.Activity:
-                await ctx.send("id: {}\n"
-                               "details: {}\n"
-                               "party: {}\n"
-                               "large img: <{}>\n"
-                               "small img: <{}>\n"
-                               "large img text: {}\n"
-                               "small img text: {}\n"
-                               "".format(t.application_id,
-                                         t.details,
-                                         t.party,
-                                         t.large_image_url,
-                                         t.small_image_url,
-                                         t.large_image_text,
-                                         t.small_image_text))
-
-            # if type(t) is discord.Spotify:
-            #    await ctx.send("{}{}".format(spotify_url, t.track_id))
-            #    return
-        # await ctx.send("{}, You are not listening to a song???".format(ctx.author.mention))
-        # await ctx.send(test)
 
     @commands.command(hidden=True, name="updatedb")
     @perms.is_dev()
