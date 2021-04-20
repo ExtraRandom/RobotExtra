@@ -82,6 +82,17 @@ class Commands(commands.Cog):
     async def invite(self, ctx):
         await ctx.send("https://discord.com/oauth2/authorize?client_id=571947888662413313&scope=bot")
 
+    @commands.command(hidden=True)
+    @perms.is_dev()
+    async def servers(self, ctx):
+        """List servers the bot is in"""
+        msg = "I am in these servers: \n"
+
+        for guild in self.bot.guilds:
+            msg += "{}\n".format(guild.name)
+
+        await ctx.send(msg)
+
     @commands.command(enabled=True)
     async def server(self, ctx):
         """Server Info"""
