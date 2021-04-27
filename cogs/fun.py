@@ -128,7 +128,9 @@ class Fun(commands.Cog):
         for s_char in second.lower():
             second_value += ord(s_char)
 
-        value = int(str(first_value + second_value)[-2:])
+        combined_value = first_value + second_value
+        random.seed(combined_value)
+        value = random.randrange(0, 100)
 
         if 92562410493202432 in ids and 287420218651967518 in ids:
             value = 100
