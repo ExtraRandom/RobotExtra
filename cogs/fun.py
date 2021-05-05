@@ -111,6 +111,8 @@ class Fun(commands.Cog):
             for member in all_members:
                 if member.bot:
                     continue
+                if member == ctx.author:
+                    continue
                 non_bot_members.append(member)
 
             random.seed()
