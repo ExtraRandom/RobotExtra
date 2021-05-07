@@ -2,3 +2,5 @@
 /db/*.sqlite
 /configs/settings.json
 /.idea
+/cogs/data/purge.txt
+/cogs/quick_test.py

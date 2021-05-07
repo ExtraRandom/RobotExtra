@@ -101,12 +101,10 @@ WHERE
         user, m_time, m_url = erq[0]
         n_time = str(datetime.fromtimestamp(m_time)).split(".")[0]
 
-        a_time = datetime.utcnow().timestamp() - m_time
-
         result.add_field(name="Last Message Time:",
                          value="{} UTC".format(n_time))
         result.add_field(name="Time Ago:",
-                         value="{} ago".format(timefmt.time_ago(a_time)))
+                         value="{} ago".format(timefmt.time_ago(m_time)))
         result.add_field(name="URL:",
                          value="{}".format(m_url))
 
@@ -140,8 +138,7 @@ WHERE
 
         users = []
         for user in is_not_member:
-            ago = datetime.utcnow().timestamp() - user.joined_at.timestamp()
-            new = "{} - Joined: {}".format(user.mention, timefmt.time_ago(ago))
+            new = "{} - Joined: {}".format(user.mention, timefmt.time_ago(user.joined_at))
             users.append(new)
 
         if len(is_not_member) is 0:
@@ -172,10 +169,7 @@ WHERE
                 continue
 
             if len(erq) == 0:
-                ago = datetime.utcnow().timestamp() - member.joined_at.timestamp()
-                new = "{} - Joined: {}".format(member.mention,
-                                               timefmt.time_ago(ago)
-                                               )
+                new = "{} - Joined: {}".format(member.mention, timefmt.time_ago(member.joined_at))
                 users.append(new)
                 continue
 
@@ -221,12 +215,10 @@ WHERE
 
                     n_time = str(datetime.fromtimestamp(last_time)).split(".")[0]
 
-                    a_time = datetime.utcnow().timestamp() - last_time
-
                     result.add_field(name="Last Message Time:",
                                      value="{} UTC".format(n_time))
                     result.add_field(name="Time Ago:",
-                                     value="{} ago".format(timefmt.time_ago(a_time)))
+                                     value="{} ago".format(timefmt.time_ago(last_time)))
                     result.add_field(name="URL:",
                                      value="{}".format(last_url))
                     await ctx.send(embed=result)
@@ -432,9 +424,9 @@ WHERE
                 result.add_field(name="Kick Reason:",
                                  value="Never spoke")
                 result.add_field(name="Time ago:",
-                                 value=timefmt.time_ago(datetime.fromtimestamp(float(join_time))))
+                                 value=timefmt.time_ago(join_time))
                 result.add_field(name="Joined Server:",
-                                 value="{} UTC".format(datetime.fromtimestamp(float(join_time))))
+                                 value="{} UTC".format(join_time))
             else:
                 last_id, last_time, last_url = erq[0]
                 total_time = datetime.utcnow().timestamp() - last_time
@@ -444,9 +436,9 @@ WHERE
                     result.add_field(name="Kick Reason:",
                                      value="Inactivity")
                     result.add_field(name="Time ago:",
-                                     value=timefmt.time_ago(datetime.fromtimestamp(float(last_time))))
+                                     value=timefmt.time_ago(last_time))
                     result.add_field(name="Last Message Time:",
-                                     value="{} UTC".format(datetime.fromtimestamp(float(last_time))))
+                                     value="{} UTC".format(last_time))
                     result.add_field(name="Last Message Link:",
                                      value=last_url)
                 else:
