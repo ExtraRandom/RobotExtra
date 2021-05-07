@@ -30,19 +30,33 @@ class Logging(commands.Cog):
             return
 
         if message.guild.id == self.ids["server"]:
+            u_id = message.author.id
+            new_time = message.created_at.timestamp()
+
+            """
+            try:
+                _, old_time, __ = self.bot.db_quick_read(u_id)
+                self.bot.dispatch("msg_xp", u_id, old_time, new_time)
+
+            except ValueError:
+                pass
+            except IndexError:
+                pass
+            """
+
             query = """
-INSERT OR REPLACE INTO
-    tracking(user_id, message_last_time, message_last_url)
-VALUES
-    ({}, {}, "{}")
-""".format(message.author.id, message.created_at.timestamp(), message.jump_url)
+            INSERT OR REPLACE INTO
+                tracking(user_id, message_last_time, message_last_url)
+            VALUES
+                ({}, {}, "{}")
+            """.format(u_id, new_time, message.jump_url)
             eq = self.bot.execute_query(query)
 
     async def on_member_join(self, member):
         if member.guild.id == self.ids["server"]:
             channel = discord.utils.get(member.guild.text_channels, id=self.ids["join_leave_log"])
 
-            account_age = timefmt.datetime_to_time_ago(member.created_at)
+            account_age = timefmt.time_ago(member.created_at)
             age_stamp = datetime.utcnow().timestamp() - member.created_at.timestamp()
             if age_stamp < (60 * 60 * 24):
                 account_age_msg = ":warning: {} :warning:".format(account_age)
@@ -94,7 +108,7 @@ VALUES
                                    description="**User:** {}\n"
                                                "**Member for:** {}\n"
                                                "**Roles:** {}"
-                                               "".format(member.mention, timefmt.datetime_to_time_ago(member.joined_at),
+                                               "".format(member.mention, timefmt.time_ago(member.joined_at),
                                                          " ".join(roles)))
             result.set_author(name="{}".format(member), icon_url=member.avatar_url)
             result.timestamp = datetime.utcnow()

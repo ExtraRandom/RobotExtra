@@ -23,15 +23,14 @@ class Commands(commands.Cog):
                 await ctx.send(IO.settings_fail_read)
                 return
 
-            now = datetime.now().timestamp()
             tfmt = '%Y-%m-%d %H:%M:%S.%f'
             start = datetime.strptime(data['info']['start-time'], tfmt)
             rc = datetime.strptime(data['info']['reconnect-time'], tfmt)
 
             await ctx.send("Bot Uptime: {}\n"
                            "Last Reconnect Time: {}"
-                           "".format(timefmt.time_ago(now - start.timestamp()),
-                                     timefmt.time_ago(now - rc.timestamp())))
+                           "".format(timefmt.time_ago(start.timestamp()),
+                                     timefmt.time_ago(rc.timestamp())))
 
         except Exception as e:
             await ctx.send("Error getting bot uptime. Reason: {}".format(type(e).__name__))
@@ -107,6 +106,7 @@ class Commands(commands.Cog):
         res = discord.Embed(title="Server Creation Time", description="Time in UTC (yyyy/mm/dd)")
         res.add_field(name="Date", value="{}/{}/{}".format(year, month, day))
         res.add_field(name="Time", value="{}:{}:{}".format(hour, minute, second))
+        res.add_field(name="Time Ago", value=timefmt.time_ago(dt))
 
         await ctx.send(embed=res)
 

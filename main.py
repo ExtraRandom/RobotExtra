@@ -65,9 +65,21 @@ class SNBot(commands.Bot):
             print(f"Error executing read query: {e}")
             return None
 
+    def db_quick_read(self, user_id):
+        query = """
+        SELECT
+            *
+        FROM
+            tracking
+        WHERE
+            user_id = "{}"
+        """.format(user_id)
+        res = self.execute_read_query(query)
+        return res[0]
+
     async def on_ready(self):
         self.update_json_time(update_reconnect_time=True)
-        login_msg = "Bot Connected at {}".format(str(datetime.now()))
+        login_msg = "Bot Connected at {} UTC".format(str(datetime.utcnow()))
         Logger.log_write("----------------------------------------------------------\n"
                          "{}\n"
                          "".format(login_msg))
@@ -131,7 +143,8 @@ class SNBot(commands.Bot):
         if "commands" in cmd_dir:
             msg += "Subcommands:\n"
             for sub_cmd in cmd.commands:
-                msg += " {:<12} {:<55}\n".format(sub_cmd.name[:12], sub_cmd.short_doc[:55])
+                if sub_cmd.enabled:
+                    msg += " {:<12} {:<55}\n".format(sub_cmd.name[:12], sub_cmd.short_doc[:55])
 
         if len(cmd_aliases) > 0:
             msg += "\n\n" \
@@ -143,7 +156,7 @@ class SNBot(commands.Bot):
 
     @staticmethod
     def update_json_time(update_start_time=False, update_reconnect_time=False):
-        time = str(datetime.now())
+        time = str(datetime.utcnow())
         data = IO.read_settings_as_json()
 
         if data is None:

@@ -3,6 +3,7 @@ requests
 pytz
 Pillow
 fake_useragent
+python-dateutil
 
 # git+https://github.com/Rapptz/discord.py
 # git+git://github.com/ExtraRandom/Game_Stores_API

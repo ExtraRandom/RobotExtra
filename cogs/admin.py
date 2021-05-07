@@ -141,9 +141,7 @@ WHERE
         users = []
         for user in is_not_member:
             ago = datetime.utcnow().timestamp() - user.joined_at.timestamp()
-            new = "{} - Joined: {}".format(user.mention,
-                                           timefmt.time_ago(ago)
-                                           )
+            new = "{} - Joined: {}".format(user.mention, timefmt.time_ago(ago))
             users.append(new)
 
         if len(is_not_member) is 0:
@@ -575,7 +573,7 @@ WHERE
             if len(reacts.fields) >= 1:
                 await ctx.send(embed=reacts)
 
-    @commands.command(enabled=False, hidden=True)
+    @commands.command(enabled=True, hidden=False)
     @perms.is_admin()
     async def info(self, ctx, *, user=None):
         """Show info of a member
@@ -616,13 +614,14 @@ WHERE
                              value="No Roles")
 
         result.add_field(name="Created Account at:",
-                         value="{}\n({} ago)".format(target.created_at,
-                                                     timefmt.datetime_to_time_ago(target.created_at)))
+                         value="{}\n({} ago)".format(str(target.created_at).split(".")[0],
+                                                     timefmt.time_ago(target.created_at)))
 
         result.add_field(name="Joined Server at:",
-                         value="{}\n({} ago)".format(target.joined_at,
-                                                     timefmt.datetime_to_time_ago(target.joined_at)))
+                         value="{}\n({} ago)".format(str(target.joined_at).split(".")[0],
+                                                     timefmt.time_ago(target.joined_at)))
         result.set_footer(text="ID: {}".format(target.id))
+        result.timestamp = datetime.utcnow()
 
         await ctx.send(embed=result)
 
@@ -632,8 +631,8 @@ WHERE
         """Used to update the message time db.
         Kinda janky"""
         start_time = time()
-        h_msg = await ctx.send("Updating DB with messages from the last {} days. Started at {}"
-                               "".format(days_ago, start_time))
+        await ctx.send("Updating DB with messages from the last {} days. Started at {}"
+                       "".format(days_ago, start_time))
 
         for channel in ctx.guild.text_channels:
             if channel.category_id in self.ignore_categories:
@@ -663,13 +662,18 @@ WHERE
                 eq2 = self.bot.execute_query(query_2)
 
         end_time = time()
-        await h_msg.edit(content="DB updated with messages from the last {} hours. Time taken {}"
-                                 "".format(days_ago, end_time - start_time))
+        await ctx.reply(content="DB updated with messages from the last {} hours. Time taken {}"
+                                "".format(days_ago, end_time - start_time))
 
     @commands.command(hidden=True)
     @perms.is_dev()
     async def time(self, ctx, *, time_inp: int):
-        await ctx.send(timefmt.time_ago(time_inp))
+        then_ts = datetime.utcnow().timestamp()-time_inp
+        await ctx.send("time since {}:\n"
+                       "{}".format(datetime.fromtimestamp(then_ts),
+                                   timefmt.time_ago(then_ts)))
+
+        # await ctx.send(timefmt.time_ago(datetime.utcnow().timestamp()-time_inp))
 
     @commands.command(hidden=True)
     @perms.is_dev()
