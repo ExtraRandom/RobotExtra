@@ -2,16 +2,22 @@ import datetime
 from dateutil.relativedelta import relativedelta
 
 
+def day_suffix(day):
+    day = int(day)
+    if 4 <= day <= 20 or 24 <= day <= 30:
+        suffix = "th"
+    else:
+        suffix = ["st", "nd", "rd"][day % 10 - 1]
+    return suffix
+
+
 def time_ago(time_input):
     now = datetime.datetime.utcnow()
     now = now.replace(microsecond=0)
 
     if type(time_input) is datetime.datetime:
-        # print("dt")
         then = time_input.replace(microsecond=0)
     elif type(time_input) is float or type(time_input) is int:
-        # print("number", time_input)
-        # then_ts = now.timestamp() - time_input
         then = datetime.datetime.fromtimestamp(time_input)
         then = then.replace(microsecond=0)
     else:
@@ -33,4 +39,7 @@ def time_ago(time_input):
             else:
                 results.append("{} {}".format(elem, attr))
 
-    return ", ".join(results)
+    result_str = ", ".join(results)
+    last_comma_index = result_str.rfind(",")
+    new_result_str = result_str[:last_comma_index] + " and " + result_str[last_comma_index+2:]
+    return new_result_str

@@ -81,7 +81,7 @@ class Commands(commands.Cog):
     async def invite(self, ctx):
         await ctx.send("https://discord.com/oauth2/authorize?client_id=571947888662413313&scope=bot")
 
-    @commands.command(hidden=True)
+    @commands.command(hidden=True, enabled=False)
     @perms.is_dev()
     async def servers(self, ctx):
         """List servers the bot is in"""
@@ -98,15 +98,17 @@ class Commands(commands.Cog):
         dt = ctx.guild.created_at
         year = dt.year
         month = f'{dt.month:02}'
-        day = f'{dt.day:02}'
+        day = f'{dt.day:01}'
         hour = f'{dt.hour:02}'
         minute = f'{dt.minute:02}'
         second = f'{dt.second:02}'
 
-        res = discord.Embed(title="Server Creation Time", description="Time in UTC (yyyy/mm/dd)")
-        res.add_field(name="Date", value="{}/{}/{}".format(year, month, day))
-        res.add_field(name="Time", value="{}:{}:{}".format(hour, minute, second))
-        res.add_field(name="Time Ago", value=timefmt.time_ago(dt))
+        res = discord.Embed(title="Server Info", description="Times in UTC", colour=ctx.guild.owner.colour)
+        res.add_field(name="Creation Date", value="{}{} of {}, {} at {}:{}"
+                      .format(day, timefmt.day_suffix(day), dt.strftime("%B"), year, hour, minute))
+        res.add_field(name="Server Age", value="{} old".format(timefmt.time_ago(dt)))
+        res.add_field(name="Server Owner", value="{}\n({})".format(ctx.guild.owner,
+                                                                   ctx.guild.owner.mention))
 
         await ctx.send(embed=res)
 
