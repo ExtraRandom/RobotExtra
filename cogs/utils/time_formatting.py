@@ -33,7 +33,6 @@ def time_ago(time_input):
         if not elem:
             continue
         else:
-            # print(elem)
             if elem is 1:
                 results.append("{} {}".format(elem, attr[:-1]))
             else:
@@ -41,5 +40,6 @@ def time_ago(time_input):
 
     result_str = ", ".join(results)
     last_comma_index = result_str.rfind(",")
-    new_result_str = result_str[:last_comma_index] + " and " + result_str[last_comma_index+2:]
-    return new_result_str
+    if last_comma_index != -1:
+        result_str = result_str[:last_comma_index] + " and " + result_str[last_comma_index+2:]
+    return result_str

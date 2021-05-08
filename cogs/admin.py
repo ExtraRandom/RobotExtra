@@ -16,8 +16,7 @@ class Admin(commands.Cog):
         self.bot = bot
         self.ignore_categories = [758500155207974983,  # STAFF LOGS
                                   750690307191865445,  # SERVER
-                                  761526935200595988,  # ARCHIVED CHANNELS
-                                  766643538900811816]  # ADMIN (ARCHIVED)
+                                  809906596041457694]  # ARCHIVED CHANNELS
 
     async def find_member_from_id_or_mention(self, ctx, user):
         target = None
@@ -52,44 +51,35 @@ class Admin(commands.Cog):
     @commands.group(name="check", invoke_without_command=True, aliases=['chk'])
     @perms.is_admin()
     @perms.is_in_somewhere_nice()
-    async def _check(self, ctx, *, user_id: str):
+    async def _check(self, ctx, *, user: str):
         """Check member activity
 
-        Use with a user id to check when a member last spoke.
+        Use with a user id or mention to check when a member last spoke.
         Use with one of the below subcommands to list multiple users.
         """
 
-        try:
-            user_id = int(user_id)
-        except ValueError:
-            await ctx.send("Invalid user ID: '{}'".format(user_id))
+        target = await Admin.find_member_from_id_or_mention(self, ctx, user)
+
+        if target is None:
+            await ctx.send("Couldn't find that user")
             return
 
-        user_data = discord.utils.find(lambda m: m.id == user_id, ctx.guild.members)
         try:
-            result = discord.Embed(title="{}#{}".format(user_data.name, user_data.discriminator),
-                                   description="{}".format(user_data.mention),
+            result = discord.Embed(title="{}#{}".format(target.name, target.discriminator),
+                                   description="{}".format(target.mention),
                                    colour=discord.Color.green())
         except AttributeError:
-            await ctx.send("The user with the ID '{}' is not part of this server.".format(user_id))
+            await ctx.send("The user with the ID '{}' is not part of this server.".format(user))
             return
 
-        if user_data.bot:
+        if target.bot:
             result.add_field(name="Bot",
                              value="The user ID provided is for a bot.")
             result.colour = discord.Color.blue()
             await ctx.send(embed=result)
             return
 
-        query = """
-SELECT
-    *
-FROM
-    tracking
-WHERE
-    user_id = "{}"
-            """.format(user_id)
-        erq = self.bot.execute_read_query(query)
+        erq = self.bot.db_quick_read(target.id)
 
         if len(erq) == 0:
             result.add_field(name="Last Message Time:",
@@ -98,7 +88,7 @@ WHERE
             await ctx.send(embed=result)
             return
 
-        user, m_time, m_url = erq[0]
+        user, m_time, m_url = erq
         n_time = str(datetime.fromtimestamp(m_time)).split(".")[0]
 
         result.add_field(name="Last Message Time:",
