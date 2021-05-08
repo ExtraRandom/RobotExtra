@@ -100,6 +100,37 @@ class CogManagement(commands.Cog):
             await ctx.send("Failed to reload cog '{}'".format(cog))
             return
 
+    @commands.command(aliases=["ra"])
+    @perms.is_dev()
+    async def reload_all(self, ctx):
+        msg = await ctx.send("Reloading all non critical cogs (excludes cog_management and logging)")
+        reloaded = 0
+        cog_list = [cog for cog in self.bot.extensions]
+        cog_count = len(cog_list)
+
+        for cog in cog_list:
+            if cog in ["cogs.cog_management", "cogs.logging"]:
+                cog_count -= 1
+                continue
+
+            try:
+                self.bot.unload_extension(cog)
+            except Exception as e:
+                Logger.write(e)
+                cog_list.remove(cog)
+                continue
+
+            try:
+                self.bot.load_extension(cog)
+                reloaded += 1
+            except Exception as e:
+                Logger.write(e)
+                continue
+
+        await msg.edit(content="{} cogs out of {} successfully reload "
+                               "(cog_management and logging must be reload manually)\n"
+                               "Any errors can be found in the logs.".format(reloaded, cog_count))
+
     @commands.command(name="cogs")
     @perms.is_dev()
     async def the_cog_list(self, ctx):

@@ -4,7 +4,7 @@ from time import time
 from datetime import datetime, timedelta
 from cogs.utils import perms  # , IO
 from cogs.utils import time_formatting as timefmt
-# from cogs.utils.logger import Logger
+from cogs.utils.logger import Logger
 import discord
 # import random
 import re
@@ -19,6 +19,8 @@ class Admin(commands.Cog):
                                   809906596041457694]  # ARCHIVED CHANNELS
 
     async def find_member_from_id_or_mention(self, ctx, user):
+        """Takes messaage context to check for mentions and user input to check if its an id and returns
+        the member object should it find one, or none if it does not"""
         target = None
 
         if user is None:
@@ -30,7 +32,6 @@ class Admin(commands.Cog):
                 if len(mentions) == 1:
                     target = mentions[0]
                 elif len(mentions) > 1:
-                    # await ctx.send("Please only mention **one** user")
                     return None
             except AttributeError:
                 pass
@@ -40,7 +41,6 @@ class Admin(commands.Cog):
                 try:
                     user_id = int(user)
                     user_find = ctx.message.guild.get_member(user_id)
-                    # user_find = discord.utils.find(lambda m: m.id == user_id, ctx.guild.members)
                     if user_find is not None:
                         target = user_find
                 except Exception:
@@ -659,9 +659,15 @@ WHERE
 
     @commands.command(hidden=True)
     @perms.is_dev()
-    async def now(self, ctx):
-        await ctx.send(datetime.utcnow())
+    async def log(self, ctx):
+        log_file = os.path.join(self.bot.base_directory, "logs", Logger.get_filename())
+        await ctx.author.send(file=discord.File(log_file))
+        await ctx.send("DM'd latest log file <:somewhere_nice:766664959979159553>")
 
+    @commands.command(hidden=True)
+    @perms.is_dev()
+    async def eid(self, ctx, *, emoji: discord.Emoji):
+        await ctx.send(emoji.id)
 
 def setup(bot):
     bot.add_cog(Admin(bot))
