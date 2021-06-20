@@ -669,6 +669,7 @@ WHERE
     async def eid(self, ctx, *, emoji: discord.Emoji):
         await ctx.send(emoji.id)
 
+
 def setup(bot):
     bot.add_cog(Admin(bot))
 

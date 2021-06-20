@@ -5,6 +5,7 @@ from cogs.utils.logger import Logger
 import discord
 import traceback
 import os
+import time
 
 import sqlite3
 from sqlite3 import Error
@@ -19,9 +20,12 @@ class SNBot(commands.Bot):
     def __init__(self):
         self.base_directory = os.path.dirname(os.path.realpath(__file__))
 
-        self.path = os.path.join(self.base_directory, "db", "testing.sqlite")
+        self.start_time = None
+        self.reconnect_time = None
+
+        db_path = os.path.join(self.base_directory, "db", "testing.sqlite")
         try:
-            s_connection = sqlite3.connect(self.path)  # print("Connected to the DB")
+            s_connection = sqlite3.connect(db_path)  # print("Connected to the DB")
         except Error as e:
             print(f"Error connecting to DB: {e}")
             raise Exception("shits fucked oh dear god please fix")
@@ -78,7 +82,8 @@ class SNBot(commands.Bot):
         return res[0]
 
     async def on_ready(self):
-        self.update_json_time(update_reconnect_time=True)
+        self.reconnect_time = datetime.utcnow()
+        # self.update_json_time(update_reconnect_time=True)
         login_msg = "Bot Connected at {} UTC".format(str(datetime.utcnow()))
         Logger.log_write("----------------------------------------------------------\n"
                          "{}\n"
@@ -154,6 +159,7 @@ class SNBot(commands.Bot):
 
         await ctx.send(msg)
 
+    """
     @staticmethod
     def update_json_time(update_start_time=False, update_reconnect_time=False):
         time = str(datetime.utcnow())
@@ -169,6 +175,7 @@ class SNBot(commands.Bot):
 
         if IO.write_settings(data) is False:
             print(IO.settings_fail_write)
+    """
 
     @staticmethod
     def get_cogs_in_folder():
@@ -196,11 +203,7 @@ class SNBot(commands.Bot):
                 "keys": {
                     "token": None
                 },
-                "cogs": {},
-                "info": {
-                    "start-time": None,
-                    "reconnect-time": None
-                }
+                "cogs": {}
             }
         sd_len = len(settings_data)
         if sd_len == 0:
@@ -288,11 +291,14 @@ class SNBot(commands.Bot):
             raise Exception(IO.settings_fail_write)
 
         if token:
-            self.update_json_time(update_start_time=True)
+            self.start_time = datetime.utcnow()
+            # self.update_json_time(update_start_time=True)
             super().run(token)
         else:
             Logger.write_and_print("Token is not set! Go to {} and change the token parameter!"
                                    "".format(IO.settings_file_path))
+            print("Waiting 30 seconds before trying again")
+            time.sleep(30)
 
 
 if __name__ == '__main__':

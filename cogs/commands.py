@@ -18,14 +18,17 @@ class Commands(commands.Cog):
     async def uptime(self, ctx):
         """Shows the bots current uptime"""
         try:
-            data = IO.read_settings_as_json()
-            if data is None:
-                await ctx.send(IO.settings_fail_read)
-                return
+            # data = IO.read_settings_as_json()
+            # if data is None:
+            #    await ctx.send(IO.settings_fail_read)
+            #    return
 
-            tfmt = '%Y-%m-%d %H:%M:%S.%f'
-            start = datetime.strptime(data['info']['start-time'], tfmt)
-            rc = datetime.strptime(data['info']['reconnect-time'], tfmt)
+            # tfmt = '%Y-%m-%d %H:%M:%S.%f'
+            # start = datetime.strptime(data['info']['start-time'], tfmt)
+            # rc = datetime.strptime(data['info']['reconnect-time'], tfmt)
+
+            start = self.bot.start_time
+            rc = self.bot.reconnect_time
 
             await ctx.send("Bot Uptime: {}\n"
                            "Last Reconnect Time: {}"
