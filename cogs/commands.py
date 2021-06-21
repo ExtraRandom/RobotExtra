@@ -8,6 +8,7 @@ import io
 import discord
 import requests
 import pytz
+from platform import python_version as py_v
 
 
 class Commands(commands.Cog):
@@ -18,15 +19,6 @@ class Commands(commands.Cog):
     async def uptime(self, ctx):
         """Shows the bots current uptime"""
         try:
-            # data = IO.read_settings_as_json()
-            # if data is None:
-            #    await ctx.send(IO.settings_fail_read)
-            #    return
-
-            # tfmt = '%Y-%m-%d %H:%M:%S.%f'
-            # start = datetime.strptime(data['info']['start-time'], tfmt)
-            # rc = datetime.strptime(data['info']['reconnect-time'], tfmt)
-
             start = self.bot.start_time
             rc = self.bot.reconnect_time
 
@@ -112,6 +104,27 @@ class Commands(commands.Cog):
         res.add_field(name="Server Age", value="{} old".format(timefmt.time_ago(dt)))
         res.add_field(name="Server Owner", value="{}\n({})".format(ctx.guild.owner,
                                                                    ctx.guild.owner.mention))
+
+        await ctx.send(embed=res)
+
+    @commands.command()
+    async def bot(self, ctx):
+        """Bot Info"""
+        bot_info = await self.bot.application_info()
+        bot_name = bot_info.name
+        bot_owner = bot_info.owner.mention
+        discord_py_version = discord.__version__
+        python_version = py_v()
+        github_link = "https://github.com/ExtraRandom/SNBot"
+        uptime = timefmt.time_ago(self.bot.start_time.timestamp())
+
+        res = discord.Embed(title="Bot Info", colour=discord.colour.Colour.dark_blue())
+        res.add_field(name="Name", value="{}".format(bot_name))
+        res.add_field(name="Owner", value="{}".format(bot_owner))
+        res.add_field(name="Discord Py Version", value="{}".format(discord_py_version))
+        res.add_field(name="Python Version", value="{}".format(python_version))
+        res.add_field(name="Source Code", value="{}".format(github_link))
+        res.add_field(name="Uptime", value="{}".format(uptime))
 
         await ctx.send(embed=res)
 
