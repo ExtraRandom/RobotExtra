@@ -98,12 +98,19 @@ class Commands(commands.Cog):
         minute = f'{dt.minute:02}'
         second = f'{dt.second:02}'
 
+        total_count = ctx.guild.member_count
+        member_count = len([m for m in ctx.guild.members if not m.bot])
+        bot_count = total_count - member_count
+
         res = discord.Embed(title="Server Info", description="Times in UTC", colour=ctx.guild.owner.colour)
         res.add_field(name="Creation Date", value="{}{} of {}, {} at {}:{}"
                       .format(day, timefmt.day_suffix(day), dt.strftime("%B"), year, hour, minute))
         res.add_field(name="Server Age", value="{} old".format(timefmt.time_ago(dt, True)))
         res.add_field(name="Server Owner", value="{}\n({})".format(ctx.guild.owner,
                                                                    ctx.guild.owner.mention))
+        res.add_field(name="Member Count", value="{} Total Members\n"
+                                                 "{} Users\n"
+                                                 "{} Bots".format(total_count, member_count, bot_count))
 
         await ctx.send(embed=res)
 
