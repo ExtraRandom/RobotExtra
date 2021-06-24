@@ -41,6 +41,9 @@ def time_ago(time_input, brief=False):
                 if weeks > 0:
                     elem -= weeks * 7
 
+                if elem == 0:
+                    continue
+
             if attr == "hours":
                 if brief is True:
                     if r_count > 1:  # if more than one attr exists (e.g. month + day) then break to keep it brief
