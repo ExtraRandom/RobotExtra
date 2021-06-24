@@ -33,6 +33,11 @@ def time_ago(time_input):
         if not elem:
             continue
         else:
+            if attr == "days":
+                weeks = delta.weeks
+                if weeks > 0:
+                    elem -= weeks * 7
+
             if elem is 1:
                 results.append("{} {}".format(elem, attr[:-1]))
             else:

@@ -83,7 +83,6 @@ class SNBot(commands.Bot):
 
     async def on_ready(self):
         self.reconnect_time = datetime.utcnow()
-        # self.update_json_time(update_reconnect_time=True)
         login_msg = "Bot Connected at {} UTC".format(str(datetime.utcnow()))
         Logger.log_write("----------------------------------------------------------\n"
                          "{}\n"
@@ -158,24 +157,6 @@ class SNBot(commands.Bot):
         msg += "```"
 
         await ctx.send(msg)
-
-    """
-    @staticmethod
-    def update_json_time(update_start_time=False, update_reconnect_time=False):
-        time = str(datetime.utcnow())
-        data = IO.read_settings_as_json()
-
-        if data is None:
-            raise Exception(IO.settings_fail_read)
-
-        if update_start_time:
-            data['info']['start-time'] = time
-        if update_reconnect_time:
-            data['info']['reconnect-time'] = time
-
-        if IO.write_settings(data) is False:
-            print(IO.settings_fail_write)
-    """
 
     @staticmethod
     def get_cogs_in_folder():
@@ -292,7 +273,6 @@ class SNBot(commands.Bot):
 
         if token:
             self.start_time = datetime.utcnow()
-            # self.update_json_time(update_start_time=True)
             super().run(token)
         else:
             Logger.write_and_print("Token is not set! Go to {} and change the token parameter!"
