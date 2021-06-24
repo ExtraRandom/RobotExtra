@@ -409,7 +409,7 @@ class Admin(commands.Cog):
                                    colour=discord.Color.gold())
             if len(erq) == 0:
                 total_count += 1
-                join_time = member.joined_at.timestamp()
+                join_time = member.joined_at
                 kick_reason = "never spoke"
                 result.add_field(name="Kick Reason:",
                                  value="Never spoke")
@@ -428,7 +428,7 @@ class Admin(commands.Cog):
                     result.add_field(name="Time ago:",
                                      value=timefmt.time_ago(last_time))
                     result.add_field(name="Last Message Time:",
-                                     value="{} UTC".format(last_time))
+                                     value="{} UTC".format(datetime.fromtimestamp(last_time)))
                     result.add_field(name="Last Message Link:",
                                      value=last_url)
                 else:
