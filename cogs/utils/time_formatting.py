@@ -11,7 +11,7 @@ def day_suffix(day):
     return suffix
 
 
-def time_ago(time_input):
+def time_ago(time_input, brief=False):
     now = datetime.datetime.utcnow()
     now = now.replace(microsecond=0)
 
@@ -26,22 +26,32 @@ def time_ago(time_input):
     delta = relativedelta(now, then)
 
     attrs = ["years", "months", "weeks", "days", "hours", "minutes", "seconds"]
+
     results = []
+    r_count = 0  # count how attrs have been added (used for brief)
 
     for attr in attrs:
         elem = getattr(delta, attr)
         if not elem:
             continue
         else:
+
             if attr == "days":
                 weeks = delta.weeks
                 if weeks > 0:
                     elem -= weeks * 7
 
+            if attr == "hours":
+                if brief is True:
+                    if r_count > 1:  # if more than one attr exists (e.g. month + day) then break to keep it brief
+                        break
+
             if elem is 1:
                 results.append("{} {}".format(elem, attr[:-1]))
             else:
                 results.append("{} {}".format(elem, attr))
+
+            r_count += 1
 
     result_str = ", ".join(results)
     last_comma_index = result_str.rfind(",")

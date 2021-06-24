@@ -597,11 +597,11 @@ class Admin(commands.Cog):
 
         result.add_field(name="Created Account at:",
                          value="{}\n({} ago)".format(str(target.created_at).split(".")[0],
-                                                     timefmt.time_ago(target.created_at)))
+                                                     timefmt.time_ago(target.created_at, True)))
 
         result.add_field(name="Joined Server at:",
                          value="{}\n({} ago)".format(str(target.joined_at).split(".")[0],
-                                                     timefmt.time_ago(target.joined_at)))
+                                                     timefmt.time_ago(target.joined_at, True)))
         result.set_footer(text="ID: {}".format(target.id))
         result.timestamp = datetime.utcnow()
 
@@ -656,6 +656,14 @@ WHERE
                                    timefmt.time_ago(then_ts)))
 
         # await ctx.send(timefmt.time_ago(datetime.utcnow().timestamp()-time_inp))
+
+    @commands.command(hidden=True)
+    @perms.is_dev()
+    async def timeb(self, ctx, *, time_inp: int):
+        then_ts = datetime.utcnow().timestamp() - time_inp
+        await ctx.send("time since {}:\n"
+                       "{}".format(datetime.fromtimestamp(then_ts),
+                                   timefmt.time_ago(then_ts, True)))
 
     @commands.command(hidden=True)
     @perms.is_dev()
