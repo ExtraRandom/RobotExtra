@@ -17,6 +17,7 @@ class Admin(commands.Cog):
         self.ignore_categories = [758500155207974983,  # STAFF LOGS
                                   750690307191865445,  # SERVER
                                   809906596041457694]  # ARCHIVED CHANNELS
+        self.purge_immune_role_id = 857532290527657984
 
     async def find_member_from_id_or_mention(self, ctx, user):
         """Takes messaage context to check for mentions and user input to check if its an id and returns
@@ -47,6 +48,10 @@ class Admin(commands.Cog):
                     pass
 
         return target
+
+    async def get_role_from_id(self, ctx, role_id: int):
+        role = ctx.guild.get_role(role_id)
+        return role
 
     @commands.group(name="check", invoke_without_command=True, aliases=['chk'])
     @perms.is_admin()
@@ -302,8 +307,14 @@ class Admin(commands.Cog):
     async def check_purge(self, ctx):
         """Check how many members a purge may kick"""
         count = 0
+        immune_role = await self.get_role_from_id(ctx, self.purge_immune_role_id)
+        immune_count = 0
         for member in ctx.guild.members:
             if member.bot:
+                continue
+
+            if immune_role in member.roles:
+                immune_count += 1
                 continue
 
             user_id = member.id
@@ -337,9 +348,12 @@ class Admin(commands.Cog):
     async def purgetxt(self, ctx):
         """purgetxt"""
         purge_file = os.path.join(self.bot.base_directory, "cogs", "data", "purge.txt")
+        immune_role = await self.get_role_from_id(ctx, self.purge_immune_role_id)
         with open(purge_file, "w", encoding="utf-8") as fw:
             for member in ctx.guild.members:
                 if member.bot:
+                    continue
+                if immune_role in member.roles:
                     continue
 
                 user_id = member.id
@@ -389,8 +403,12 @@ class Admin(commands.Cog):
         total_count = 0
         kicked_count = 0
 
+        immune_role = await self.get_role_from_id(ctx, self.purge_immune_role_id)
+
         for member in ctx.guild.members:
             if member.bot:
+                continue
+            if immune_role in member.roles:
                 continue
 
             user_id = member.id
