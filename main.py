@@ -184,7 +184,20 @@ class SNBot(commands.Bot):
                 "keys": {
                     "token": None
                 },
-                "cogs": {}
+                "cogs":
+                    {
+
+                },
+                "reddit":
+                    {
+                        "username": None,
+                        "password": None,
+                        "client_id": None,
+                        "client_secret": None,
+                        "user_agent": None,
+                        "post_title": None,
+                        "post_url": None
+                    }
             }
         sd_len = len(settings_data)
         if sd_len == 0:
