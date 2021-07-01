@@ -105,7 +105,7 @@ class Commands(commands.Cog):
         res = discord.Embed(title="Server Info", description="Times in UTC", colour=ctx.guild.owner.colour)
         res.add_field(name="Creation Date", value="{}{} of {}, {} at {}:{}"
                       .format(day, timefmt.day_suffix(day), dt.strftime("%B"), year, hour, minute))
-        res.add_field(name="Server Age", value="{} old".format(timefmt.time_ago(dt, True)))
+        res.add_field(name="Server Age", value="{} old".format(timefmt.time_ago(dt, brief=True)))
         res.add_field(name="Server Owner", value="{}\n({})".format(ctx.guild.owner,
                                                                    ctx.guild.owner.mention))
         res.add_field(name="Member Count", value="{} Total Members\n"

@@ -134,7 +134,7 @@ class CogManagement(commands.Cog):
 
     @commands.command(name="cogs")
     @perms.is_dev()
-    async def cog_list(self, ctx):
+    async def the_cog_list(self, ctx):
         """List all loaded and unloaded cogs"""
         ext_list = self.bot.extensions
         loaded = []

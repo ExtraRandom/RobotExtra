@@ -4,6 +4,7 @@ pytz
 Pillow
 fake_useragent
 python-dateutil
+asyncpraw
 
 # git+https://github.com/Rapptz/discord.py
 # git+git://github.com/ExtraRandom/Game_Stores_API

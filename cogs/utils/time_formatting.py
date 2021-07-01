@@ -11,14 +11,17 @@ def day_suffix(day):
     return suffix
 
 
-def time_ago(time_input, brief=False):
+def time_ago(time_input, brief=False, force_into_utc=False):
     now = datetime.datetime.utcnow()
     now = now.replace(microsecond=0)
 
     if type(time_input) is datetime.datetime:
         then = time_input.replace(microsecond=0)
     elif type(time_input) is float or type(time_input) is int:
-        then = datetime.datetime.fromtimestamp(time_input)
+        if not force_into_utc:
+            then = datetime.datetime.fromtimestamp(time_input)
+        else:
+            then = datetime.datetime.utcfromtimestamp(time_input)
         then = then.replace(microsecond=0)
     else:
         raise TypeError("Wrong type input for time_ago function")
@@ -44,7 +47,7 @@ def time_ago(time_input, brief=False):
                 if elem == 0:
                     continue
 
-            if brief is True and (attr == "hours") or (attr == "minutes") or (attr == "seconds"):
+            if brief is True and (attr == "hours" or attr == "minutes" or attr == "seconds"):
                 if r_count > 1:  # if more than one attr exists (e.g. month + day) then break to keep it brief
                     break
 
