@@ -80,6 +80,7 @@ class Fun(commands.Cog):
 
     @commands.command()
     async def ship(self, ctx, first=None, *, second=None):
+        """Random 'matchmaking'"""
         pattern = "(?<=\<@)(.*?)(?=\>)"
         ids = []
 
