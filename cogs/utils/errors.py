@@ -8,3 +8,9 @@ class WrongGuild(commands.CheckFailure):
 
 class DevOnly(commands.CheckFailure):
     pass
+
+
+class ProtectedCog(Exception):
+    pass
+
+
