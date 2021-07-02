@@ -71,7 +71,11 @@ class Dev(commands.Cog):
         if cmd.enabled == enabled:
             return "Command '{}' is already {}".format(command_name, word)
 
-        cmd.update(enabled=enabled)
+        # cmd.update(enabled=enabled)  # breaks the command
+
+        self.bot.remove_command(cmd.name)
+        cmd.enabled = enabled
+        self.bot.add_command(cmd)
 
         return True
 

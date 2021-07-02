@@ -3,7 +3,7 @@ import discord
 from datetime import datetime
 
 
-def quick_embed(title, description, colour=discord.colour.Colour.red(), fields=None, timestamp=False):
+def quick_embed(title: str, description: str, colour=discord.colour.Colour.red(), fields=None, timestamp=False):
     embed = discord.Embed(
         title=title,
         description=description,
