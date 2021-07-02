@@ -51,7 +51,7 @@ class Commands(commands.Cog):
     @commands.command()
     @perms.is_admin()
     async def times(self, ctx):
-        """Get the current time for admins/mods"""
+        """Get the current time for the admins"""
         extra_time = datetime.now(tz=pytz.timezone('Europe/London'))
         john_time = datetime.now(tz=pytz.timezone('Europe/Copenhagen'))
         nat_time = datetime.now(tz=pytz.timezone('Australia/Victoria'))

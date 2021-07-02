@@ -29,6 +29,9 @@ class Logging(commands.Cog):
         if bot_msg is True:
             return
 
+        if type(message.channel) is discord.DMChannel:
+            return
+
         if message.guild.id == self.ids["server"]:
             u_id = message.author.id
             new_time = message.created_at.timestamp()

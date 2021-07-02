@@ -1,6 +1,6 @@
 from discord.ext import commands
 from cogs.utils import perms, IO, time_formatting as timefmt
-from cogs.utils import quick_embed
+from cogs.utils import ez_utils
 import asyncpraw
 import discord
 
@@ -49,14 +49,14 @@ class Reddit(commands.Cog):
 
         await ctx.send("https://www.reddit.com{}".format(tp.permalink))
 
-    @commands.command(name="pds")
+    @commands.command(name="pds", hidden=True)
     @perms.is_dev()
     async def post_discord_server(self, ctx):
         """Post server ad on r/discordservers"""
         sub = "discordservers"
         await self.post_advert(self.reddit, ctx, sub, self.post_title, self.post_url)
 
-    @commands.command(name="pdas")
+    @commands.command(name="pdas", hidden=True)
     @perms.is_dev()
     async def post_discord_app_server(self, ctx):
         """Post server ad on r/DiscordAppServers"""
@@ -74,7 +74,7 @@ class Reddit(commands.Cog):
             sr = post.subreddit
             url = self.base_url + post.permalink
 
-            await ctx.send(embed=quick_embed.create(
+            await ctx.send(embed=ez_utils.quick_embed(
                 title=title, description="Posted on r/{}".format(sr),
                 fields=[("Post Age", age), ("URL", url)]
             ))
