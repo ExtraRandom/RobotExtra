@@ -1,5 +1,5 @@
 from discord.ext import commands
-import discord
+# import discord
 
 
 class WrongGuild(commands.CheckFailure):
@@ -12,5 +12,3 @@ class DevOnly(commands.CheckFailure):
 
 class ProtectedCog(Exception):
     pass
-
-

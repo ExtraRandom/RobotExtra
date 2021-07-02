@@ -157,5 +157,3 @@ class CogManagement(commands.Cog):
 
 def setup(bot):
     bot.add_cog(CogManagement(bot))
-
-

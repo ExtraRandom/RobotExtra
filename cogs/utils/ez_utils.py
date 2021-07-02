@@ -23,5 +23,3 @@ async def send_then_delete(message, channel, time=60):
     msg = await channel.send(message)
     await asyncio.sleep(time)
     await msg.delete()
-
-

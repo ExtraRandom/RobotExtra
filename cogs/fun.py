@@ -1,5 +1,5 @@
 from discord.ext import commands
-from cogs.utils import perms
+# from cogs.utils import perms
 import discord
 import random
 import json
@@ -37,7 +37,7 @@ class Fun(commands.Cog):
         await ctx.reply(embed=resp, file=img)
 
     @commands.command(name="8ball")
-    async def eight_ball(self, ctx, *, question: str):
+    async def eight_ball(self, ctx):
         """It's a ~magic~ 8 ball"""
         answers = [
             # Affirmative answers (10)
@@ -117,9 +117,9 @@ class Fun(commands.Cog):
                 non_bot_members.append(member)
 
             random.seed()
-            rndmem = random.randint(0, len(non_bot_members) - 1)
-            second = non_bot_members[rndmem].display_name
-            ids.append(non_bot_members[rndmem].id)
+            random_member = random.randint(0, len(non_bot_members) - 1)
+            second = non_bot_members[random_member].display_name
+            ids.append(non_bot_members[random_member].id)
 
         ship_name = str(first)[:len(first) // 2] + str(second)[len(second) // 2:]
 
@@ -142,7 +142,7 @@ class Fun(commands.Cog):
                        ":small_red_triangle_down:{}\n"
                        ":small_red_triangle:{}\n"
                        "{}%".format(ship_name, first, second, value))
-        # :heartpulse:
+        # :heart pulse:
 
 
 def setup(bot):

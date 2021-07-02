@@ -72,7 +72,6 @@ class Logger:
             print("Error reading log file. Reason {}".format(type(e).__name__))
             return None
 
-
     @staticmethod
     def write(to_write):
         if Logger.check_for_folder() is False:
@@ -135,14 +134,3 @@ class Logger:
                 return True
             else:
                 return False
-
-
-
-
-
-
-
-
-
-
-

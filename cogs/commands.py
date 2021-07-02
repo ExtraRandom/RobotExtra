@@ -2,7 +2,7 @@ from discord.ext import commands
 from cogs.utils import time_formatting as timefmt
 from PIL import Image
 from datetime import datetime
-from cogs.utils import perms, IO
+from cogs.utils import perms
 import os
 import io
 import discord
@@ -38,13 +38,13 @@ class Commands(commands.Cog):
         Input emote must be a discord custom emoji.
         Doesn't work with animated emoji or default emoji."""
 
-        BASE = Image.open(os.path.join(self.bot.base_directory, "cogs", "data", "memes", "emote_why.png"))
+        img_base = Image.open(os.path.join(self.bot.base_directory, "cogs", "data", "memes", "emote_why.png"))
         res = requests.get(emote.url)
-        EMOTE = Image.open(io.BytesIO(res.content)).convert("RGBA")
-        EMOTE = EMOTE.resize((400, 400))
-        BASE.paste(EMOTE, (69, 420), EMOTE)
+        img_emote = Image.open(io.BytesIO(res.content)).convert("RGBA")
+        img_emote = img_emote.resize((400, 400))
+        img_base.paste(img_emote, (69, 420), img_emote)
         file = io.BytesIO()
-        BASE.save(file, format="PNG")
+        img_base.save(file, format="PNG")
         file.seek(0)
         await ctx.send(file=discord.File(file, "why.png"))
 
@@ -92,11 +92,11 @@ class Commands(commands.Cog):
         """Server Info"""
         dt = ctx.guild.created_at
         year = dt.year
-        month = f'{dt.month:02}'
+        # month = f'{dt.month:02}'
         day = f'{dt.day:01}'
         hour = f'{dt.hour:02}'
         minute = f'{dt.minute:02}'
-        second = f'{dt.second:02}'
+        # second = f'{dt.second:02}'
 
         total_count = ctx.guild.member_count
         member_count = len([m for m in ctx.guild.members if not m.bot])
@@ -138,5 +138,3 @@ class Commands(commands.Cog):
 
 def setup(bot):
     bot.add_cog(Commands(bot))
-
-

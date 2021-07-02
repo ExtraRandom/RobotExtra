@@ -1,12 +1,8 @@
 from discord.ext import commands
-from datetime import datetime
-# from cogs.utils import perms, IO
-# from cogs.utils.logger import Logger
-from cogs.utils import time_formatting as timefmt
-import discord
-import re
 from cogs.utils import ez_utils
 from time import time
+import discord
+import re
 
 
 class ChatFilter(commands.Cog):
@@ -98,4 +94,3 @@ def setup(bot):
     b = ChatFilter(bot)
     bot.add_cog(b)
     bot.add_listener(b.on_message, "on_message")
-

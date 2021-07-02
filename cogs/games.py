@@ -1,5 +1,5 @@
 from discord.ext import commands
-from cogs.utils import perms
+# from cogs.utils import perms
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 import requests
@@ -68,5 +68,3 @@ class Games(commands.Cog):
 
 def setup(bot):
     bot.add_cog(Games(bot))
-
-

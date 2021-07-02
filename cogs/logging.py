@@ -25,8 +25,7 @@ class Logging(commands.Cog):
         self.ids = self.somewhere_nice
 
     async def on_message(self, message):
-        bot_msg = message.author.bot
-        if bot_msg is True:
+        if message.author.bot is True:
             return
 
         if type(message.channel) is discord.DMChannel:
@@ -53,7 +52,7 @@ class Logging(commands.Cog):
             VALUES
                 ({}, {}, "{}")
             """.format(u_id, new_time, message.jump_url)
-            eq = self.bot.execute_query(query)
+            self.bot.execute_query(query)  # eq =
 
     async def on_member_join(self, member):
         if member.guild.id == self.ids["server"]:
@@ -159,7 +158,7 @@ class Logging(commands.Cog):
         # print(before.name)
         # print(before.status)
         # print(after.status)
-
+    """
     async def on_message_edit(self, old, new):
         if new.author.bot is True:
             return
@@ -171,6 +170,7 @@ class Logging(commands.Cog):
     async def on_bulk_message_delete(self, messages):
         for msg in messages:
             print("DELETED BULK", msg.content)
+    """
 
 
 def setup(bot):

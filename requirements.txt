@@ -5,8 +5,8 @@ Pillow
 fake_useragent
 python-dateutil
 asyncpraw
+beautifulsoup4
 
 # git+https://github.com/Rapptz/discord.py
 # git+git://github.com/ExtraRandom/Game_Stores_API
 # mcstatus
-# beautifulsoup4

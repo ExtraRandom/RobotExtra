@@ -178,7 +178,7 @@ class SNBot(commands.Bot):
         return c_list
 
     @staticmethod
-    def ensure_all_fields(settings_data):
+    def ensure_all_fields(settings_data: dict):
         fields = \
             {
                 "keys": {
@@ -247,13 +247,13 @@ class SNBot(commands.Bot):
         for folder_cog in folder_cogs:
             cog_path = "cogs.{}".format(folder_cog)
             if first_time is True:
-                s_data['cogs'][folder_cog] = True
+                s_data['cogs'][folder_cog: str] = True
             else:
                 try:
                     should_load = s_data['cogs'][folder_cog]
                 except KeyError:
                     Logger.write_and_print("New Cog '{}'".format(folder_cog))
-                    s_data['cogs'][folder_cog] = True
+                    s_data['cogs'][folder_cog: str] = True
                     should_load = True
 
                 if should_load is True:
@@ -262,7 +262,7 @@ class SNBot(commands.Bot):
                     except Exception as exc:
                         print("Failed to load cog '{}', Reason: {}".format(folder_cog, type(exc).__name__))
                         Logger.write(exc)
-                        s_data['cogs'][folder_cog] = False
+                        s_data['cogs'][folder_cog: str] = False
 
         """Read in discord token"""
         if first_time is True:

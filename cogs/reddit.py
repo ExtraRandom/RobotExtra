@@ -2,7 +2,7 @@ from discord.ext import commands
 from cogs.utils import perms, IO, time_formatting as timefmt
 from cogs.utils import ez_utils
 import asyncpraw
-import discord
+# import discord
 
 # https://asyncpraw.readthedocs.io/en/latest/getting_started/quick_start.html
 

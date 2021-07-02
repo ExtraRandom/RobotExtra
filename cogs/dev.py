@@ -1,6 +1,5 @@
-import discord.ext.commands
 from discord.ext import commands
-from cogs.utils import perms, errors, ez_utils
+from cogs.utils import perms, errors
 
 
 class Dev(commands.Cog):
@@ -19,7 +18,7 @@ class Dev(commands.Cog):
     async def disable(self, ctx, *, command_name: str):
         """Disable a command"""
         res = self.command_enabled(False, command_name)
-        if res == True:
+        if res is True:
             await ctx.send("Command '{}' disabled".format(command_name))
         else:
             await ctx.send(res)
@@ -29,7 +28,7 @@ class Dev(commands.Cog):
     async def enable(self, ctx, command_name: str):
         """Enable a command"""
         res = self.command_enabled(True, command_name)
-        if res == True:
+        if res is True:
             await ctx.send("Command '{}' enabled".format(command_name))
         else:
             await ctx.send(res)
@@ -92,5 +91,3 @@ class Dev(commands.Cog):
 
 def setup(bot):
     bot.add_cog(Dev(bot))
-
-

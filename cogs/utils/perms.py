@@ -88,5 +88,3 @@ def admin_or_permissions(**perms):
     def predicate(ctx):
         return role_or_permissions(ctx, lambda r: r.name == 'Bot Admin', **perms)
     return commands.check(predicate)
-
-

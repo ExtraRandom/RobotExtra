@@ -19,8 +19,9 @@ class Admin(commands.Cog):
                                   809906596041457694]  # ARCHIVED CHANNELS
         self.purge_immune_role_id = 857532290527657984
 
-    async def find_member_from_id_or_mention(self, ctx, user):
-        """Takes messaage context to check for mentions and user input to check if its an id and returns
+    @staticmethod
+    async def find_member_from_id_or_mention(ctx, user):  # self,
+        """Takes message context to check for mentions and user input to check if its an id and returns
         the member object should it find one, or none if it does not"""
         target = None
 
@@ -44,12 +45,14 @@ class Admin(commands.Cog):
                     user_find = ctx.message.guild.get_member(user_id)
                     if user_find is not None:
                         target = user_find
-                except Exception:
+                except Exception as e:
+                    Logger.write(e)
                     pass
 
         return target
 
-    async def get_role_from_id(self, ctx, role_id: int):
+    @staticmethod
+    async def get_role_from_id(ctx, role_id: int):
         role = ctx.guild.get_role(role_id)
         return role
 
@@ -63,7 +66,7 @@ class Admin(commands.Cog):
         Use with one of the below subcommands to list multiple users.
         """
 
-        target = await Admin.find_member_from_id_or_mention(self, ctx, user)
+        target = await Admin.find_member_from_id_or_mention(ctx, user)  # self,
 
         if target is None:
             await ctx.send("Couldn't find that user")
@@ -287,7 +290,7 @@ class Admin(commands.Cog):
         """List earliest remaining members"""
         users = []
         for member in ctx.guild.members:
-            if member.bot == False:
+            if member.bot is False:
                 users.append((member.joined_at, member))
 
         newest = sorted(users, key=lambda tup: tup[0])[:5]
@@ -346,7 +349,7 @@ class Admin(commands.Cog):
     @perms.is_dev()
     @perms.is_in_somewhere_nice()
     async def purgetxt(self, ctx):
-        """purgetxt"""
+        """purge.txt"""
         purge_file = os.path.join(self.bot.base_directory, "cogs", "data", "purge.txt")
         immune_role = await self.get_role_from_id(ctx, self.purge_immune_role_id)
         with open(purge_file, "w", encoding="utf-8") as fw:
@@ -476,9 +479,9 @@ class Admin(commands.Cog):
             await msg.add_reaction(no)
             await msg.add_reaction(stop)
 
-            def check(reaction, user):
-                return user == ctx.author and reaction.message == msg \
-                       and reaction.emoji in [yes, no, stop]
+            def check(m_reaction, m_user):
+                return m_user == ctx.author and m_reaction.message == msg \
+                       and m_reaction.emoji in [yes, no, stop]
 
             try:
                 reaction, user = await self.bot.wait_for('reaction_add', timeout=timeout_length, check=check)
@@ -508,7 +511,7 @@ class Admin(commands.Cog):
 
         try:
             int(message_id)
-        except Exception as e:
+        except ValueError:
             await ctx.send("`{}` is an invalid message id!".format(message_id))
             return
 
@@ -568,6 +571,7 @@ class Admin(commands.Cog):
                     reacts.add_field(name="{}".format(reaction.emoji.name),
                                      value="[Link]({})".format(link))
                 except Exception as e:
+                    Logger.write(e)
                     continue
 
             if len(reacts.fields) >= 1:
@@ -582,7 +586,7 @@ class Admin(commands.Cog):
         No Argument will return your own info"""
         # https://discordpy.readthedocs.io/en/latest/api.html#member
         # target = None
-        target = await Admin.find_member_from_id_or_mention(self, ctx, user)
+        target = await Admin.find_member_from_id_or_mention(ctx, user)  # self,
 
         if target is None:
             await ctx.send("Couldn't find that user")
@@ -658,8 +662,8 @@ SET
 WHERE
     user_id = {0} AND message_last_time < {1}""".format(msg.author.id, msg.created_at.timestamp(), msg.jump_url)
 
-                eq = self.bot.execute_query(query)
-                eq2 = self.bot.execute_query(query_2)
+                self.bot.execute_query(query)  # eq =
+                self.bot.execute_query(query_2)  # eq2 =
 
         end_time = time()
         await ctx.reply(content="DB updated with messages from the last {} hours. Time taken {}"
@@ -698,5 +702,3 @@ WHERE
 
 def setup(bot):
     bot.add_cog(Admin(bot))
-
-
