@@ -66,6 +66,7 @@ class Reddit(commands.Cog):
     @commands.command(name="findold", hidden=True)
     @perms.is_dev()
     async def find_old(self, ctx):
+        """Find previous reddit posts"""
         me = await self.reddit.user.me()
         async for post in me.new():
             title = post.title
@@ -80,7 +81,7 @@ class Reddit(commands.Cog):
             ))
 
     @staticmethod
-    async def post_advert(reddit, ctx, sub: str, post_title, post_url):
+    async def post_advert(reddit, ctx, sub: str, post_title: str, post_url: str):
         deleted_old = False
         text = "Searching for previous post..."
         msg = await ctx.send(text)

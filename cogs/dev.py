@@ -1,3 +1,4 @@
+import discord
 from discord.ext import commands
 from cogs.utils import perms, errors
 
@@ -5,6 +6,36 @@ from cogs.utils import perms, errors
 class Dev(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.command(hidden=True)
+    @perms.is_dev()
+    async def hidden(self, ctx):
+        """Lists hidden commands"""
+        hidden = []
+
+        for cmd in self.bot.commands:
+            if cmd.hidden is True:
+                hidden.append(cmd)
+
+        msg = "```Hidden Commands\n\n"
+
+        for cmd in hidden:
+            msg += " {:<12} {:<55}\n".format(cmd.name[:12], cmd.short_doc[:55])
+
+        msg += "```"
+        await ctx.send(msg)
+
+    @commands.command(name="whatcog")
+    @perms.is_dev()
+    async def what_cog(self, ctx, *, command_name: str):
+        """Find what cog the given command is from"""
+        cmd = self.get_command(command_name, ignore_check=True)
+        cmd: discord.ext.commands.Command
+        if cmd is None:
+            await ctx.send("Command '{}' not found".format(command_name))
+            return
+        else:
+            await ctx.send("Command '{}' is from the cog '{}'".format(cmd.name, cmd.cog_name))
 
     @commands.group(name="command", invoke_without_command=True, aliases=['cmd'])
     @perms.is_dev()
@@ -78,15 +109,16 @@ class Dev(commands.Cog):
 
         return True
 
-    def get_command(self, command_name: str):
+    def get_command(self, command_name: str, ignore_check=False):
         cmd = self.bot.get_command(command_name)
 
         if cmd is None:
             return None
         else:
-            if cmd.cog_name == "Dev" or cmd.cog_name == "CogManagement":
+            if ignore_check is False and (cmd.cog_name == "Dev" or cmd.cog_name == "CogManagement"):
                 raise errors.ProtectedCog()
-            return cmd
+            else:
+                return cmd
 
 
 def setup(bot):

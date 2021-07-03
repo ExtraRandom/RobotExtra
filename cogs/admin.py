@@ -672,6 +672,7 @@ WHERE
     @commands.command(hidden=True)
     @perms.is_dev()
     async def time(self, ctx, *, time_inp: int):
+        """Time testing"""
         then_ts = datetime.utcnow().timestamp()-time_inp
         await ctx.send("time since {}:\n"
                        "{}".format(datetime.fromtimestamp(then_ts),
@@ -682,6 +683,7 @@ WHERE
     @commands.command(hidden=True)
     @perms.is_dev()
     async def timeb(self, ctx, *, time_inp: int):
+        """Time brief testing"""
         then_ts = datetime.utcnow().timestamp() - time_inp
         await ctx.send("time since {}:\n"
                        "{}".format(datetime.fromtimestamp(then_ts),
@@ -690,6 +692,7 @@ WHERE
     @commands.command(hidden=True)
     @perms.is_dev()
     async def log(self, ctx):
+        """DM latest log file"""
         log_file = os.path.join(self.bot.base_directory, "logs", Logger.get_filename())
         await ctx.author.send(file=discord.File(log_file))
         await ctx.send("DM'd latest log file <:somewhere_nice:766664959979159553>")
@@ -697,6 +700,7 @@ WHERE
     @commands.command(hidden=True)
     @perms.is_dev()
     async def eid(self, ctx, *, emoji: discord.Emoji):
+        """Get ID of an Emoji"""
         await ctx.send(emoji.id)
 
 
