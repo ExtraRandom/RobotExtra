@@ -197,7 +197,7 @@ class SNBot(commands.Bot):
                         "user_agent": None,
                         "post_title": None,
                         "post_url": None
-                    }
+                }
             }
         sd_len = len(settings_data)
         if sd_len == 0:
