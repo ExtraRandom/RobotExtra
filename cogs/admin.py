@@ -20,38 +20,6 @@ class Admin(commands.Cog):
         self.purge_immune_role_id = 857532290527657984
 
     @staticmethod
-    async def find_member_from_id_or_mention(ctx, user):  # self,
-        """Takes message context to check for mentions and user input to check if its an id and returns
-        the member object should it find one, or none if it does not"""
-        target = None
-
-        if user is None:
-            target = ctx.author
-        else:
-            # Check for mention
-            try:
-                mentions = ctx.message.mentions
-                if len(mentions) == 1:
-                    target = mentions[0]
-                elif len(mentions) > 1:
-                    return None
-            except AttributeError:
-                pass
-
-            # Check for id
-            if target is None:
-                try:
-                    user_id = int(user)
-                    user_find = ctx.message.guild.get_member(user_id)
-                    if user_find is not None:
-                        target = user_find
-                except Exception as e:
-                    Logger.write(e)
-                    pass
-
-        return target
-
-    @staticmethod
     async def get_role_from_id(ctx, role_id: int):
         role = ctx.guild.get_role(role_id)
         return role
@@ -66,7 +34,7 @@ class Admin(commands.Cog):
         Use with one of the below subcommands to list multiple users.
         """
 
-        target = await Admin.find_member_from_id_or_mention(ctx, user)  # self,
+        target = await self.bot.find_member_from_id_or_mention(ctx, user)  # self,
 
         if target is None:
             await ctx.send("Couldn't find that user")
@@ -586,7 +554,7 @@ class Admin(commands.Cog):
         No Argument will return your own info"""
         # https://discordpy.readthedocs.io/en/latest/api.html#member
         # target = None
-        target = await Admin.find_member_from_id_or_mention(ctx, user)  # self,
+        target = await self.bot.find_member_from_id_or_mention(ctx, user)  # self,
 
         if target is None:
             await ctx.send("Couldn't find that user")

@@ -178,6 +178,38 @@ class SNBot(commands.Bot):
         return c_list
 
     @staticmethod
+    async def find_member_from_id_or_mention(ctx, user):  # self,
+        """Takes message context to check for mentions and user input to check if its an id and returns
+        the member object should it find one, or none if it does not"""
+        target = None
+
+        if user is None:
+            target = ctx.author
+        else:
+            # Check for mention
+            try:
+                mentions = ctx.message.mentions
+                if len(mentions) == 1:
+                    target = mentions[0]
+                elif len(mentions) > 1:
+                    return None
+            except AttributeError:
+                pass
+
+            # Check for id
+            if target is None:
+                try:
+                    user_id = int(user)
+                    user_find = ctx.message.guild.get_member(user_id)
+                    if user_find is not None:
+                        target = user_find
+                except Exception as e:
+                    Logger.write(e)
+                    pass
+
+        return target
+
+    @staticmethod
     def ensure_all_fields(settings_data: dict):
         fields = \
             {
@@ -247,13 +279,15 @@ class SNBot(commands.Bot):
         for folder_cog in folder_cogs:
             cog_path = "cogs.{}".format(folder_cog)
             if first_time is True:
-                s_data['cogs'][folder_cog: str] = True
+                # noinspection PyTypeChecker
+                s_data['cogs'][folder_cog] = True
             else:
                 try:
                     should_load = s_data['cogs'][folder_cog]
                 except KeyError:
                     Logger.write_and_print("New Cog '{}'".format(folder_cog))
-                    s_data['cogs'][folder_cog: str] = True
+                    # noinspection PyTypeChecker
+                    s_data['cogs'][folder_cog] = True
                     should_load = True
 
                 if should_load is True:
@@ -262,7 +296,8 @@ class SNBot(commands.Bot):
                     except Exception as exc:
                         print("Failed to load cog '{}', Reason: {}".format(folder_cog, type(exc).__name__))
                         Logger.write(exc)
-                        s_data['cogs'][folder_cog: str] = False
+                        # noinspection PyTypeChecker
+                        s_data['cogs'][folder_cog] = False
 
         """Read in discord token"""
         if first_time is True:

@@ -1,7 +1,7 @@
 /logs/*.txt
 /db/*.sqlite
-/configs/settings.json
+/configs/*.*
 /.idea
 /cogs/data/purge.txt
-/cogs/quick_test.py
 /cogs/ignored_cogs
+/cogs/ignored_cogs/*.py
