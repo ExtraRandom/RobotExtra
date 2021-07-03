@@ -32,7 +32,7 @@ class Commands(commands.Cog):
 
     @commands.command()
     @commands.cooldown(1, 20, commands.BucketType.guild)
-    async def why(self, ctx, emote: discord.Emoji):
+    async def why(self, ctx, emote: discord.PartialEmoji):
         """Why does this emote exist?
 
         Input emote must be a discord custom emoji.
@@ -42,7 +42,7 @@ class Commands(commands.Cog):
         res = requests.get(emote.url)
         img_emote = Image.open(io.BytesIO(res.content)).convert("RGBA")
         img_emote = img_emote.resize((400, 400))
-        img_base.paste(img_emote, (69, 420), img_emote)
+        img_base.paste(img_emote, (69, 420), img_emote)  # nice
         file = io.BytesIO()
         img_base.save(file, format="PNG")
         file.seek(0)
@@ -74,6 +74,7 @@ class Commands(commands.Cog):
     @commands.command(hidden=True)
     @perms.is_dev()
     async def invite(self, ctx):
+        """Get bot invite link"""
         await ctx.send("https://discord.com/oauth2/authorize?client_id=571947888662413313&scope=bot")
 
     @commands.command(hidden=True, enabled=False)
