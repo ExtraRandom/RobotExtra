@@ -10,6 +10,15 @@ import time
 import sqlite3
 from sqlite3 import Error
 
+# from discord_components import DiscordComponents
+
+"""
+import sys
+if not sys.warnoptions:
+    import warnings
+    warnings.simplefilter("default")
+"""
+
 
 def get_prefix(d_bot, message):
     prefixes = ["e?", "E?"]
@@ -34,11 +43,11 @@ class SNBot(commands.Bot):
 
         cursor = self.connection.cursor()
         sql_file = os.path.join(self.base_directory, "db", "schema.sql")
-        sql_as_string = open(sql_file).read()
-
-        # print("Running SQL Scheme Script")
-        cursor.executescript(sql_as_string)
-        # print("Database setup done")
+        with open(sql_file, "r") as rf:
+            sql_as_string = rf.read()
+            # print("Running SQL Scheme Script")
+            cursor.executescript(sql_as_string)
+            # print("Database setup done")
 
         self.d_intents = discord.Intents.all()
 
@@ -88,6 +97,8 @@ class SNBot(commands.Bot):
                          "{}\n"
                          "".format(login_msg))
         print(login_msg)
+
+        # DiscordComponents(self)
 
     async def on_message(self, message):
         bot_msg = message.author.bot

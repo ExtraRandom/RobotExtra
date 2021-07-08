@@ -107,7 +107,7 @@ class Admin(commands.Cog):
             new = "{} - Joined: {}".format(user.mention, timefmt.time_ago(user.joined_at))
             users.append(new)
 
-        if len(is_not_member) is 0:
+        if len(is_not_member) == 0:
             await ctx.send("No users missing member role.")
             return
 
@@ -434,7 +434,7 @@ class Admin(commands.Cog):
                 roles.append(role.mention)
 
             roles.reverse()
-            if len(roles) is not 0:
+            if len(roles) != 0:
                 result.add_field(name="Roles",
                                  value="{}".format(" ".join(roles)))
             else:
@@ -520,7 +520,7 @@ class Admin(commands.Cog):
             for emote in custom_emojis:
                 file_type = "png"
                 is_animated = str(emote.split(":")[0]).replace("<", "")
-                if len(is_animated) is not 0:
+                if len(is_animated) != 0:
                     file_type = "gif"
                 emoji_id = str(emote.split(":")[-1]).replace(">", "")
                 link = "<https://cdn.discordapp.com/emojis/{}.{}?v=1>".format(emoji_id, file_type)
@@ -531,7 +531,7 @@ class Admin(commands.Cog):
 
         reactions = message.reactions
 
-        if len(reactions) is not 0:
+        if len(reactions) != 0:
             reacts = discord.Embed(title="Reactions to message with id '{}'".format(message_id))
             for reaction in reactions:
                 try:
@@ -578,7 +578,7 @@ class Admin(commands.Cog):
 
         roles.reverse()
 
-        if len(roles) is not 0:
+        if len(roles) != 0:
             result.add_field(name="Roles",
                              value="{}".format(" ".join(roles)))
         else:

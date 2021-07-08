@@ -44,8 +44,8 @@ class Logger:
 
     @staticmethod
     def write_and_print(to_write):
-        print(to_write)
-        if Logger.write(to_write) is True:
+        # print(to_write)
+        if Logger.write(to_write, print_log=True) is True:
             return True
         else:
             return False
@@ -70,10 +70,11 @@ class Logger:
 
         except Exception as e:
             print("Error reading log file. Reason {}".format(type(e).__name__))
+            print(e)
             return None
 
     @staticmethod
-    def write(to_write):
+    def write(to_write, print_log=False):
         if Logger.check_for_folder() is False:
             return False
 
@@ -82,6 +83,9 @@ class Logger:
             return "Failed to write error log, File is None"
 
         if isinstance(to_write, str):
+            if print_log is True:
+                print(to_write)
+
             if Logger.log_write("{} - {}".format(Logger.time_now(), to_write)) is True:
                 return True
             else:
@@ -108,7 +112,8 @@ class Logger:
                       "Code: {}\n" \
                       "----------------------------------------------------------" \
                       "".format(Logger.time_now(), ex_type, args, err_file, err_line, err_code)
-
+            if print_log is True:
+                print(err_msg)
             if Logger.log_write(err_msg) is True:
                 return True
             else:
@@ -122,6 +127,8 @@ class Logger:
                            "{}\n" \
                            "----------------------------------------------------------" \
                            "".format(Logger.time_now(), string_for_msg)
+            if print_log is True:
+                print(write_string)
             if Logger.log_write(write_string):
                 return True
             else:

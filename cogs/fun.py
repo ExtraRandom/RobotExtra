@@ -55,7 +55,7 @@ class Fun(commands.Cog):
         response = "**My Response is:** {}".format(random.choice(answers))
         await ctx.reply(response)
 
-    @commands.command(name="pick", aliases=["choose", "choice", "select"])
+    @commands.command(name="pick", aliases=["choose", "choice"])
     async def pick_random(self, ctx, *, choices: str):
         """Pick a random choice
 

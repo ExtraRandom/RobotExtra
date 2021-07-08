@@ -9,8 +9,12 @@ def quick_embed(title: str, description: str, colour=discord.colour.Colour.red()
         description=description,
         colour=colour
     )
-    for field in fields:
-        name, value = field
+    try:
+        for field in fields:
+            name, value = field
+            embed.add_field(name=name, value=value)
+    except ValueError:
+        name, value = fields
         embed.add_field(name=name, value=value)
 
     if timestamp is True:

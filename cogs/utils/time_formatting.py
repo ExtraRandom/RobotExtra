@@ -51,7 +51,7 @@ def time_ago(time_input, brief=False, force_into_utc=False):
                 if r_count > 1:  # if more than one attr exists (e.g. month + day) then break to keep it brief
                     break
 
-            if elem is 1:
+            if elem == 1:
                 results.append("{} {}".format(elem, attr[:-1]))
             else:
                 results.append("{} {}".format(elem, attr))
