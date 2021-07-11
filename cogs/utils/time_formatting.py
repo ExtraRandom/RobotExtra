@@ -2,8 +2,7 @@ import datetime
 from dateutil.relativedelta import relativedelta
 
 
-def day_suffix(day):
-    day = int(day)
+def day_suffix(day: int):
     if 4 <= day <= 20 or 24 <= day <= 30:
         suffix = "th"
     else:
