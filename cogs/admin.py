@@ -26,7 +26,6 @@ class Admin(commands.Cog):
 
     @commands.group(name="check", invoke_without_command=True, aliases=['chk'])
     @perms.is_admin()
-    # @perms.is_in_somewhere_nice()
     async def _check(self, ctx, *, user: str):
         """Check member activity
 
@@ -78,7 +77,6 @@ class Admin(commands.Cog):
 
     @_check.command(name="member", aliases=["members", "mems", "mem"])
     @perms.is_admin()
-    @perms.is_in_somewhere_nice()
     async def check_member(self, ctx):
         """List users who didn't read the rules
 
@@ -116,7 +114,6 @@ class Admin(commands.Cog):
 
     @_check.command(name="all")
     @perms.is_admin()
-    @perms.is_in_somewhere_nice()
     async def check_all(self, ctx):
         """List all server members who have never spoken"""
         users = []
@@ -147,7 +144,6 @@ class Admin(commands.Cog):
 
     @_check.command(name="active")
     @perms.is_admin()
-    @perms.is_in_somewhere_nice()
     async def check_active(self, ctx):
         """List inactive members
 
@@ -158,13 +154,13 @@ class Admin(commands.Cog):
         for member in ctx.guild.members:
             user_id = member.id
             query = """
-        SELECT
-            *
-        FROM
-            activity
-        WHERE
-            user_id = "{}"
-                    """.format(user_id)
+            SELECT
+                *
+            FROM
+                activity
+            WHERE
+                user_id = "{}" AND server_id = {}
+            """.format(user_id, ctx.guild.id)
             erq = self.bot.execute_read_query(query)
             if member.bot:
                 continue
@@ -632,8 +628,8 @@ SET
 WHERE
     user_id = {0} AND message_last_time < {1}""".format(msg.author.id, msg.created_at.timestamp(), msg.jump_url)
 
-                self.bot.execute_query(query)  # eq =
-                self.bot.execute_query(query_2)  # eq2 =
+                self.bot.execute_query(query)
+                self.bot.execute_query(query_2)
 
         end_time = time()
         await ctx.reply(content="DB updated with messages from the last {} hours. Time taken {}"
