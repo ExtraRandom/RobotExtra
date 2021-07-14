@@ -29,12 +29,19 @@ def is_in_somewhere_nice():
 
 def is_admin():
     def predicate(ctx):
-        return ctx.message.author.id in [735446137489719307, 750341810873696316, 92562410493202432, 309514963037192204]
+        if ctx.message.guild.id == 750689226382901288:  # sn
+            return ctx.message.author.id in [735446137489719307, 750341810873696316,
+                                             92562410493202432, 309514963037192204]
+        elif ctx.message.guild.id == 863589037959938098:
+            return ctx.message.author.id in [287420218651967518, 92562410493202432]  # utms
+        else:
+            if ctx.message.author.id == 92562410493202432:
+                return True
 
     return commands.check(predicate)
 
 
-def is_admin_or_mod():
+def is_admin_or_mod():  # not used
     def predicate(ctx):
         return ctx.message.author.id in [735446137489719307, 750341810873696316, 92562410493202432, 309514963037192204]
 
