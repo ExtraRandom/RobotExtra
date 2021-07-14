@@ -53,7 +53,7 @@ class SNBot(commands.Bot):
 
         super().__init__(command_prefix=get_prefix,
                          description="Bot Developed by @Extra_Random#2564\n"
-                                     "Source code: https://github.com/ExtraRandom/SNBot",
+                                     "Source code: https://github.com/ExtraRandom/RobotExtra",
                          pm_help=False,
                          intents=self.d_intents)
 
