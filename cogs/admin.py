@@ -599,6 +599,7 @@ class Admin(commands.Cog):
 
     @commands.command(hidden=True, name="updatedb")
     @perms.is_dev()
+    @perms.is_in_somewhere_nice()
     async def update_db(self, ctx, days_ago: int = 2):
         """Used to update the message time db.
         Kinda janky"""

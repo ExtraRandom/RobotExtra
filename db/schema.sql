@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS tracking (
-    user_id STRING PRIMARY KEY,
+    user_id TEXT PRIMARY KEY,
     message_last_time INT,
-    message_last_url STRING
+    message_last_url TEXT
 );

@@ -25,7 +25,7 @@ class Dev(commands.Cog):
         msg += "```"
         await ctx.send(msg)
 
-    @commands.command(name="whatcog")
+    @commands.command(name="whatcog", hidden=True)
     @perms.is_dev()
     async def what_cog(self, ctx, *, command_name: str):
         """Find what cog the given command is from"""
@@ -37,7 +37,7 @@ class Dev(commands.Cog):
         else:
             await ctx.send("Command '{}' is from the cog '{}'".format(cmd.name, cmd.cog_name))
 
-    @commands.group(name="command", invoke_without_command=True, aliases=['cmd'])
+    @commands.group(name="command", invoke_without_command=True, aliases=['cmd'], hidden=True)
     @perms.is_dev()
     async def command_group(self, ctx):
         """Command management"""

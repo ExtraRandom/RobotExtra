@@ -32,6 +32,7 @@ class Commands(commands.Cog):
 
     @commands.command()
     @commands.cooldown(1, 20, commands.BucketType.guild)
+    @perms.is_in_somewhere_nice()
     async def why(self, ctx, emote: discord.PartialEmoji):
         """Why does this emote exist?
 
@@ -50,6 +51,7 @@ class Commands(commands.Cog):
 
     @commands.command()
     @perms.is_admin()
+    @perms.is_in_somewhere_nice()
     async def times(self, ctx):
         """Get the current time for the admins"""
         extra_time = datetime.now(tz=pytz.timezone('Europe/London'))

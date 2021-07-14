@@ -39,6 +39,7 @@ class Reddit(commands.Cog):
 
     @commands.command(enabled=False, hidden=True)
     @perms.is_dev()
+    @perms.is_in_somewhere_nice()
     async def rtest(self, ctx):
         """reddit test post"""
         await ctx.send("submitting test post")
@@ -51,6 +52,7 @@ class Reddit(commands.Cog):
 
     @commands.command(name="pds", hidden=True)
     @perms.is_dev()
+    @perms.is_in_somewhere_nice()
     async def post_discord_server(self, ctx):
         """Post server ad on r/discordservers"""
         sub = "discordservers"
@@ -58,6 +60,7 @@ class Reddit(commands.Cog):
 
     @commands.command(name="pdas", hidden=True)
     @perms.is_dev()
+    @perms.is_in_somewhere_nice()
     async def post_discord_app_server(self, ctx):
         """Post server ad on r/DiscordAppServers"""
         sub = "DiscordAppServers"
@@ -65,6 +68,7 @@ class Reddit(commands.Cog):
 
     @commands.command(name="findold", hidden=True)
     @perms.is_dev()
+    @perms.is_in_somewhere_nice()
     async def find_old(self, ctx):
         """Find previous reddit posts"""
         me = await self.reddit.user.me()

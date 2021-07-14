@@ -35,17 +35,6 @@ class Logging(commands.Cog):
             u_id = message.author.id
             new_time = message.created_at.timestamp()
 
-            """
-            try:
-                _, old_time, __ = self.bot.db_quick_read(u_id)
-                self.bot.dispatch("msg_xp", u_id, old_time, new_time)
-
-            except ValueError:
-                pass
-            except IndexError:
-                pass
-            """
-
             query = """
             INSERT OR REPLACE INTO
                 tracking(user_id, message_last_time, message_last_url)
