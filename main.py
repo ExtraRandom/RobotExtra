@@ -37,7 +37,7 @@ class SNBot(commands.Bot):
             s_connection = sqlite3.connect(db_path)  # print("Connected to the DB")
         except Error as e:
             print(f"Error connecting to DB: {e}")
-            raise Exception("shits fucked oh dear god please fix")
+            raise Exception("Couldn't connect to the DB!")
 
         self.connection = s_connection
 
@@ -78,17 +78,20 @@ class SNBot(commands.Bot):
             print(f"Error executing read query: {e}")
             return None
 
-    def db_quick_read(self, user_id):
+    def db_quick_read(self, user_id, server_id):
         query = """
         SELECT
             *
         FROM
-            tracking
+            activity
         WHERE
-            user_id = "{}"
-        """.format(user_id)
-        res = self.execute_read_query(query)
-        return res[0]
+            user_id = "{}" AND server_id = {}
+        """.format(user_id, server_id)
+        res = self.execute_read_query(query)  # print(res)
+        try:
+            return res[0]
+        except IndexError:
+            return None
 
     async def on_ready(self):
         self.reconnect_time = datetime.utcnow()

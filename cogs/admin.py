@@ -26,7 +26,7 @@ class Admin(commands.Cog):
 
     @commands.group(name="check", invoke_without_command=True, aliases=['chk'])
     @perms.is_admin()
-    @perms.is_in_somewhere_nice()
+    # @perms.is_in_somewhere_nice()
     async def _check(self, ctx, *, user: str):
         """Check member activity
 
@@ -55,7 +55,7 @@ class Admin(commands.Cog):
             await ctx.send(embed=result)
             return
 
-        erq = self.bot.db_quick_read(target.id)
+        erq = self.bot.db_quick_read(target.id, ctx.message.guild.id)
 
         if len(erq) == 0:
             result.add_field(name="Last Message Time:",
@@ -64,7 +64,7 @@ class Admin(commands.Cog):
             await ctx.send(embed=result)
             return
 
-        user, m_time, m_url = erq
+        _, user, server, m_time, m_url = erq
         n_time = str(datetime.fromtimestamp(m_time)).split(".")[0]
 
         result.add_field(name="Last Message Time:",
@@ -126,7 +126,7 @@ class Admin(commands.Cog):
     SELECT
         *
     FROM
-        tracking
+        activity
     WHERE
         user_id = "{}"
                 """.format(user_id)
@@ -161,7 +161,7 @@ class Admin(commands.Cog):
         SELECT
             *
         FROM
-            tracking
+            activity
         WHERE
             user_id = "{}"
                     """.format(user_id)
@@ -172,7 +172,7 @@ class Admin(commands.Cog):
             if len(erq) == 0:
                 continue
             else:
-                last_id, last_time, last_url = erq[0]
+                _, server_id, last_id, last_time, last_url = erq[0]
                 total_time = datetime.utcnow().timestamp() - last_time
                 if total_time >= 2419200:
                     result = discord.Embed(title="{}#{}".format(member.name, member.discriminator),
@@ -293,7 +293,7 @@ class Admin(commands.Cog):
         SELECT
             *
         FROM
-            tracking
+            activity
         WHERE
             user_id = "{}"
                     """.format(user_id)
@@ -303,7 +303,7 @@ class Admin(commands.Cog):
                 count += 1
                 continue
             else:
-                last_id, last_time, last_url = erq[0]
+                _, server_id, last_id, last_time, last_url = erq[0]
                 total_time = datetime.utcnow().timestamp() - last_time
                 if total_time >= 2419200:
                     count += 1
@@ -332,7 +332,7 @@ class Admin(commands.Cog):
             SELECT
                 *
             FROM
-                tracking
+                activity
             WHERE
                 user_id = "{}"
                         """.format(user_id)
@@ -348,7 +348,7 @@ class Admin(commands.Cog):
                              "\n".format(member, kick_reason, datetime.fromtimestamp(float(join_time))))
 
                 else:
-                    last_id, last_time, last_url = erq[0]
+                    _, server_id, last_id, last_time, last_url = erq[0]
                     total_time = datetime.utcnow().timestamp() - last_time
                     if total_time >= 2419200:
                         kick_reason = "Inactive"
@@ -387,7 +387,7 @@ class Admin(commands.Cog):
         SELECT
             *
         FROM
-            tracking
+            activity
         WHERE
             user_id = "{}"
                     """.format(user_id)
@@ -407,7 +407,7 @@ class Admin(commands.Cog):
                 result.add_field(name="Joined Server:",
                                  value="{} UTC".format(join_time))
             else:
-                last_id, last_time, last_url = erq[0]
+                _, server_id, last_id, last_time, last_url = erq[0]
                 total_time = datetime.utcnow().timestamp() - last_time
                 if total_time >= 2419200:
                     kick_reason = "inactive"
@@ -597,7 +597,8 @@ class Admin(commands.Cog):
 
         await ctx.send(embed=result)
 
-    @commands.command(hidden=True, name="updatedb")
+    """This command is outdated"""
+    @commands.command(hidden=True, name="updatedb", enabled=False)
     @perms.is_dev()
     @perms.is_in_somewhere_nice()
     async def update_db(self, ctx, days_ago: int = 2):

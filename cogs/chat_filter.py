@@ -11,13 +11,37 @@ class ChatFilter(commands.Cog):
         self.regex = r"(https?:\/\/)?(www\.)?(discord\.(gg|io|me|li)|discordapp\.com\/invite|discord\.com\/invite)" \
                      "\/([a-zA-Z0-9]+)"
 
-        self.log_channel = 860513900994232372
+        self.sn_id = 750689226382901288
+        self.utms_id = 863589037959938098
 
-        self.ignore_channels = []
-        self.ignore_categories = [750690307191865445, 750974763249172482]  # SERVER, STAFF
-        # self.ignore_categories = [] # testing
-        # self.ignore_roles = []  # testing
-        self.ignore_roles = [765458196365967370]
+        self.utms = {
+            "log": 864755033757057054,  # #invites-log
+            "ignore": {
+                "channels": [],
+                "categories": [
+                    863613866327801876,  # SERVER THINGS
+                    863621225090908180  # ADMIN
+                ],
+                "roles": [
+                    863621296462102538,  # Admin
+                ]
+            }
+        }
+
+        self.sn = {
+            "log": 860513900994232372,  # #extras_invite_log
+            "ignore": {
+                "channels": [],
+                "categories": [
+                    750690307191865445,  # SERVER
+                    750974763249172482  # STAFF
+                ],
+                "roles": [
+                    765458196365967370,  # Admin
+                ]
+            }
+        }
+
         self.warning_delete_time = 20
         self.last_warning_time = 0
 
@@ -28,19 +52,25 @@ class ChatFilter(commands.Cog):
         if type(message.channel) == discord.DMChannel:
             return
 
-        if message.guild.id == 750689226382901288:  # and message.channel.id == 766644856524636170: testing
+        ids = None
+        if message.guild.id == self.sn_id:
+            ids = self.sn
+        elif message.guild.id == self.utms_id:
+            ids = self.utms
+
+        if ids is not None:
             invites = re.findall(self.regex, message.content)
 
-            if len(invites) is 0:
+            if len(invites) == 0:
                 return
             else:
                 ignore_roles_as_roles = []
-                log = message.guild.get_channel(self.log_channel)
-                for role in self.ignore_roles:
+                log = message.guild.get_channel(ids['log'])
+                for role in ids['ignore']['roles']:
                     ignore_roles_as_roles.append(message.guild.get_role(role))
 
-                if message.channel.category_id in self.ignore_categories \
-                    or message.channel.id in self.ignore_channels \
+                if message.channel.category_id in ids['ignore']['categories'] \
+                    or message.channel.id in ids['ignore']['channels'] \
                         or any(role in message.author.roles for role in ignore_roles_as_roles):
 
                     await log.send(embed=ez_utils.quick_embed(

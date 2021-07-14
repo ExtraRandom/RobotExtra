@@ -24,6 +24,8 @@ class Logging(commands.Cog):
 
         self.ids = self.somewhere_nice
 
+        self.tracked_server_ids = [750689226382901288, 863589037959938098]
+
     async def on_message(self, message):
         if message.author.bot is True:
             return
@@ -31,16 +33,30 @@ class Logging(commands.Cog):
         if type(message.channel) is discord.DMChannel:
             return
 
-        if message.guild.id == self.ids["server"]:
+        if message.guild.id in self.tracked_server_ids:
             u_id = message.author.id
             new_time = message.created_at.timestamp()
 
-            query = """
-            INSERT OR REPLACE INTO
-                tracking(user_id, message_last_time, message_last_url)
-            VALUES
-                ({}, {}, "{}")
-            """.format(u_id, new_time, message.jump_url)
+            check = self.bot.db_quick_read(u_id, message.guild.id)
+            db_id, __user_id, __server_id, __message_last_time, __message_last_url = check
+            if check is None:
+                query = """
+                INSERT INTO
+                    activity(user_id, server_id, message_last_time, message_last_url)
+                VALUES
+                    ({}, {}, {}, "{}", {})
+                """.format(u_id, message.guild.id, new_time, message.jump_url, message.guild.id)
+            else:
+                query = """
+                UPDATE
+                    activity
+                SET
+                    message_last_time = {},
+                    message_last_url = "{}"
+                WHERE
+                    db_id = {}
+                """.format(new_time, message.jump_url, db_id)
+
             self.bot.execute_query(query)  # eq =
 
     async def on_member_join(self, member):
