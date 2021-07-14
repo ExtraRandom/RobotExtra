@@ -14,9 +14,12 @@ import os
 class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.ignore_categories = [758500155207974983,  # STAFF LOGS
-                                  750690307191865445,  # SERVER
-                                  809906596041457694]  # ARCHIVED CHANNELS
+        self.ignore_categories = [758500155207974983,  # STAFF LOGS - SN
+                                  750690307191865445,  # SERVER - SN
+                                  809906596041457694,  # ARCHIVED CHANNELS - SN
+                                  863644215614898197,  # ADMIN LOGS - UTMS
+                                  863613866327801876  # SERVER THINGS - UTMS
+                                  ]
         self.purge_immune_role_id = 857532290527657984
 
     @staticmethod
@@ -56,7 +59,7 @@ class Admin(commands.Cog):
 
         erq = self.bot.db_quick_read(target.id, ctx.message.guild.id)
 
-        if len(erq) == 0:
+        if erq is None:
             result.add_field(name="Last Message Time:",
                              value="Never")
             result.colour = discord.Color.red()
@@ -593,10 +596,8 @@ class Admin(commands.Cog):
 
         await ctx.send(embed=result)
 
-    """This command is outdated"""
     @commands.command(hidden=True, name="updatedb", enabled=False)
     @perms.is_dev()
-    @perms.is_in_somewhere_nice()
     async def update_db(self, ctx, days_ago: int = 2):
         """Used to update the message time db.
         Kinda janky"""
@@ -613,26 +614,31 @@ class Admin(commands.Cog):
                 if msg.author.bot is True:
                     continue
 
-                query = """
-INSERT OR IGNORE INTO 
-    tracking (user_id, message_last_time, message_last_url)
-VALUES
-    ({0}, {1}, "{2}")
-                """.format(msg.author.id, msg.created_at.timestamp(), msg.jump_url)
+                check = self.bot.db_quick_read(msg.author.id, msg.guild.id)
 
-                query_2 = """
-UPDATE
-    tracking
-SET
-    message_last_time = {1}, message_last_url = "{2}"
-WHERE
-    user_id = {0} AND message_last_time < {1}""".format(msg.author.id, msg.created_at.timestamp(), msg.jump_url)
+                if check is None:
+                    query = """
+                    INSERT INTO
+                        activity(user_id, server_id, message_last_time, message_last_url)
+                    VALUES
+                        ({}, {}, {}, "{}")
+                    """.format(msg.author.id, msg.guild.id, msg.created_at.timestamp(), msg.jump_url)
+                else:
+                    db_id, __user_id, __server_id, __message_last_time, __message_last_url = check
+                    query = """
+                    UPDATE
+                        activity
+                    SET
+                        message_last_time = {},
+                        message_last_url = "{}"
+                    WHERE
+                        db_id = {}
+                    """.format(msg.created_at.timestamp(), msg.jump_url, db_id)
 
                 self.bot.execute_query(query)
-                self.bot.execute_query(query_2)
 
         end_time = time()
-        await ctx.reply(content="DB updated with messages from the last {} hours. Time taken {}"
+        await ctx.reply(content="DB updated with messages from the last {} days. Time taken {}"
                                 "".format(days_ago, end_time - start_time))
 
     @commands.command(hidden=True)

@@ -38,15 +38,15 @@ class Logging(commands.Cog):
             new_time = message.created_at.timestamp()
 
             check = self.bot.db_quick_read(u_id, message.guild.id)
-            db_id, __user_id, __server_id, __message_last_time, __message_last_url = check
             if check is None:
                 query = """
                 INSERT INTO
                     activity(user_id, server_id, message_last_time, message_last_url)
                 VALUES
-                    ({}, {}, {}, "{}", {})
-                """.format(u_id, message.guild.id, new_time, message.jump_url, message.guild.id)
+                    ({}, {}, {}, "{}")
+                """.format(u_id, message.guild.id, new_time, message.jump_url)
             else:
+                db_id, __user_id, __server_id, __message_last_time, __message_last_url = check
                 query = """
                 UPDATE
                     activity

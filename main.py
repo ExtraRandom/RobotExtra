@@ -217,9 +217,11 @@ class SNBot(commands.Bot):
                     user_find = ctx.message.guild.get_member(user_id)
                     if user_find is not None:
                         target = user_find
+                except ValueError:
+                    return None
                 except Exception as e:
                     Logger.write(e)
-                    pass
+                    return None
 
         return target
 
