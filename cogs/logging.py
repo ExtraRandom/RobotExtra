@@ -36,6 +36,13 @@ class Logging(commands.Cog):
 
         # self.ids = self.somewhere_nice
 
+        self.ignore_categories = [758500155207974983,  # STAFF LOGS - SN
+                                  750690307191865445,  # SERVER - SN
+                                  809906596041457694,  # ARCHIVED CHANNELS - SN
+                                  863644215614898197,  # ADMIN LOGS - UTMS
+                                  863613866327801876  # SERVER THINGS - UTMS
+                                  ]
+
         self.tracked_server_ids = [750689226382901288, 863589037959938098]
 
     """
@@ -46,7 +53,7 @@ class Logging(commands.Cog):
         server = {"{}".format(guild): {}}
     """
 
-    async def on_message(self, message):  # log user_id, server_id, message time and jump url to db
+    async def on_message(self, message: discord.Message):  # log user_id, server_id, message time and jump url to db
         if message.author.bot is True:
             return
 
@@ -54,6 +61,9 @@ class Logging(commands.Cog):
             return
 
         if message.guild.id in self.tracked_server_ids:
+            if message.channel.category_id in self.ignore_categories:  # don't log if in these categories
+                return
+
             u_id = message.author.id
             new_time = message.created_at.timestamp()
 
