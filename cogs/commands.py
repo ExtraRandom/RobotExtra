@@ -125,7 +125,7 @@ class Commands(commands.Cog):
         bot_owner = bot_info.owner.mention
         discord_py_version = discord.__version__
         python_version = py_v()
-        github_link = "https://github.com/ExtraRandom/SNBot"
+        github_link = "https://github.com/ExtraRandom/RobotExtra"
         uptime = timefmt.time_ago(self.bot.start_time.timestamp())
 
         res = discord.Embed(title="Bot Info", colour=discord.colour.Colour.dark_blue())
