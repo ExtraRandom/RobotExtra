@@ -35,7 +35,6 @@ class Admin(commands.Cog):
         Use with a user id or mention to check when a member last spoke.
         Use with one of the below subcommands to list multiple users.
         """
-
         target = await self.bot.find_member_from_id_or_mention(ctx, user)  # self,
 
         if target is None:
@@ -545,7 +544,7 @@ class Admin(commands.Cog):
                 await ctx.send(embed=reacts)
 
     @commands.command(enabled=True, hidden=False)
-    @perms.is_admin()
+    # @perms.is_admin()
     async def info(self, ctx, *, user=None):
         """Show info of a member
 

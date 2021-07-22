@@ -1,4 +1,5 @@
-discord.py[voice]
+discord.py
+# git+https://github.com/Rapptz/discord.py
 requests
 pytz
 Pillow
@@ -6,7 +7,4 @@ fake_useragent
 python-dateutil
 asyncpraw
 beautifulsoup4
-
-# git+https://github.com/Rapptz/discord.py
-# git+git://github.com/ExtraRandom/Game_Stores_API
-# mcstatus
+discord-components
