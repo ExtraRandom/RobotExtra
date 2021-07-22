@@ -11,6 +11,7 @@ class ChatFilter(commands.Cog):
         self.regex = r"(https?:\/\/)?(www\.)?(discord\.(gg|io|me|li)|discordapp\.com\/invite|discord\.com\/invite)" \
                      "\/([a-zA-Z0-9]+)"
 
+        """
         self.sn_id = 750689226382901288
         self.utms_id = 863589037959938098
 
@@ -41,9 +42,10 @@ class ChatFilter(commands.Cog):
                 ]
             }
         }
-
+        """
         self.warning_delete_time = 20
         self.last_warning_time = 0
+        # TODO change to dict of server id: time of last warning
 
     async def on_message(self, message):
         if message.author.bot is True:
@@ -52,25 +54,27 @@ class ChatFilter(commands.Cog):
         if type(message.channel) == discord.DMChannel:
             return
 
-        ids = None
-        if message.guild.id == self.sn_id:
-            ids = self.sn
-        elif message.guild.id == self.utms_id:
-            ids = self.utms
+        gid = str(message.guild.id)
+        config = self.bot.servers_config[gid]
 
-        if ids is not None:
+        log_channel = config['invites']['log']
+        ignore_channels = config['invites']['ignore_channels']
+        ignore_roles = config['invites']['ignore_roles']
+        ignore_categories = config['invites']['ignore_categories']
+
+        if log_channel is not None:
             invites = re.findall(self.regex, message.content)
 
             if len(invites) == 0:
                 return
             else:
                 ignore_roles_as_roles = []
-                log = message.guild.get_channel(ids['log'])
-                for role in ids['ignore']['roles']:
+                log = message.guild.get_channel(log_channel)
+                for role in ignore_roles:
                     ignore_roles_as_roles.append(message.guild.get_role(role))
 
-                if message.channel.category_id in ids['ignore']['categories'] \
-                    or message.channel.id in ids['ignore']['channels'] \
+                if message.channel.category_id in ignore_categories \
+                    or message.channel.id in ignore_channels \
                         or any(role in message.author.roles for role in ignore_roles_as_roles):
 
                     await log.send(embed=ez_utils.quick_embed(

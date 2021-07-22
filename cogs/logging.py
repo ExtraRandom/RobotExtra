@@ -11,11 +11,6 @@ class Logging(commands.Cog):
         self.bot = bot
 
         """
-        self.config = IO.read_server_as_json()
-        if self.config is None:
-            self.config = {}
-        """
-
         self.somewhere_nice = {
             "server": 750689226382901288,
             "join_leave_log": 796381270799024150,
@@ -44,14 +39,7 @@ class Logging(commands.Cog):
                                   ]
 
         self.tracked_server_ids = [750689226382901288, 863589037959938098]
-
-    """
-    @commands.command()
-    @perms.is_dev()
-    async def add_server(self, ctx):
-        guild = ctx.message.guild.id
-        server = {"{}".format(guild): {}}
-    """
+        """
 
     async def on_message(self, message: discord.Message):  # log user_id, server_id, message time and jump url to db
         if message.author.bot is True:
@@ -60,8 +48,12 @@ class Logging(commands.Cog):
         if type(message.channel) is discord.DMChannel:
             return
 
-        if message.guild.id in self.tracked_server_ids:
-            if message.channel.category_id in self.ignore_categories:  # don't log if in these categories
+        gid = str(message.guild.id)
+        config = self.bot.servers_config[gid]
+
+        if config['tracking']['last_message']:
+            if message.channel.category_id in config['tracking']['ignore_categories']:
+                # don't log if in these categories
                 return
 
             u_id = message.author.id
@@ -90,19 +82,11 @@ class Logging(commands.Cog):
             self.bot.execute_query(query)  # eq =
 
     async def on_member_join(self, member):
-        guild = member.guild
-        if guild.id in self.tracked_server_ids:
-            if guild.id == self.somewhere_nice['server']:
-                ids = self.somewhere_nice
-            elif guild.id == self.utms['server']:
-                ids = self.utms
-            else:
-                return
-        else:
-            return
+        gid = str(member.guild.id)
+        config = self.bot.servers_config[gid]
 
-        if member.guild.id == ids["server"]:
-            channel = discord.utils.get(member.guild.text_channels, id=ids["join_leave_log"])
+        if config['logging']['join_leave_log'] is not None:
+            channel = discord.utils.get(member.guild.text_channels, id=config['logging']["join_leave_log"])
 
             account_age = timefmt.time_ago(member.created_at)
             age_stamp = datetime.utcnow().timestamp() - member.created_at.timestamp()
@@ -126,32 +110,25 @@ class Logging(commands.Cog):
             await channel.send(embed=result)
 
     async def on_member_remove(self, member):
-        guild = member.guild
-        if guild.id in self.tracked_server_ids:
-            if guild.id == self.somewhere_nice['server']:
-                ids = self.somewhere_nice
-            elif guild.id == self.utms['server']:
-                ids = self.utms
-            else:
-                return
-        else:
-            return
+        gid = str(member.guild.id)
+        config = self.bot.servers_config[gid]
 
-        if member.guild.id == ids["server"]:
-            # Log kick/ban if applicable
-            async for entry in member.guild.audit_logs(limit=5):
-                if entry.action == discord.AuditLogAction.kick and entry.target.name == member.name:
-                    channel = discord.utils.get(member.guild.text_channels, id=ids["kick_ban_log"])
-                    user = entry.target
-                    msg = discord.Embed(title="{} kicked".format(user),
-                                        colour=discord.Colour.dark_gold(),
-                                        description="**Offender:** {}\n"
-                                                    "**Reason:** {}\n"
-                                                    "**Responsible admin:** {}"
-                                                    "".format(entry.target, entry.reason, entry.user))
-                    msg.set_footer(text="User ID: {}".format(user.id))
-                    msg.timestamp = datetime.utcnow()
-                    await channel.send(embed=msg)
+        if config['logging']['join_leave_log'] is not None:
+            # Log kick/ban if applicable and set in config
+            if config['logging']['kick_ban_log'] is not None:
+                async for entry in member.guild.audit_logs(limit=5):
+                    if entry.action == discord.AuditLogAction.kick and entry.target.name == member.name:
+                        channel = discord.utils.get(member.guild.text_channels, id=config['logging']["kick_ban_log"])
+                        user = entry.target
+                        msg = discord.Embed(title="{} kicked".format(user),
+                                            colour=discord.Colour.dark_gold(),
+                                            description="**Offender:** {}\n"
+                                                        "**Reason:** {}\n"
+                                                        "**Responsible admin:** {}"
+                                                        "".format(entry.target, entry.reason, entry.user))
+                        msg.set_footer(text="User ID: {}".format(user.id))
+                        msg.timestamp = datetime.utcnow()
+                        await channel.send(embed=msg)
 
             # Log leave
             role_list = member.roles
@@ -173,25 +150,18 @@ class Logging(commands.Cog):
             result.timestamp = datetime.utcnow()
             result.set_footer(text="ID: {}".format(member.id))
 
-            channel = discord.utils.get(member.guild.text_channels, id=ids["join_leave_log"])
+            channel = discord.utils.get(member.guild.text_channels, id=config['logging']["join_leave_log"])
 
             await channel.send(embed=result)
 
     async def on_member_ban(self, guild, user):
-        if guild.id in self.tracked_server_ids:
-            if guild.id == self.somewhere_nice['server']:
-                ids = self.somewhere_nice
-            elif guild.id == self.utms['server']:
-                ids = self.utms
-            else:
-                return
-        else:
-            return
+        gid = str(guild.id)
+        config = self.bot.servers_config[gid]
 
-        if guild.id == ids["server"]:
+        if config['logging']['kick_ban_log'] is not None:
             async for entry in guild.audit_logs(limit=5):
                 if entry.action == discord.AuditLogAction.ban and entry.target.name == user.name:
-                    channel = discord.utils.get(guild.text_channels, id=ids["kick_ban_log"])
+                    channel = discord.utils.get(guild.text_channels, id=config['logging']["kick_ban_log"])
                     user = entry.target
                     msg = discord.Embed(title="{} banned".format(user),
                                         colour=discord.Colour.dark_red(),
@@ -205,19 +175,13 @@ class Logging(commands.Cog):
                     return
 
     async def on_member_unban(self, guild, user):
-        if guild.id in self.tracked_server_ids:
-            if guild.id == self.somewhere_nice['server']:
-                ids = self.somewhere_nice
-            elif guild.id == self.utms['server']:
-                ids = self.utms
-            else:
-                return
-        else:
-            return
-        if guild.id == ids["server"]:
+        gid = str(guild.id)
+        config = self.bot.servers_config[gid]
+
+        if config['logging']['kick_ban_log'] is not None:
             async for entry in guild.audit_logs(limit=5):
                 if entry.action == discord.AuditLogAction.unban and entry.target.name == user.name:
-                    channel = discord.utils.get(guild.text_channels, id=ids["kick_ban_log"])
+                    channel = discord.utils.get(guild.text_channels, id=config['logging']["kick_ban_log"])
                     user = entry.target
                     msg = discord.Embed(title="{} unbanned".format(user),
                                         colour=discord.Colour.green(),

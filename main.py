@@ -10,7 +10,7 @@ import time
 import sqlite3
 from sqlite3 import Error
 
-# from discord_components import DiscordComponents
+from discord_components import DiscordComponents
 
 """
 import sys
@@ -28,6 +28,7 @@ def get_prefix(d_bot, message):
 class SNBot(commands.Bot):
     def __init__(self):
         self.base_directory = os.path.dirname(os.path.realpath(__file__))
+        self.servers_config = {}
 
         self.start_time = None
         self.reconnect_time = None
@@ -101,7 +102,11 @@ class SNBot(commands.Bot):
                          "".format(login_msg))
         print(login_msg)
 
-        # DiscordComponents(self)
+        DiscordComponents(self)
+
+        self.ensure_all_fields_server()
+        print(self.servers_config)
+        IO.write_server(self.servers_config)
 
     async def on_message(self, message):
         bot_msg = message.author.bot
@@ -148,8 +153,12 @@ class SNBot(commands.Bot):
         cmd_sig = cmd.signature
         cmd_dir = dir(ctx.command)
         cmd_aliases = cmd.aliases
+        cmd_parent = cmd.full_parent_name
 
-        msg = "```e?{} {}\n\n".format(cmd_name, cmd_sig)
+        if cmd_parent:
+            msg = "```e?{} {} {}\n\n".format(cmd_parent, cmd_name, cmd_sig)
+        else:
+            msg = "```e?{} {}\n\n".format(cmd_name, cmd_sig)
 
         if "commands" in cmd_dir and cmd_help is None:
             cmd_help = "Use with one of the sub commands listed below"
@@ -269,8 +278,60 @@ class SNBot(commands.Bot):
                             settings_data[top_field][inner_field] = None
                             Logger.write("Settings.json - Added inner field '{}' to category '{}'".format(inner_field,
                                                                                                           top_field))
-
             return settings_data
+
+    def ensure_all_fields_server(self):
+        servers = self.guilds
+        fields = \
+            {
+                "tracking": {
+                    "last_message": False,  # track last message from users in db
+                    "ignore_categories": []  # categories to ignore tracking in
+                },
+                "invites": {
+                    "log": None,  # channel to log to
+                    "ignore_channels": [],  # don't delete invites in these channels
+                    "ignore_categories": [],  # don't delete invites in these categories
+                    "ignore_roles": []  # don't delete invites from users with these roles
+                },
+                "logging": {
+                    "join_leave_log": None,  # channel to log joins/leaves to
+                    "kick_ban_log": None  # channel to log kicks/bans to
+                },
+                "anti-raid": {
+                    "lockdown_categories": [],  # categories to lockdown
+                    "lockdown_roles": []  # roles to enforce lockdown on
+                }
+            }
+
+        for server in servers:
+            gid = str(server.id)  # print(gid)
+            try:
+                data = self.servers_config[gid]
+            except KeyError:
+                self.servers_config[gid] = fields
+                continue
+
+            for top_field in fields:
+                if top_field in self.servers_config[gid]:
+                    for inner_field in fields[top_field]:
+                        if inner_field not in self.servers_config[gid][top_field]:
+                            self.servers_config[gid][top_field][inner_field] = fields[top_field][inner_field]
+                            Logger.write("Servers.json - Added inner field '{}' to category '{}'"
+                                         "".format(inner_field, top_field))
+                else:
+                    self.servers_config[top_field] = {}
+                    Logger.write("Servers.json - Added category '{}'".format(top_field))
+
+                    for inner_field in fields[top_field]:
+                        if inner_field not in self.servers_config[gid][top_field]:
+                            self.servers_config[gid][top_field][inner_field] = fields[top_field][inner_field]
+                            Logger.write("Servers.json - Added inner field '{}' to category '{}'"
+                                         "".format(inner_field, top_field))
+
+    def update_server_json(self):
+        print("remember to make this actually write somewhen")
+        # IO.write_server(self.servers_config)
 
     def run(self):
         first_time = False
@@ -289,6 +350,12 @@ class SNBot(commands.Bot):
                 raise Exception(IO.settings_fail_read)
 
         s_data = self.ensure_all_fields(s_data)
+
+        """Make sure server configs exists"""
+        if os.path.isfile(IO.server_conf_file_path) is False:
+            IO.write_server({})
+        else:
+            self.servers_config = IO.read_server_as_json()
 
         """Load cogs"""
         folder_cogs = self.get_cogs_in_folder()
