@@ -227,7 +227,7 @@ class ServerSetup(Cog):
                 else:
                     enabled = False
 
-                role_selects.append(SelectOption(label=role.name,
+                role_selects.append(SelectOption(label=role.name[:25],
                                                  value=role.id,
                                                  default=enabled,
                                                  description="{} members have this role".format(len(role.members))))
