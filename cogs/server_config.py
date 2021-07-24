@@ -388,6 +388,12 @@ class ServerSetup(Cog):
         output_string = output_string.strip()  # remove trailing space
         return output_string
 
+    @group(name="set", invoke_without_command=True)
+    @perms.is_admin()
+    async def set(self, ctx):
+        """Set server config values"""
+        await self.bot.show_cmd_help(ctx)
+
     @command()
     @perms.is_admin()
     async def rdebug(self, ctx):
@@ -403,13 +409,7 @@ class ServerSetup(Cog):
                 role_list.append(role.mention)
 
         await ctx.send(", ".join(role_list))
-
-    @group(name="set", invoke_without_command=True)
-    @perms.is_admin()
-    async def set(self, ctx):
-        """Set server config values"""
-        await self.bot.show_cmd_help(ctx)
-
+        
     @set.command()
     @perms.is_admin()
     async def menu(self, ctx):
