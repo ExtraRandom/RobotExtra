@@ -163,7 +163,7 @@ class ServerSetup(Cog):
 
         res = await self.dynamic_menu(ctx, role_selects,
                                       "Select Roles",
-                                      "Set roles to {} from (60s timeout)".format(setting_text))
+                                      setting_text)
         if res is not None:
             self.bot.servers_config[str(ctx.guild.id)][settings_category][setting] = res
             self.bot.update_server_json()
