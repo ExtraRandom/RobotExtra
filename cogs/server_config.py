@@ -388,6 +388,22 @@ class ServerSetup(Cog):
         output_string = output_string.strip()  # remove trailing space
         return output_string
 
+    @command()
+    @perms.is_admin()
+    async def rdebug(self, ctx):
+        """list all roles with perms, excluding everyone and bot roles"""
+        roles = ctx.guild.roles
+        role_list = []
+        for role in roles:
+            if role.is_integration() or role.is_bot_managed():
+                continue
+            if role.name == "@everyone":
+                continue
+            if role.permissions != role.permissions.none():
+                role_list.append(role.mention)
+
+        await ctx.send(", ".join(role_list))
+
     @group(name="set", invoke_without_command=True)
     @perms.is_admin()
     async def set(self, ctx):
