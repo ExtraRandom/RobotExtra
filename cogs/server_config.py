@@ -28,6 +28,7 @@ class ServerSetup(Cog):
             max_values = len(menu_select_options_list)
         message = await ctx.send(message_text,
                                  components=[Select(placeholder=placeholder_text,
+                                                    min_values=0,
                                                     max_values=max_values,
                                                     options=menu_select_options_list)])
 
@@ -40,28 +41,14 @@ class ServerSetup(Cog):
             await message.delete()
 
             new_ids = []
-            for comp in resp.component:
-                new_ids.append(int(comp.value))
+            if resp.component:
+                for comp in resp.component:
+                    new_ids.append(int(comp.value))
             return new_ids
 
         except TimeoutError:
             await message.delete()
             await ctx.send(self.timeout_message)
-            return None
-
-    def get_channel_from_mention(self, ctx, channel_id):
-        if channel_id is None:
-            return ctx.message.channel
-        else:
-            try:
-                mentions = ctx.message.channel_mentions
-                if len(mentions) == 1:
-                    return mentions[0]
-                elif len(mentions) > 1:
-                    return None
-            except AttributeError:
-                pass
-
             return None
 
     async def boolean_updater(self, ctx, settings_category: str, setting: str, ask_text: str):
@@ -300,12 +287,23 @@ class ServerSetup(Cog):
         self.bot.update_server_json()
         await ctx.send("{}have been set as the {} {} channels".format(channel_final_msg, settings_category, setting))
 
+    @staticmethod
+    def capitalise_every_word(input_string: str, split_char=" "):
+        as_list = input_string.split(split_char)
+        output_string = ""
+        for word in as_list:
+            output_string += "{} ".format(word.capitalize())
+        output_string = output_string.strip()  # remove trailing space
+        return output_string
+
     @group(name="set", invoke_without_command=True)
+    @perms.is_admin()
     async def set(self, ctx):
         """Set server config values"""
         await self.bot.show_cmd_help(ctx)
 
     @set.command()
+    @perms.is_admin()
     async def menu(self, ctx):
         menu_loop = True
         while menu_loop:
@@ -363,10 +361,58 @@ class ServerSetup(Cog):
 
             menu_loop = await self.continue_checker(ctx, "Continue editing server configuration? (60s timeout)")
 
-    # TODO update to be an embed, normalise the ids to mentions and just sorta make it look nice
     @set.command()
-    @perms.is_dev()
+    @perms.is_admin()
     async def show(self, ctx):
+        """Show the current server settings"""
+        settings_embed = discord.Embed(title="{} Server Settings".format(ctx.guild.name),
+                                       colour=discord.Colour.gold())
+        config = self.bot.servers_config[str(ctx.guild.id)]
+        for top_setting in config:
+            field_name = self.capitalise_every_word(top_setting)
+            field_text = ""
+            for inner_setting in config[top_setting]:
+                field_text += "{}:\n".format(self.capitalise_every_word(inner_setting, "_"))
+                inner_value = config[top_setting][inner_setting]
+                if isinstance(inner_value, bool):
+                    normal_inner_value = str(inner_value)
+                elif isinstance(inner_value, type(None)):
+                    normal_inner_value = "Not set"
+                elif isinstance(inner_value, int):
+                    normal_inner_value = "{} ".format(ctx.guild.get_channel(inner_value).mention)
+                elif isinstance(inner_value, list):
+                    list_of = str(inner_setting).split("_")[1:][0]
+                    if len(inner_value) == 0:
+                        normal_inner_value = "None set"
+                    elif list_of == "categories":
+                        names_list = []
+                        for value in inner_value:
+                            names_list.append(ctx.guild.get_channel(value).name)
+                        normal_inner_value = ", ".join(names_list)
+                    elif list_of == "channels":
+                        mention_list = []
+                        for value in inner_value:
+                            mention_list.append(ctx.guild.get_channel(value).mention)
+                        normal_inner_value = ", ".join(mention_list)
+                    elif list_of == "roles":
+                        mention_list = []
+                        for value in inner_value:
+                            mention_list.append(ctx.guild.get_role(value).mention)
+                        normal_inner_value = ", ".join(mention_list)
+                    else:
+                        normal_inner_value = "Unhandled list of {}".format(list_of)
+                else:
+                    normal_inner_value = "Unhandled inner type of {}".format(type(inner_value))
+
+                field_text += "{}\n\n".format(normal_inner_value)
+
+            settings_embed.add_field(name=field_name, value=field_text)
+
+        await ctx.send(embed=settings_embed)
+
+    @set.command(enabled=False, hidden=True)
+    @perms.is_dev()
+    async def jsonshow(self, ctx):
         await ctx.send("```json\n{}\n```".format(json.dumps(self.bot.servers_config[str(ctx.guild.id)], indent=4)))
 
     @set.command(enabled=False, hidden=True)
@@ -383,76 +429,91 @@ class ServerSetup(Cog):
         await ctx.send("updated :D")
 
     @set.group(invoke_without_command=True)
+    @perms.is_admin()
     async def invites(self, ctx):
         """Invite filter related settings"""
         await self.bot.show_cmd_help(ctx)
 
-    @invites.command()
-    async def channel(self, ctx):
+    @invites.command(name="channel")
+    @perms.is_admin()
+    async def invites_log_channel(self, ctx):
         await self.single_channel_updater(ctx, "invites", "log", "Select the channel to log invites to (60s timeout)")
         return
 
     @invites.command(name="categories")
+    @perms.is_admin()
     async def invites_categories(self, ctx):
-        await self.role_updater(ctx, "invites", "ignore_categories",
-                                "Set Categories to ignore invite links in (60s timeout)")
+        await self.category_updater(ctx, "invites", "ignore_categories",
+                                    "Set Categories to ignore invite links in (60s timeout)")
 
     @invites.command(name="roles")
-    async def roles_set(self, ctx):
+    @perms.is_admin()
+    async def invites_roles(self, ctx):
         await self.role_updater(ctx, "invites", "ignore_roles",
                                 "Set roles to ignore invite links from (60s timeout)")
 
     @set.group(invoke_without_command=True)
+    @perms.is_admin()
     async def tracking(self, ctx):
         """Tracking related settings"""
         await self.bot.show_cmd_help(ctx)
 
     @tracking.command()
+    @perms.is_admin()
     async def track(self, ctx):
         await self.boolean_updater(ctx, "track", "last_message",
                                    "Enable tracking? (60s timeout)")
 
     @tracking.command(name="categories")
+    @perms.is_admin()
     async def tracking_categories(self, ctx):
         await self.category_updater(ctx, "tracking", "ignore_categories",
                                     "Select categories to be ignored by tracking (60s timeout)")
 
     @set.group(invoke_without_command=True, name="anti-raid")
+    @perms.is_admin()
     async def anti_raid(self, ctx):
         """Anti-raid related settings"""
         await self.bot.show_cmd_help(ctx)
 
     @anti_raid.command(name="categories")
+    @perms.is_admin()
     async def lockdown_categories(self, ctx):
         await self.category_updater(ctx, "anti-raid", "lockdown_categories",
                                     "Select categories enforce lockdown on during lockdowns (60s timeout)")
 
     @anti_raid.command(name="roles")
+    @perms.is_admin()
     async def lockdown_roles(self, ctx):
         await self.role_updater(ctx, "anti-raid", "lockdown_roles",
                                 "Select roles to enforce lockdown on during lockdowns (60s timeout)")
 
     @anti_raid.command(name="channels")
+    @perms.is_admin()
     async def lockdown_channels(self, ctx):
         await self.channels_updater(ctx, "anti-raid", "lockdown_channels", "Select channels (60s timeout)")
 
     @anti_raid.command(name="caution")
+    @perms.is_admin()
     async def lockdown_caution(self, ctx):
         await self.boolean_updater(ctx, "anti-raid", "caution",
                                    "Cautious booting? (Yes = Kick, No = Ban) (60s timeout)")
 
     @set.group(invoke_without_command=True)
+    @perms.is_admin()
     async def logging(self, ctx):
         """Logging related settings"""
         await self.bot.show_cmd_help(ctx)
 
     @logging.command(name="join-leave")
-    async def join_leave_log(self, ctx):
+    @perms.is_admin()
+    async def join_leave_log_channel(self, ctx):
         await self.single_channel_updater(ctx, "logging", "join_leave_log",
                                           "Select the channel to log joins and leaves to (60s timeout)")
 
     @logging.command(name="kick-ban")
-    async def kick_ban_log(self, ctx):
+    @perms.is_admin()
+    async def kick_ban_log_channel(self, ctx):
         await self.single_channel_updater(ctx, "logging", "kick_ban_log",
                                           "Select the channel to log kicks, bans and unbans to (60s timeout)")
 
