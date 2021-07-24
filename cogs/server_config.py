@@ -2,6 +2,7 @@ import json
 import discord
 from discord.ext.commands import command, Cog, group
 from cogs.utils import ez_utils, perms
+from cogs.utils.logger import Logger
 from discord_components import (
     DiscordComponents,
     Button,
@@ -387,17 +388,32 @@ class ServerSetup(Cog):
                     elif list_of == "categories":
                         names_list = []
                         for value in inner_value:
-                            names_list.append(ctx.guild.get_channel(value).name)
+                            try:
+                                names_list.append(ctx.guild.get_channel(value).name)
+                            except AttributeError as e:
+                                Logger.write_and_print("Couldn't find category with id '{}'".format(value))
+                                Logger.write_and_print(e)
+                                continue
                         normal_inner_value = ", ".join(names_list)
                     elif list_of == "channels":
                         mention_list = []
                         for value in inner_value:
-                            mention_list.append(ctx.guild.get_channel(value).mention)
+                            try:
+                                mention_list.append(ctx.guild.get_channel(value).mention)
+                            except AttributeError as e:
+                                Logger.write_and_print("Couldn't find channel with id '{}'".format(value))
+                                Logger.write_and_print(e)
+                                continue
                         normal_inner_value = ", ".join(mention_list)
                     elif list_of == "roles":
                         mention_list = []
                         for value in inner_value:
-                            mention_list.append(ctx.guild.get_role(value).mention)
+                            try:
+                                mention_list.append(ctx.guild.get_role(value).mention)
+                            except AttributeError as e:
+                                Logger.write_and_print("Couldn't find role with id '{}'".format(value))
+                                Logger.write_and_print(e)
+                                continue
                         normal_inner_value = ", ".join(mention_list)
                     else:
                         normal_inner_value = "Unhandled list of {}".format(list_of)
