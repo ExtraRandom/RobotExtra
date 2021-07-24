@@ -95,14 +95,14 @@ class SNBot(commands.Bot):
             return None
 
     async def on_ready(self):
+        DiscordComponents(self)
+
         self.reconnect_time = datetime.utcnow()
         login_msg = "Bot Connected at {} UTC".format(str(datetime.utcnow()))
         Logger.log_write("----------------------------------------------------------\n"
                          "{}\n"
                          "".format(login_msg))
         print(login_msg)
-
-        DiscordComponents(self)
 
         self.ensure_all_fields_server()
         IO.write_server(self.servers_config)

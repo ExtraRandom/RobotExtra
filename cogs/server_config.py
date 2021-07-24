@@ -1,3 +1,4 @@
+import copy
 import json
 import discord
 from discord.ext.commands import command, Cog, group
@@ -52,7 +53,81 @@ class ServerSetup(Cog):
             await ctx.send(self.timeout_message)
             return None
 
+    def updated_embed(self, ctx, setting: str, setting_category: str, config_before: dict, config_after: dict):
+        try:
+            setting_type = setting_category.split("_")[1:][0]
+        except IndexError:
+            setting_type = setting_category
+
+        normal_setting = self.capitalise_every_word(setting)
+        normal_category = self.capitalise_every_word(setting_category, "_")
+
+        output = discord.Embed(title="Setting Updated",
+                               description="{} {}".format(normal_setting, normal_category),
+                               colour=discord.Colour.purple())
+
+        removed_id = []
+        added_id = []
+        changed_id = ()
+        new_bool_value = None
+
+        for top_setting in config_after:
+            inner_value = config_after[top_setting]
+            if isinstance(inner_value, list):
+                for value in inner_value:
+                    if value not in config_before[top_setting]:
+                        added_id.append(value)
+
+                for value in config_before[top_setting]:
+                    if value not in inner_value:
+                        removed_id.append(value)
+
+            elif isinstance(inner_value, bool):
+                if inner_value != config_before:
+                    new_bool_value = inner_value
+
+            elif isinstance(inner_value, int):
+                if inner_value != config_before[top_setting]:
+                    changed_id = (inner_value, config_before[top_setting])
+
+        def get_name_or_mention(check_id: int):
+            if setting_type == "categories":
+                return ctx.guild.get_channel(check_id).name
+            elif setting_type == "channels":
+                return ctx.guild.get_channel(check_id).mention
+            elif setting_type == "roles":
+                return ctx.guild.get_role(check_id).name
+            return None
+
+        def add_field(field_type: str, ids: List[int]):
+            normal_list = []
+            for r_id in ids:
+                normal_list.append(get_name_or_mention(r_id))
+            output.add_field(name="{} {}".format(field_type, setting_type),
+                             value="\n".join(normal_list))
+
+        if len(removed_id) > 0:
+            add_field("Removed", removed_id)
+        if len(added_id) > 0:
+            add_field("Added", added_id)
+        if len(changed_id) > 0:
+            old, new = changed_id
+            setting_type = "channels"
+            new_mention = get_name_or_mention(new)
+            old_mention = get_name_or_mention(old)
+            output.add_field(name="Changed {}".format(setting_type),
+                             value="Old: {}\nNew: {}".format(new_mention, old_mention))
+        if new_bool_value is not None:
+            output.add_field(name="Changed {}".format(setting_category), value="Set to {}".format(new_bool_value))
+
+        if len(removed_id) == 0 and len(added_id) == 0 and len(changed_id) == 0 and new_bool_value is None:
+            return discord.Embed(title="Setting was set to same value as before",
+                                 description="No change to setting",
+                                 colour=discord.Colour.dark_purple())
+        return output
+
     async def boolean_updater(self, ctx, settings_category: str, setting: str, ask_text: str):
+        config = copy.deepcopy(self.bot.servers_config[str(ctx.guild.id)][settings_category])
         options = [[Button(style=ButtonStyle.green, label="Yes", custom_id="yes"),
                     Button(style=ButtonStyle.red, label="No", custom_id="no")]]
 
@@ -75,7 +150,9 @@ class ServerSetup(Cog):
                 self.bot.servers_config[str(ctx.guild.id)][settings_category][setting] = False
                 set_v = False
             self.bot.update_server_json()
-            await ctx.send("Set {} {} to {}".format(settings_category, setting, set_v))
+            # await ctx.send("Set {} {} to {}".format(settings_category, setting, set_v))
+            await ctx.send(embed=self.updated_embed(ctx, settings_category, setting, config,
+                                                    self.bot.servers_config[str(ctx.guild.id)][settings_category]))
         except TimeoutError:
             await ctx.send(self.timeout_message)
             return
@@ -106,7 +183,8 @@ class ServerSetup(Cog):
 
     async def category_updater(self, ctx, settings_category: str, setting: str, setting_text: str,
                                max_values: int = None):
-        config = self.bot.servers_config[str(ctx.guild.id)][settings_category]
+
+        config = copy.deepcopy(self.bot.servers_config[str(ctx.guild.id)][settings_category])
         categories = ctx.guild.categories
         categories_selects = []
         for category in categories:
@@ -127,10 +205,12 @@ class ServerSetup(Cog):
         if res is not None:
             self.bot.servers_config[str(ctx.guild.id)][settings_category][setting] = res
             self.bot.update_server_json()
-            await ctx.send("Updated {} {}".format(settings_category, setting))
+            # await ctx.send("Updated {} {}".format(settings_category, setting))
+            await ctx.send(embed=self.updated_embed(ctx, settings_category, setting, config,
+                                                    self.bot.servers_config[str(ctx.guild.id)][settings_category]))
 
     async def role_updater(self, ctx, settings_category: str, setting: str, setting_text: str):
-        config = self.bot.servers_config[str(ctx.guild.id)][settings_category]
+        config = copy.deepcopy(self.bot.servers_config[str(ctx.guild.id)][settings_category])
         roles = ctx.guild.roles
         role_selects = []
         for role in roles:
@@ -155,10 +235,13 @@ class ServerSetup(Cog):
         if res is not None:
             self.bot.servers_config[str(ctx.guild.id)][settings_category][setting] = res
             self.bot.update_server_json()
-            await ctx.send("Updated {} {}".format(settings_category, setting))
+            # await ctx.send("Updated {} {}".format(settings_category, setting))
+            await ctx.send(embed=self.updated_embed(ctx, settings_category, setting, config,
+                                                    self.bot.servers_config[str(ctx.guild.id)][settings_category]))
 
     async def single_channel_updater(self, ctx, settings_category: str, setting: str,
                                      setting_text: str):
+        config = copy.deepcopy(self.bot.servers_config[str(ctx.guild.id)][settings_category])
         categories = ctx.guild.categories
         categories_selects = []
         for category in categories:
@@ -210,10 +293,13 @@ class ServerSetup(Cog):
 
         self.bot.servers_config[str(ctx.guild.id)][settings_category][setting] = channel_final.id
         self.bot.update_server_json()
-        await ctx.send("{} has been set as the {} {} channel".format(channel_final.mention, settings_category, setting))
+        # await ctx.send("{} has been set as the {} {} channel".format(channel_final.mention, settings_category, setting))
+        await ctx.send(embed=self.updated_embed(ctx, settings_category, setting, config,
+                                                self.bot.servers_config[str(ctx.guild.id)][settings_category]))
 
     async def channels_updater(self, ctx, settings_category: str, setting: str,
                                setting_text: str):
+        config = copy.deepcopy(self.bot.servers_config[str(ctx.guild.id)][settings_category])
         selected_channels = []
         continue_loop = True
         while continue_loop:
@@ -286,7 +372,9 @@ class ServerSetup(Cog):
             channel_final_msg += "{} ".format(channel.mention)
         self.bot.servers_config[str(ctx.guild.id)][settings_category][setting] = selected_ids
         self.bot.update_server_json()
-        await ctx.send("{}have been set as the {} {} channels".format(channel_final_msg, settings_category, setting))
+        # await ctx.send("{}have been set as the {} {} channels".format(channel_final_msg, settings_category, setting))
+        await ctx.send(embed=self.updated_embed(ctx, settings_category, setting, config,
+                                                self.bot.servers_config[str(ctx.guild.id)][settings_category]))
 
     @staticmethod
     def capitalise_every_word(input_string: str, split_char=" "):
@@ -329,6 +417,7 @@ class ServerSetup(Cog):
                 await resp.respond(type=InteractionType.DeferredUpdateMessage)
                 sub_menu_type = resp.component.custom_id
             except TimeoutError:
+                await main_menu.delete()
                 await ctx.send(self.timeout_message)
                 return
 
@@ -353,6 +442,7 @@ class ServerSetup(Cog):
                 cmd = resp.component.custom_id
                 await main_menu.delete()
             except TimeoutError:
+                await main_menu.delete()
                 await ctx.send(self.timeout_message)
                 return
 
