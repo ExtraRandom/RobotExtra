@@ -10,37 +10,6 @@ class Logging(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        """
-        self.somewhere_nice = {
-            "server": 750689226382901288,
-            "join_leave_log": 796381270799024150,
-            "kick_ban_log": 761212419388604477
-        }
-
-        self.utms = {
-            "server": 863589037959938098,
-            "join_leave_log": 865234346176544769,
-            "kick_ban_log": 865234400535248928
-        }
-
-        self.dev = {
-            "server": 223132558609612810,
-            "join_leave_log": 796547566509621260,
-            "kick_ban_log": 796547635485343784
-        }
-
-        # self.ids = self.somewhere_nice
-
-        self.ignore_categories = [758500155207974983,  # STAFF LOGS - SN
-                                  750690307191865445,  # SERVER - SN
-                                  809906596041457694,  # ARCHIVED CHANNELS - SN
-                                  863644215614898197,  # ADMIN LOGS - UTMS
-                                  863613866327801876  # SERVER THINGS - UTMS
-                                  ]
-
-        self.tracked_server_ids = [750689226382901288, 863589037959938098]
-        """
-
     async def on_message(self, message: discord.Message):  # log user_id, server_id, message time and jump url to db
         if message.author.bot is True:
             return

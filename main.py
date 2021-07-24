@@ -105,7 +105,6 @@ class SNBot(commands.Bot):
         DiscordComponents(self)
 
         self.ensure_all_fields_server()
-        print(self.servers_config)
         IO.write_server(self.servers_config)
 
     async def on_message(self, message):
@@ -146,7 +145,7 @@ class SNBot(commands.Bot):
             return
 
     @staticmethod
-    async def show_cmd_help(ctx):
+    async def show_cmd_help(ctx, full_doc=False):
         cmd = ctx.command
         cmd_name = cmd.name
         cmd_help = cmd.help
@@ -168,10 +167,15 @@ class SNBot(commands.Bot):
         msg += "{}\n\n".format(cmd_help)
 
         if "commands" in cmd_dir:
-            msg += "Subcommands:\n"
+            if full_doc is False:
+                msg += "Subcommands:\n"
             for sub_cmd in cmd.commands:
                 if sub_cmd.enabled:
-                    msg += " {:<12} {:<55}\n".format(sub_cmd.name[:12], sub_cmd.short_doc[:55])
+                    if full_doc is False:
+                        msg += " {:<12} {:<55}\n".format(sub_cmd.name[:12], sub_cmd.short_doc[:55])
+                    else:
+                        msg += " e?{} {} {}\n{}\n\n" \
+                               "".format(cmd_name, sub_cmd.name[:12], sub_cmd.signature, sub_cmd.help)
 
         if len(cmd_aliases) > 0:
             msg += "\n\n" \
@@ -300,14 +304,16 @@ class SNBot(commands.Bot):
                 },
                 "anti-raid": {
                     "lockdown_categories": [],  # categories to lockdown
-                    "lockdown_roles": []  # roles to enforce lockdown on
+                    "lockdown_channels": [],  # channels to indiviaully lockdown
+                    "lockdown_roles": [],  # roles to enforce lockdown on
+                    "caution": True,  # if true kick, if false ban
                 }
             }
 
         for server in servers:
             gid = str(server.id)  # print(gid)
             try:
-                data = self.servers_config[gid]
+                self.servers_config[gid]
             except KeyError:
                 self.servers_config[gid] = fields
                 continue
@@ -330,8 +336,7 @@ class SNBot(commands.Bot):
                                          "".format(inner_field, top_field))
 
     def update_server_json(self):
-        print("remember to make this actually write somewhen")
-        # IO.write_server(self.servers_config)
+        IO.write_server(self.servers_config)
 
     def run(self):
         first_time = False

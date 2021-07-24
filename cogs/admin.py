@@ -6,7 +6,6 @@ from cogs.utils import perms  # , IO
 from cogs.utils import time_formatting as timefmt
 from cogs.utils.logger import Logger
 import discord
-# import random
 import re
 import os
 
@@ -14,12 +13,6 @@ import os
 class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.ignore_categories = [758500155207974983,  # STAFF LOGS - SN
-                                  750690307191865445,  # SERVER - SN
-                                  809906596041457694,  # ARCHIVED CHANNELS - SN
-                                  863644215614898197,  # ADMIN LOGS - UTMS
-                                  863613866327801876  # SERVER THINGS - UTMS
-                                  ]
         self.purge_immune_role_id = 857532290527657984
 
     @staticmethod
@@ -491,7 +484,7 @@ class Admin(commands.Cog):
 
         if message is None:
             for channel in channels:
-                if channel.category_id in self.ignore_categories:
+                if channel.category_id in self.bot.servers_config[str(ctx.guild.id)]['tracking']['ignore_categories']:
                     continue
                 if channel == msg_channel:
                     continue
@@ -544,7 +537,6 @@ class Admin(commands.Cog):
                 await ctx.send(embed=reacts)
 
     @commands.command(enabled=True, hidden=False)
-    # @perms.is_admin()
     async def info(self, ctx, *, user=None):
         """Show info of a member
 
@@ -605,7 +597,7 @@ class Admin(commands.Cog):
                        "".format(days_ago, start_time))
 
         for channel in ctx.guild.text_channels:
-            if channel.category_id in self.ignore_categories:
+            if channel.category_id in self.bot.servers_config[str(ctx.guild.id)]['tracking']['ignore_categories']:
                 continue
 
             async for msg in channel.history(limit=50000,
