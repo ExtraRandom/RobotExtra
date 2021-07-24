@@ -17,6 +17,9 @@ class Logging(commands.Cog):
         if type(message.channel) is discord.DMChannel:
             return
 
+        if message.is_system():
+            return
+
         gid = str(message.guild.id)
         config = self.bot.servers_config[gid]
 

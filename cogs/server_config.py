@@ -114,7 +114,10 @@ class ServerSetup(Cog):
             old, new = changed_id
             setting_type = "channels"
             new_mention = get_name_or_mention(new)
-            old_mention = get_name_or_mention(old)
+            if old is not None:
+                old_mention = get_name_or_mention(old)
+            else:
+                old_mention = "N/A"
             output.add_field(name="Changed {}".format(setting_type),
                              value="Old: {}\nNew: {}".format(new_mention, old_mention))
         if new_bool_value is not None:
