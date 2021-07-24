@@ -312,7 +312,7 @@ class ServerSetup(Cog):
             settings = list(ctx.command.cog.get_commands()[0].commands)
             settings.sort(key=lambda x: x.name)
             for setting in settings:
-                if setting.name in ["show", "jsonset", "menu"]:
+                if setting.name in ["show", "jsonset", "menu", "jsonshow"]:
                     continue
                 else:
                     settings_buttons.append(Button(style=ButtonStyle.green,
@@ -477,7 +477,7 @@ class ServerSetup(Cog):
     @tracking.command()
     @perms.is_admin()
     async def track(self, ctx):
-        await self.boolean_updater(ctx, "track", "last_message",
+        await self.boolean_updater(ctx, "tracking", "last_message",
                                    "Enable tracking? (60s timeout)")
 
     @tracking.command(name="categories")
