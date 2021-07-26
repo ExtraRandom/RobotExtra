@@ -28,6 +28,7 @@ class ServerSetup(Cog):
         """setup menu and return results"""
         if max_values is None:
             max_values = len(menu_select_options_list)
+
         message = await ctx.send(message_text,
                                  components=[Select(placeholder=placeholder_text,
                                                     min_values=0,
@@ -148,12 +149,9 @@ class ServerSetup(Cog):
 
             if enable == "yes":
                 self.bot.servers_config[str(ctx.guild.id)][settings_category][setting] = True
-                set_v = True
             else:
                 self.bot.servers_config[str(ctx.guild.id)][settings_category][setting] = False
-                set_v = False
             self.bot.update_server_json()
-            # await ctx.send("Set {} {} to {}".format(settings_category, setting, set_v))
             await ctx.send(embed=self.updated_embed(ctx, settings_category, setting, config,
                                                     self.bot.servers_config[str(ctx.guild.id)][settings_category]))
         except TimeoutError:
@@ -208,7 +206,6 @@ class ServerSetup(Cog):
         if res is not None:
             self.bot.servers_config[str(ctx.guild.id)][settings_category][setting] = res
             self.bot.update_server_json()
-            # await ctx.send("Updated {} {}".format(settings_category, setting))
             await ctx.send(embed=self.updated_embed(ctx, settings_category, setting, config,
                                                     self.bot.servers_config[str(ctx.guild.id)][settings_category]))
 
@@ -238,7 +235,6 @@ class ServerSetup(Cog):
         if res is not None:
             self.bot.servers_config[str(ctx.guild.id)][settings_category][setting] = res
             self.bot.update_server_json()
-            # await ctx.send("Updated {} {}".format(settings_category, setting))
             await ctx.send(embed=self.updated_embed(ctx, settings_category, setting, config,
                                                     self.bot.servers_config[str(ctx.guild.id)][settings_category]))
 
@@ -296,7 +292,6 @@ class ServerSetup(Cog):
 
         self.bot.servers_config[str(ctx.guild.id)][settings_category][setting] = channel_final.id
         self.bot.update_server_json()
-        # await ctx.send("{} has been set as the {} {} channel".format(channel_final.mention, settings_category, setting))
         await ctx.send(embed=self.updated_embed(ctx, settings_category, setting, config,
                                                 self.bot.servers_config[str(ctx.guild.id)][settings_category]))
 
@@ -375,7 +370,6 @@ class ServerSetup(Cog):
             channel_final_msg += "{} ".format(channel.mention)
         self.bot.servers_config[str(ctx.guild.id)][settings_category][setting] = selected_ids
         self.bot.update_server_json()
-        # await ctx.send("{}have been set as the {} {} channels".format(channel_final_msg, settings_category, setting))
         await ctx.send(embed=self.updated_embed(ctx, settings_category, setting, config,
                                                 self.bot.servers_config[str(ctx.guild.id)][settings_category]))
 
@@ -409,7 +403,7 @@ class ServerSetup(Cog):
                 role_list.append(role.mention)
 
         await ctx.send(", ".join(role_list))
-        
+
     @set.command()
     @perms.is_admin()
     async def menu(self, ctx):

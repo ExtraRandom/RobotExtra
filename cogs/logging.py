@@ -89,18 +89,22 @@ class Logging(commands.Cog):
             # Log kick/ban if applicable and set in config
             if config['logging']['kick_ban_log'] is not None:
                 async for entry in member.guild.audit_logs(limit=5):
-                    if entry.action == discord.AuditLogAction.kick and entry.target.name == member.name:
-                        channel = discord.utils.get(member.guild.text_channels, id=config['logging']["kick_ban_log"])
-                        user = entry.target
-                        msg = discord.Embed(title="{} kicked".format(user),
-                                            colour=discord.Colour.dark_gold(),
-                                            description="**Offender:** {}\n"
-                                                        "**Reason:** {}\n"
-                                                        "**Responsible admin:** {}"
-                                                        "".format(entry.target, entry.reason, entry.user))
-                        msg.set_footer(text="User ID: {}".format(user.id))
-                        msg.timestamp = datetime.utcnow()
-                        await channel.send(embed=msg)
+                    if entry.created_at.timestamp() >= datetime.utcnow().timestamp() - 30:
+                        # check it occured in the last 30 seconds, else skip attempting to log
+                        if entry.action == discord.AuditLogAction.kick and entry.target.name == member.name:
+                            channel = member.guild.get_channel(config['logging']['kick_ban_log'])
+                            # channel = discord.utils.get(member.guild.text_channels,
+                            #                            id=config['logging']["kick_ban_log"])
+                            user = entry.target
+                            msg = discord.Embed(title="{} kicked".format(user),
+                                                colour=discord.Colour.dark_gold(),
+                                                description="**Offender:** {}\n"
+                                                            "**Reason:** {}\n"
+                                                            "**Responsible admin:** {}"
+                                                            "".format(entry.target, entry.reason, entry.user))
+                            msg.set_footer(text="User ID: {}".format(user.id))
+                            msg.timestamp = datetime.utcnow()
+                            await channel.send(embed=msg)
 
             # Log leave
             role_list = member.roles
@@ -122,7 +126,8 @@ class Logging(commands.Cog):
             result.timestamp = datetime.utcnow()
             result.set_footer(text="ID: {}".format(member.id))
 
-            channel = discord.utils.get(member.guild.text_channels, id=config['logging']["join_leave_log"])
+            # channel = discord.utils.get(member.guild.text_channels, id=config['logging']["join_leave_log"])
+            channel = member.guild.get_channel(config['logging']['join_leave_log'])
 
             await channel.send(embed=result)
 

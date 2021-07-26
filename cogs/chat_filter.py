@@ -11,38 +11,6 @@ class ChatFilter(commands.Cog):
         self.regex = r"(https?:\/\/)?(www\.)?(discord\.(gg|io|me|li)|discordapp\.com\/invite|discord\.com\/invite)" \
                      "\/([a-zA-Z0-9]+)"
 
-        """
-        self.sn_id = 750689226382901288
-        self.utms_id = 863589037959938098
-
-        self.utms = {
-            "log": 864755033757057054,  # #invites-log
-            "ignore": {
-                "channels": [],
-                "categories": [
-                    863613866327801876,  # SERVER THINGS
-                    863621225090908180  # ADMIN
-                ],
-                "roles": [
-                    863621296462102538,  # Admin
-                ]
-            }
-        }
-
-        self.sn = {
-            "log": 860513900994232372,  # #extras_invite_log
-            "ignore": {
-                "channels": [],
-                "categories": [
-                    750690307191865445,  # SERVER
-                    750974763249172482  # STAFF
-                ],
-                "roles": [
-                    765458196365967370,  # Admin
-                ]
-            }
-        }
-        """
         self.warning_delete_time = 20
         self.last_warning_time = 0
         # TODO change to dict of server id: time of last warning
