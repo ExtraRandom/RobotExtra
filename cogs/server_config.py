@@ -1,3 +1,4 @@
+import asyncio
 import copy
 import json
 import discord
@@ -10,7 +11,8 @@ from discord_components import (
     ButtonStyle,
     Select,
     SelectOption,
-    InteractionType
+    InteractionType,
+    Interaction
 )
 from asyncio import TimeoutError
 from typing import List
@@ -24,21 +26,63 @@ class ServerSetup(Cog):
     async def dynamic_menu(self, ctx, menu_select_options_list: List[SelectOption],
                            placeholder_text: str,
                            message_text: str,
-                           max_values: int = None):
+                           max_values: int = None,
+                           accept_button: bool = False,
+                           accept_button_disabled: bool = False):
         """setup menu and return results"""
         if max_values is None:
             max_values = len(menu_select_options_list)
+
+        if accept_button:
+            buttons = [Button(style=ButtonStyle.red, label="Cancel", custom_id="cancel"),
+                       Button(style=ButtonStyle.green, label="Accept", custom_id="accept",
+                              disabled=accept_button_disabled)]
+        else:
+            buttons = [Button(style=ButtonStyle.red, label="Cancel", custom_id="cancel")]
 
         message = await ctx.send(message_text,
                                  components=[Select(placeholder=placeholder_text,
                                                     min_values=0,
                                                     max_values=max_values,
-                                                    options=menu_select_options_list)])
+                                                    options=menu_select_options_list),
+                                             buttons])
 
         def check(res):
             return ctx.author == res.user and res.channel == ctx.channel
 
+        tasks = [self.bot.wait_for("select_option", check=check, timeout=60),
+                 self.bot.wait_for("button_click", check=check, timeout=60)]
+
         try:
+            done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+
+            for future in pending:
+                future.cancel()
+
+            for completed in done:
+                interaction = completed.result()
+                if interaction:
+                    if isinstance(interaction, Interaction):
+                        await interaction.respond(type=InteractionType.DeferredUpdateMessage)
+                        await message.delete()
+
+                        comp = interaction.component
+                        if isinstance(comp, list):
+                            # select options
+                            new_ids = []
+                            for option in comp:
+                                new_ids.append(int(option.value))
+                            return new_ids
+                        elif isinstance(comp, Button):
+                            # button
+                            button_id = comp.custom_id
+                            if button_id == "cancel":
+                                return None
+                            elif button_id == "accept":
+                                return "menu_accept"
+
+            """
+            
             resp = await self.bot.wait_for("select_option", check=check, timeout=60)
             await resp.respond(type=InteractionType.DeferredUpdateMessage)
             await message.delete()
@@ -48,7 +92,7 @@ class ServerSetup(Cog):
                 for comp in resp.component:
                     new_ids.append(int(comp.value))
             return new_ids
-
+            """
         except TimeoutError:
             await message.delete()
             await ctx.send(self.timeout_message)
@@ -84,7 +128,7 @@ class ServerSetup(Cog):
                         removed_id.append(value)
 
             elif isinstance(inner_value, bool):
-                if inner_value != config_before:
+                if inner_value != config_before[top_setting]:
                     new_bool_value = inner_value
 
             elif isinstance(inner_value, int):
@@ -301,6 +345,10 @@ class ServerSetup(Cog):
         selected_channels = []
         continue_loop = True
         while continue_loop:
+            if len(selected_channels) > 0:
+                accept_button_disabled = False
+            else:
+                accept_button_disabled = True
             categories = ctx.guild.categories
             categories_selects = []
             for category in categories:
@@ -316,10 +364,14 @@ class ServerSetup(Cog):
             res = await self.dynamic_menu(ctx, categories_selects,
                                           "Select category",
                                           "Select the category the desired channel is in (60s timeout)",
-                                          max_values=1)
+                                          max_values=1,
+                                          accept_button=True,
+                                          accept_button_disabled=accept_button_disabled)
 
             if res is None:
                 return
+            if res == "menu_accept":
+                break
 
             category_id = res[0]
             category_channels = []
@@ -341,9 +393,14 @@ class ServerSetup(Cog):
             res2 = await self.dynamic_menu(ctx, channel_selects,
                                            "Select channel",
                                            setting_text,
-                                           max_values=None)
+                                           max_values=None,
+                                           accept_button=True,
+                                           accept_button_disabled=accept_button_disabled)
             if res2 is None:
                 return
+            if res == "menu_accept":
+                break
+
             channel_ids = res2
             for channel in category_channels:
                 if channel.id in channel_ids:
@@ -408,6 +465,9 @@ class ServerSetup(Cog):
     @perms.is_admin()
     async def menu(self, ctx):
         menu_loop = True
+        exit_button = Button(style=ButtonStyle.red, label="Exit", custom_id="menu_exit")
+        back_button = Button(style=ButtonStyle.red, label="Back", custom_id="menu_back")
+        back_button_disabled = Button(style=ButtonStyle.red, label="Back", disabled=True)
         while menu_loop:
             settings_buttons = []
             settings = list(ctx.command.cog.get_commands()[0].commands)
@@ -424,11 +484,14 @@ class ServerSetup(Cog):
                 return ctx.author == res.user and res.channel == ctx.channel
 
             main_menu = await ctx.send("Select a settings type to change (60s timeout)",
-                                       components=[settings_buttons])
+                                       components=[settings_buttons, [back_button_disabled, exit_button]])
             try:
                 resp = await self.bot.wait_for("button_click", check=check, timeout=60)
                 await resp.respond(type=InteractionType.DeferredUpdateMessage)
                 sub_menu_type = resp.component.custom_id
+                if sub_menu_type == exit_button.custom_id:
+                    await main_menu.delete()
+                    return
             except TimeoutError:
                 await main_menu.delete()
                 await ctx.send(self.timeout_message)
@@ -447,13 +510,17 @@ class ServerSetup(Cog):
                                                    label=str(sub_setting.name).capitalize()))
 
             await main_menu.edit("Select {} Sub Setting (60s timeout)".format(sub_menu_type),
-                                 components=[sub_settings_buttons])
+                                 components=[sub_settings_buttons, [back_button, exit_button]])
 
             try:
                 resp = await self.bot.wait_for("button_click", check=check, timeout=60)
                 await resp.respond(type=InteractionType.DeferredUpdateMessage)
                 cmd = resp.component.custom_id
                 await main_menu.delete()
+                if cmd == exit_button.custom_id:
+                    return
+                if cmd == back_button.custom_id:
+                    continue
             except TimeoutError:
                 await main_menu.delete()
                 await ctx.send(self.timeout_message)
