@@ -23,22 +23,48 @@ class ServerSetup(Cog):
         self.bot = bot
         self.timeout_message = "No selection made within 60 seconds"
 
+    def clear_setting(self, server_id: str, settings_category: str, setting: str):
+        old_setting = self.bot.servers_config[server_id][settings_category][setting]
+        if old_setting is None or old_setting == []:
+            # already clear
+            return
+        else:
+            if isinstance(old_setting, list):
+                null = []
+            elif isinstance(old_setting, int):
+                null = None
+            else:
+                return
+
+            self.bot.servers_config[server_id][settings_category][setting] = null
+            self.bot.update_server_json()
+            return
+
+
     async def dynamic_menu(self, ctx, menu_select_options_list: List[SelectOption],
                            placeholder_text: str,
                            message_text: str,
                            max_values: int = None,
                            accept_button: bool = False,
-                           accept_button_disabled: bool = False):
+                           accept_button_disabled: bool = False,
+                           clear_button: bool = False,
+                           clear_button_disabled: bool = False):
         """setup menu and return results"""
         if max_values is None:
             max_values = len(menu_select_options_list)
 
+        button_cancel = Button(style=ButtonStyle.red, label="Cancel", custom_id="menu_cancel")
+        button_accept = Button(style=ButtonStyle.green, label="Accept", custom_id="menu_accept",
+                               disabled=accept_button_disabled)
+        button_clear = Button(style=ButtonStyle.red, label="Clear Setting", custom_id="menu_clear",
+                              disabled=clear_button_disabled)
+
+        buttons = [button_cancel]
+
         if accept_button:
-            buttons = [Button(style=ButtonStyle.red, label="Cancel", custom_id="cancel"),
-                       Button(style=ButtonStyle.green, label="Accept", custom_id="accept",
-                              disabled=accept_button_disabled)]
-        else:
-            buttons = [Button(style=ButtonStyle.red, label="Cancel", custom_id="cancel")]
+            buttons.append(button_accept)
+        if clear_button:
+            buttons.append(button_clear)
 
         message = await ctx.send(message_text,
                                  components=[Select(placeholder=placeholder_text,
@@ -76,13 +102,14 @@ class ServerSetup(Cog):
                         elif isinstance(comp, Button):
                             # button
                             button_id = comp.custom_id
-                            if button_id == "cancel":
+                            if button_id == button_cancel.custom_id:
                                 return None
-                            elif button_id == "accept":
+                            elif button_id == button_accept.custom_id:
                                 return "menu_accept"
+                            elif button_id == button_clear.custom_id:
+                                return "menu_clear"
 
             """
-            
             resp = await self.bot.wait_for("select_option", check=check, timeout=60)
             await resp.respond(type=InteractionType.DeferredUpdateMessage)
             await message.delete()
@@ -115,6 +142,7 @@ class ServerSetup(Cog):
         added_id = []
         changed_id = ()
         new_bool_value = None
+        setting_cleared = False
 
         for top_setting in config_after:
             inner_value = config_after[top_setting]
@@ -135,13 +163,26 @@ class ServerSetup(Cog):
                 if inner_value != config_before[top_setting]:
                     changed_id = (inner_value, config_before[top_setting])
 
+            elif isinstance(inner_value, type(None)):
+                if config_before[top_setting] is not None:
+                    setting_cleared = True
+
         def get_name_or_mention(check_id: int):
             if setting_type == "categories":
-                return ctx.guild.get_channel(check_id).name
+                try:
+                    return ctx.guild.get_channel(check_id).name
+                except AttributeError:
+                    return None  # "<#{}>".format(check_id)
             elif setting_type == "channels":
-                return ctx.guild.get_channel(check_id).mention
+                try:
+                    return ctx.guild.get_channel(check_id).mention
+                except AttributeError:
+                    return None  # "<#{}>".format(check_id)
             elif setting_type == "roles":
-                return ctx.guild.get_role(check_id).name
+                try:
+                    return ctx.guild.get_role(check_id).name
+                except AttributeError:
+                    return None  # "<@&{}>".format(check_id)
             return None
 
         def add_field(field_type: str, ids: List[int]):
@@ -166,11 +207,17 @@ class ServerSetup(Cog):
             output.add_field(name="Changed {}".format(setting_type),
                              value="Old: {}\nNew: {}".format(new_mention, old_mention))
         if new_bool_value is not None:
-            output.add_field(name="Changed {}".format(setting_category), value="Set to {}".format(new_bool_value))
+            output.add_field(name="Changed {}".format(setting_category),
+                             value="Set to {}".format(new_bool_value))
 
-        if len(removed_id) == 0 and len(added_id) == 0 and len(changed_id) == 0 and new_bool_value is None:
-            return discord.Embed(title="Setting was set to same value as before",
-                                 description="No change to setting",
+        if setting_cleared is True:
+            output.add_field(name="Setting Cleared",
+                             value="{} {} was cleared.".format(normal_setting, normal_category))
+
+        if len(output.fields) == 0:
+            # if len(removed_id) == 0 and len(added_id) == 0 and len(changed_id) == 0 and new_bool_value is None:
+            return discord.Embed(title="Setting unchanged",
+                                 description="{} {}\nNo change were made".format(normal_setting, normal_category),
                                  colour=discord.Colour.dark_purple())
         return output
 
@@ -223,6 +270,7 @@ class ServerSetup(Cog):
             else:
                 return False
         except TimeoutError:
+            await msg.delete()
             await ctx.send(self.timeout_message)
             return False
 
@@ -297,12 +345,24 @@ class ServerSetup(Cog):
                                                    value=category.id,
                                                    description=channels))
 
+        clear_button_disabled = False
+        if config[setting] is None:
+            clear_button_disabled = True
+
         res = await self.dynamic_menu(ctx, categories_selects,
                                       "Select category",
                                       "Select the category the desired channel is in (60s timeout)",
-                                      max_values=1)
+                                      max_values=1,
+                                      clear_button=True,
+                                      clear_button_disabled=clear_button_disabled)
 
         if res is None:
+            return
+        if res == "menu_clear":
+            self.clear_setting(str(ctx.guild.id), settings_category, setting)
+            self.bot.update_server_json()
+            await ctx.send(embed=self.updated_embed(ctx, settings_category, setting, config,
+                                                    self.bot.servers_config[str(ctx.guild.id)][settings_category]))
             return
 
         category_id = res[0]
@@ -325,8 +385,16 @@ class ServerSetup(Cog):
         res2 = await self.dynamic_menu(ctx, channel_selects,
                                        "Select channel",
                                        setting_text,
-                                       max_values=1)
+                                       max_values=1,
+                                       clear_button=True,
+                                       clear_button_disabled=clear_button_disabled)
         if res2 is None:
+            return
+        if res2 == "menu_clear":
+            self.clear_setting(str(ctx.guild.id), settings_category, setting)
+            self.bot.update_server_json()
+            await ctx.send(embed=self.updated_embed(ctx, settings_category, setting, config,
+                                                    self.bot.servers_config[str(ctx.guild.id)][settings_category]))
             return
         channel_id = res2[0]
         channel_final = None
@@ -398,7 +466,7 @@ class ServerSetup(Cog):
                                            accept_button_disabled=accept_button_disabled)
             if res2 is None:
                 return
-            if res == "menu_accept":
+            if res2 == "menu_accept":
                 break
 
             channel_ids = res2
