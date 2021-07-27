@@ -16,3 +16,7 @@ class ProtectedCog(Exception):
 
 class GuildsOnly(commands.CheckFailure):
     pass
+
+
+class DMOnly(commands.CheckFailure):
+    pass

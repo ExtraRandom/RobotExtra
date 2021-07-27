@@ -45,5 +45,14 @@ def is_in_a_server():
             raise errors.GuildsOnly("Server only command")
         else:
             return True
+    return commands.check(predicate)
+
+
+def is_in_dms():
+    def predicate(ctx):
+        if isinstance(ctx.message.channel, discord.DMChannel):
+            return True
+        else:
+            raise errors.DMOnly("DMs only command")
 
     return commands.check(predicate)
