@@ -91,6 +91,7 @@ class Commands(commands.Cog):
         await ctx.send(msg)
 
     @commands.command(enabled=True)
+    @perms.is_in_a_server()
     async def server(self, ctx):
         """Server Info"""
         dt = ctx.guild.created_at
@@ -127,6 +128,7 @@ class Commands(commands.Cog):
         python_version = py_v()
         github_link = "https://github.com/ExtraRandom/RobotExtra"
         uptime = timefmt.time_ago(self.bot.start_time.timestamp())
+        avatar = self.bot.user.avatar_url
 
         res = discord.Embed(title="Bot Info", colour=discord.colour.Colour.dark_blue())
         res.add_field(name="Name", value="{}".format(bot_name))
@@ -135,6 +137,7 @@ class Commands(commands.Cog):
         res.add_field(name="Python Version", value="{}".format(python_version))
         res.add_field(name="Source Code", value="{}".format(github_link))
         res.add_field(name="Uptime", value="{}".format(uptime))
+        res.set_thumbnail(url=avatar)
 
         await ctx.send(embed=res)
 

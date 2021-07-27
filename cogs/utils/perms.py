@@ -37,3 +37,13 @@ def is_admin():
     def predicate(ctx):
         return ctx.message.author.guild_permissions.administrator
     return commands.check(predicate)
+
+
+def is_in_a_server():
+    def predicate(ctx):
+        if isinstance(ctx.message.channel, discord.DMChannel):
+            raise errors.GuildsOnly("Server only command")
+        else:
+            return True
+
+    return commands.check(predicate)

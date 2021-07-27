@@ -12,3 +12,7 @@ class DevOnly(commands.CheckFailure):
 
 class ProtectedCog(Exception):
     pass
+
+
+class GuildsOnly(commands.CheckFailure):
+    pass

@@ -129,6 +129,8 @@ class SNBot(commands.Bot):
         elif isinstance(error, commands.CheckFailure):
             if type(error) == errors.WrongGuild:
                 await ctx.send("This command can not be used in this server.")
+            elif type(error) == errors.GuildsOnly:
+                await ctx.send("This command can only be used in servers.")
             else:
                 await channel.send("You do not have permission to use that command!")
             return
