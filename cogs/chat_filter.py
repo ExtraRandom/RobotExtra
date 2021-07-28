@@ -1,8 +1,15 @@
 from discord.ext import commands
 from cogs.utils import ez_utils
-from time import time
+from datetime import datetime
+from typing import List, Union
 import discord
 import re
+
+
+class ChatWarning:
+    def __init__(self, *, user: Union[discord.User, discord.Member]):
+        self.user = user
+        self.warn_time = datetime.utcnow().timestamp()
 
 
 class ChatFilter(commands.Cog):
@@ -11,9 +18,9 @@ class ChatFilter(commands.Cog):
         self.regex = r"(https?:\/\/)?(www\.)?(discord\.(gg|io|me|li)|discordapp\.com\/invite|discord\.com\/invite)" \
                      "\/([a-zA-Z0-9]+)"
 
+        self.warns: List[ChatWarning] = []
+
         self.warning_delete_time = 20
-        self.last_warning_time = 0
-        # TODO change to dict of server id: time of last warning
 
     async def on_message(self, message):
         if message.author.bot is True:
@@ -63,7 +70,7 @@ class ChatFilter(commands.Cog):
                     try:
                         await message.delete()
                     except discord.errors.NotFound:
-                        # yag deleted the message as part of the spam filter, but lets warn the user anyways
+                        # another bot deleted the message as part of its spam filter, but lets warn the user anyways
                         pass
 
                     await log.send(embed=ez_utils.quick_embed(
@@ -77,19 +84,43 @@ class ChatFilter(commands.Cog):
                         timestamp=True
                     ))
 
-                    await message.author.send("Your message in {} was deleted because it contains a discord invite.\n"
-                                              "This is against the rules and has been logged."
-                                              "".format(message.guild.name))
+                    warn = ChatWarning(user=message.author)
 
-                    if time() > self.last_warning_time + 20:
-                        self.last_warning_time = time()
+                    async def send_warn():
+                        await message.author.send(
+                            "Your message in {} was deleted because it contains a discord invite.\n"
+                            "This is against the rules and has been logged."
+                            "".format(message.guild.name))
                         await ez_utils.send_then_delete("{} your message was deleted as it contained a "
                                                         "discord invite.\n"
                                                         "This is against the server rules.\n"
                                                         "This message will self delete in {} seconds."
-                                                        "".format(message.author.mention, self.warning_delete_time),
+                                                        "".format(message.author.mention,
+                                                                  self.warning_delete_time),
                                                         message.channel,
                                                         time=self.warning_delete_time)
+
+                    for old_warning in self.warns:
+                        if warn.warn_time > old_warning.warn_time + self.warning_delete_time:
+                            self.warns.remove(old_warning)
+
+                    def get_warn(check_warn: ChatWarning):
+                        for warning in self.warns:
+                            if warning.user == check_warn.user:
+                                return warning
+                        return None
+
+                    if len(self.warns) > 0:
+                        old_warning = get_warn(warn)
+                        if old_warning is None:
+                            self.warns.append(warn)
+                            await send_warn()
+                            return
+
+                    else:
+                        self.warns.append(warn)
+                        await send_warn()
+                        return
 
 
 def setup(bot):
