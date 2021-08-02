@@ -115,6 +115,8 @@ class Commands(commands.Cog):
         res.add_field(name="Member Count", value="{} Total Members\n"
                                                  "{} Users\n"
                                                  "{} Bots".format(total_count, member_count, bot_count))
+        res.set_footer(text="ID: {}".format(ctx.guild.id))
+        res.timestamp = datetime.utcnow()
 
         await ctx.send(embed=res)
 
