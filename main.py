@@ -114,6 +114,12 @@ class SNBot(commands.Bot):
 
         await self.process_commands(message)
 
+    """
+    async def on_guild_join(self, guild):
+        self.ensure_all_fields_server()
+        self.update_server_json()
+    """
+
     async def on_command_error(self, ctx, error):
         channel = ctx.message.channel
         cmd = ctx.command
@@ -247,7 +253,8 @@ class SNBot(commands.Bot):
         fields = \
             {
                 "keys": {
-                    "token": None
+                    "token": None,
+                    "itad_api": None
                 },
                 "cogs":
                     {

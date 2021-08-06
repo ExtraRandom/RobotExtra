@@ -139,6 +139,8 @@ class Commands(commands.Cog):
         res.add_field(name="Python Version", value="{}".format(python_version))
         res.add_field(name="Source Code", value="{}".format(github_link))
         res.add_field(name="Uptime", value="{}".format(uptime))
+        res.set_footer(text="Currently being a robot in {} servers".format(len(self.bot.guilds)))
+
         res.set_thumbnail(url=avatar)
 
         await ctx.send(embed=res)

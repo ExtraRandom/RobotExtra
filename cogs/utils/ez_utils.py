@@ -1,9 +1,10 @@
 import asyncio
 import discord
 from datetime import datetime
+from typing import Union
 
 
-def quick_embed(title: str, description: str, colour=discord.colour.Colour.red(), fields=None, timestamp=False):
+def quick_embed(title: str, description: str, colour=discord.colour.Colour.red(), fields=None, timestamp: bool = False):
     embed = discord.Embed(
         title=title,
         description=description,
@@ -24,7 +25,18 @@ def quick_embed(title: str, description: str, colour=discord.colour.Colour.red()
     return embed
 
 
-async def send_then_delete(message, channel, time=60):
+async def send_then_delete(message: str, channel: Union[discord.TextChannel, discord.DMChannel], time=60):
+    """Send message then delete after time (default 60s)"""
     msg = await channel.send(message)
     await asyncio.sleep(time)
     await msg.delete()
+
+
+async def reply_then_delete(message: str, reply_message: discord.Message, time=60):
+    """Reply to a message and then delete after time (default 60s)"""
+    msg = await reply_message.reply(message)
+    await asyncio.sleep(time)
+    await msg.delete()
+
+
+
