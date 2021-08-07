@@ -2,11 +2,20 @@ import asyncio
 import copy
 import json
 import discord
+from datetime import datetime
 from discord.ext.commands import command, Cog, group
 from cogs.utils import ez_utils, perms
 from cogs.utils.logger import Logger
+from discord import (
+    User,
+    Embed,
+    Member,
+    TextChannel,
+    Message,
+    DMChannel
+)
 from discord_components import (
-    DiscordComponents,
+    # DiscordComponents,
     Button,
     ButtonStyle,
     Select,
@@ -14,14 +23,145 @@ from discord_components import (
     InteractionType,
     Interaction
 )
-from asyncio import TimeoutError
-from typing import List
+from typing import List, Union
+
+
+class Menu:
+    def __init__(self,
+                 bot: discord.Client,
+                 channel: Union[TextChannel, DMChannel],
+                 user: Union[User, Member],
+                 initial_text: Union[str, Embed],
+                 initial_options: Union[list, type(None)],  # Union[List[Union[Button, Select]], type(None)],
+                 message: Message,
+                 message_listener: bool = True
+                 ):
+        self.bot = bot
+        self.channel = channel
+        self.user = user
+        self.message = message
+        self.text = initial_text
+        self.options = initial_options
+
+        self.message_count = 0
+        self.repost_at_next_chance = False
+
+        self.last_change_timestamp = datetime.utcnow().timestamp()
+
+        if message_listener:
+            self.message_listener = self.bot.add_listener(self.__message_counter, "on_message")
+        else:
+            self.message_listener = None
+
+    async def start(self) -> bool:
+        try:
+            if isinstance(self.text, str):
+                await self.message.edit(content=self.text, embed=None, components=self.options)
+            elif isinstance(self.text, Embed):
+                await self.message.edit(content=None, embed=self.text, components=self.options)
+            self.last_change_timestamp = datetime.utcnow().timestamp()
+            return True
+        except TypeError:  # only really occurs during testing just after bot (re)start
+            return False
+
+    async def update(self, menu_text: Union[str, Embed], menu_options: list):  # List[Union[Button, Select]]):
+        self.text = menu_text
+        self.options = menu_options
+        await self.repost_if_necessary()
+        await self.start()
+
+    async def wait_for_response(self) -> Union[str, list, None]:
+        def check(res: Interaction):
+            return res.channel.id == self.channel.id \
+                   and res.user.id == self.user.id \
+                   and res.message.id == self.message.id
+
+        timeout_time = 60
+
+        tasks = [self.bot.wait_for("select_option", check=check),  # , timeout=timeout_time),
+                 self.bot.wait_for("button_click", check=check)]  # , timeout=timeout_time)]
+
+        try:
+            done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED, timeout=timeout_time)
+
+            for future in pending:
+                future.cancel()
+
+            for completed in done:
+                interaction = completed.result()
+                if interaction:
+                    if isinstance(interaction, Interaction):
+                        await interaction.respond(type=InteractionType.DeferredUpdateMessage)
+
+                        comp = interaction.component
+                        if isinstance(comp, list):
+                            # select options
+                            new_ids = []
+                            for option in comp:
+                                try:
+                                    new_ids.append(int(option.value))
+                                except ValueError:
+                                    print("Non int in list")
+                                    pass
+                            return new_ids
+                        elif isinstance(comp, Button):
+                            # button
+                            return comp.custom_id
+            return None  # if we haven't returned by this point then we probably timed out
+        except asyncio.TimeoutError:
+            # timed out
+            return None
+
+    async def __message_counter(self, message):
+        if message.channel.id == self.channel.id:
+            self.message_count += 1
+            if self.message_count >= 2:
+                self.repost_at_next_chance = True
+
+    async def repost_if_necessary(self, force_repost: bool = False):
+        if self.repost_at_next_chance or (force_repost and self.message_count >= 1):
+            await self.message.delete()
+            self.message = await self.channel.send("_ _")
+            await self.start()
+
+            self.message_count = 0
+            self.repost_at_next_chance = False
+
+    async def end(self, silent: bool = False):
+        if silent is False:
+            if self.message_count >= 1:
+                await self.message.delete()
+                await self.channel.send("Menu Closed (either due to timeout or being exited)")
+            else:
+                await self.message.edit(content="Menu Closed (either due to timeout or being exited)",
+                                        components=[],
+                                        embed=None)
+        else:
+            await self.message.delete()
+        if self.message_listener:
+            self.bot.remove_listener(self.__message_counter, "on_message")
+
+
+def get_menu(menu_list: List[Menu], channel: Union[int, discord.TextChannel]) -> Union[Menu, type(None)]:
+    """search menu list for a menu in channel, return menu or none if it exists or not"""
+    if isinstance(channel, int):
+        # find from channel id
+        for menu in menu_list:
+            if menu.channel.id == channel:
+                return menu
+    elif isinstance(channel, discord.TextChannel):
+        # find from channel
+        for menu in menu_list:
+            if menu.channel.id == channel.id:
+                return menu
+    return None
 
 
 class ServerSetup(Cog):
     def __init__(self, bot):
         self.bot = bot
         self.timeout_message = "No selection made within 60 seconds"
+        self.menus: List[Menu] = []
 
     def clear_setting(self, server_id: str, settings_category: str, setting: str):
         old_setting = self.bot.servers_config[server_id][settings_category][setting]
@@ -37,9 +177,8 @@ class ServerSetup(Cog):
                 return
 
             self.bot.servers_config[server_id][settings_category][setting] = null
-            self.bot.update_server_json()
+            # self.bot.update_server_json()
             return
-
 
     async def dynamic_menu(self, ctx, menu_select_options_list: List[SelectOption],
                            placeholder_text: str,
@@ -66,63 +205,30 @@ class ServerSetup(Cog):
         if clear_button:
             buttons.append(button_clear)
 
-        message = await ctx.send(message_text,
-                                 components=[Select(placeholder=placeholder_text,
-                                                    min_values=0,
-                                                    max_values=max_values,
-                                                    options=menu_select_options_list),
-                                             buttons])
+        options = [Select(placeholder=placeholder_text,
+                          min_values=0, max_values=max_values,
+                          options=menu_select_options_list),
+                   buttons]
 
-        def check(res):
-            return ctx.author == res.user and res.channel == ctx.channel
+        menu = get_menu(self.menus, ctx.channel)
+        if menu is None:
+            msg = await ctx.channel.send("_ _")
+            menu = Menu(bot=self.bot, channel=ctx.channel, user=ctx.message.author, initial_text=message_text,
+                        initial_options=options, message=msg)
+            await menu.start()
+            self.menus.append(menu)
+        else:
+            await menu.update(menu_text=message_text, menu_options=options)
 
-        tasks = [self.bot.wait_for("select_option", check=check, timeout=60),
-                 self.bot.wait_for("button_click", check=check, timeout=60)]
-
-        try:
-            done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-
-            for future in pending:
-                future.cancel()
-
-            for completed in done:
-                interaction = completed.result()
-                if interaction:
-                    if isinstance(interaction, Interaction):
-                        await interaction.respond(type=InteractionType.DeferredUpdateMessage)
-                        await message.delete()
-
-                        comp = interaction.component
-                        if isinstance(comp, list):
-                            # select options
-                            new_ids = []
-                            for option in comp:
-                                new_ids.append(int(option.value))
-                            return new_ids
-                        elif isinstance(comp, Button):
-                            # button
-                            button_id = comp.custom_id
-                            if button_id == button_cancel.custom_id:
-                                return None
-                            elif button_id == button_accept.custom_id:
-                                return "menu_accept"
-                            elif button_id == button_clear.custom_id:
-                                return "menu_clear"
-
-            """
-            resp = await self.bot.wait_for("select_option", check=check, timeout=60)
-            await resp.respond(type=InteractionType.DeferredUpdateMessage)
-            await message.delete()
-
-            new_ids = []
-            if resp.component:
-                for comp in resp.component:
-                    new_ids.append(int(comp.value))
-            return new_ids
-            """
-        except TimeoutError:
-            await message.delete()
-            await ctx.send(self.timeout_message)
+        res = await menu.wait_for_response()
+        if isinstance(res, str):
+            if res == button_cancel.custom_id:
+                return None
+            else:
+                return res
+        elif isinstance(res, list):
+            return res
+        elif isinstance(res, type(None)):
             return None
 
     def updated_embed(self, ctx, setting: str, setting_category: str, config_before: dict, config_after: dict):
@@ -226,52 +332,49 @@ class ServerSetup(Cog):
         options = [[Button(style=ButtonStyle.green, label="Yes", custom_id="yes"),
                     Button(style=ButtonStyle.red, label="No", custom_id="no")]]
 
-        msg = await ctx.send(content=ask_text,
-                             components=options)
+        menu = get_menu(self.menus, ctx.channel)
+        if menu is None:
+            msg = await ctx.channel.send("_ _")
+            menu = Menu(bot=self.bot, channel=ctx.channel, user=ctx.message.author, initial_text=ask_text,
+                        initial_options=options, message=msg)
+            await menu.start()
+            self.menus.append(menu)
+        else:
+            await menu.update(menu_text=ask_text, menu_options=options)
 
-        def check(res):
-            return ctx.author == res.user and res.channel == ctx.channel
+        res = await menu.wait_for_response()
+        if res is None:
+            return None
+        elif res == "yes":
+            self.bot.servers_config[str(ctx.guild.id)][settings_category][setting] = True
+        elif res == "no":
+            self.bot.servers_config[str(ctx.guild.id)][settings_category][setting] = False
 
-        try:
-            resp = await self.bot.wait_for("button_click", check=check, timeout=60)
-            await resp.respond(type=InteractionType.DeferredUpdateMessage)
-            enable = resp.component.custom_id
-            await msg.delete()
-
-            if enable == "yes":
-                self.bot.servers_config[str(ctx.guild.id)][settings_category][setting] = True
-            else:
-                self.bot.servers_config[str(ctx.guild.id)][settings_category][setting] = False
-            self.bot.update_server_json()
-            await ctx.send(embed=self.updated_embed(ctx, settings_category, setting, config,
-                                                    self.bot.servers_config[str(ctx.guild.id)][settings_category]))
-        except TimeoutError:
-            await ctx.send(self.timeout_message)
-            return
+        self.bot.update_server_json()
+        await ctx.send(embed=self.updated_embed(ctx, settings_category, setting, config,
+                                                self.bot.servers_config[str(ctx.guild.id)][settings_category]))
+        return
 
     async def continue_checker(self, ctx, ask_continue_text: str):
         options = [[Button(style=ButtonStyle.green, label="Yes", custom_id="yes"),
                     Button(style=ButtonStyle.red, label="No", custom_id="no")]]
 
-        msg = await ctx.send(content=ask_continue_text,
-                             components=options)
+        menu = get_menu(self.menus, ctx.channel)
+        if menu is None:
+            msg = await ctx.channel.send("_ _")
+            menu = Menu(bot=self.bot, channel=ctx.channel, user=ctx.message.author, initial_text=ask_continue_text,
+                        initial_options=options, message=msg)
+            await menu.start()
+            self.menus.append(menu)
+        else:
+            await menu.update(menu_text=ask_continue_text, menu_options=options)
 
-        def check(res):
-            return ctx.author == res.user and res.channel == ctx.channel
-
-        try:
-            resp = await self.bot.wait_for("button_click", check=check, timeout=60)
-            await resp.respond(type=InteractionType.DeferredUpdateMessage)
-            enable = resp.component.custom_id
-            await msg.delete()
-
-            if enable == "yes":
-                return True
-            else:
-                return False
-        except TimeoutError:
-            await msg.delete()
-            await ctx.send(self.timeout_message)
+        res = await menu.wait_for_response()
+        if res is None:
+            return False
+        elif res == "yes":
+            return True
+        elif res == "no":
             return False
 
     async def category_updater(self, ctx, settings_category: str, setting: str, setting_text: str,
@@ -513,6 +616,14 @@ class ServerSetup(Cog):
         """Set server config values"""
         await self.bot.show_cmd_help(ctx)
 
+    @command(hidden=True)
+    @perms.is_dev()
+    async def menus(self, ctx):
+        """debugging menus"""
+        await ctx.send(len(self.menus))
+        for menu in self.menus:
+            await ctx.send("menu in channel {} by user {}".format(menu.channel, menu.user))
+
     @command()
     @perms.is_admin()
     async def rdebug(self, ctx):
@@ -532,6 +643,22 @@ class ServerSetup(Cog):
     @set.command()
     @perms.is_admin()
     async def menu(self, ctx):
+        menu = get_menu(self.menus, ctx.channel)
+        if menu is None:
+            msg = await ctx.send("_ _")
+            menu = Menu(bot=self.bot, channel=ctx.channel, user=ctx.message.author,
+                        initial_text="Starting up menu...", initial_options=None, message=msg)
+            if await menu.start():
+                self.menus.append(menu)
+            else:
+                await menu.end()
+                return
+        else:
+            await ez_utils.reply_then_delete(
+                "{}, a menu is already running.".format(ctx.message.author.mention),
+                menu.message, time=20)
+            return
+
         menu_loop = True
         exit_button = Button(style=ButtonStyle.red, label="Exit", custom_id="menu_exit")
         back_button = Button(style=ButtonStyle.red, label="Back", custom_id="menu_back")
@@ -548,22 +675,15 @@ class ServerSetup(Cog):
                                                    custom_id=setting.name,
                                                    label=str(setting.name).capitalize()))
 
-            def check(res):
-                return ctx.author == res.user and res.channel == ctx.channel
+            await menu.update(menu_text="Select a settings type to change (60s timeout)",
+                              menu_options=[settings_buttons, [back_button_disabled, exit_button]])
 
-            main_menu = await ctx.send("Select a settings type to change (60s timeout)",
-                                       components=[settings_buttons, [back_button_disabled, exit_button]])
-            try:
-                resp = await self.bot.wait_for("button_click", check=check, timeout=60)
-                await resp.respond(type=InteractionType.DeferredUpdateMessage)
-                sub_menu_type = resp.component.custom_id
-                if sub_menu_type == exit_button.custom_id:
-                    await main_menu.delete()
-                    return
-            except TimeoutError:
-                await main_menu.delete()
-                await ctx.send(self.timeout_message)
-                return
+            menu_resp = await menu.wait_for_response()
+            if menu_resp is None or menu_resp == exit_button.custom_id:
+                await menu.end()
+                self.menus.remove(menu)
+                break
+            sub_menu_type = menu_resp
 
             sub_settings = None
             for setting in settings:
@@ -577,28 +697,19 @@ class ServerSetup(Cog):
                                                    custom_id=sub_setting.name,
                                                    label=str(sub_setting.name).capitalize()))
 
-            await main_menu.edit("Select {} Sub Setting (60s timeout)".format(sub_menu_type),
-                                 components=[sub_settings_buttons, [back_button, exit_button]])
-
-            try:
-                resp = await self.bot.wait_for("button_click", check=check, timeout=60)
-                await resp.respond(type=InteractionType.DeferredUpdateMessage)
-                cmd = resp.component.custom_id
-                await main_menu.delete()
-                if cmd == exit_button.custom_id:
-                    return
-                if cmd == back_button.custom_id:
-                    continue
-            except TimeoutError:
-                await main_menu.delete()
-                await ctx.send(self.timeout_message)
-                return
+            await menu.update(menu_text="Select {} Sub Setting (60s timeout)".format(sub_menu_type),
+                              menu_options=[sub_settings_buttons, [back_button, exit_button]])
+            sub_resp = await menu.wait_for_response()
+            if sub_resp is None or sub_resp == exit_button.custom_id:
+                await menu.end()
+                self.menus.remove(menu)
+                break
+            elif sub_resp == back_button:
+                continue
 
             for sub_setting in sub_settings:
-                if sub_setting.name == cmd:
+                if sub_setting.name == sub_resp:
                     await sub_setting.__call__(ctx)
-
-            menu_loop = await self.continue_checker(ctx, "Continue editing server configuration? (60s timeout)")
 
     @set.command()
     @perms.is_admin()
@@ -682,90 +793,90 @@ class ServerSetup(Cog):
         self.bot.update_server_json()
         await ctx.send("updated :D")
 
-    @set.group(invoke_without_command=True)
+    @set.group(invoke_without_command=True, enabled=False)
     @perms.is_admin()
     async def invites(self, ctx):
         """Invite filter related settings"""
         await self.bot.show_cmd_help(ctx)
 
-    @invites.command(name="channel")
+    @invites.command(name="channel", enabled=False)
     @perms.is_admin()
     async def invites_log_channel(self, ctx):
         await self.single_channel_updater(ctx, "invites", "log", "Select the channel to log invites to (60s timeout)")
         return
 
-    @invites.command(name="categories")
+    @invites.command(name="categories", enabled=False)
     @perms.is_admin()
     async def invites_categories(self, ctx):
         await self.category_updater(ctx, "invites", "ignore_categories",
                                     "Set Categories to ignore invite links in (60s timeout)")
 
-    @invites.command(name="roles")
+    @invites.command(name="roles", enabled=False)
     @perms.is_admin()
     async def invites_roles(self, ctx):
         await self.role_updater(ctx, "invites", "ignore_roles",
                                 "Set roles to ignore invite links from (60s timeout)")
 
-    @set.group(invoke_without_command=True)
+    @set.group(invoke_without_command=True, enabled=False)
     @perms.is_admin()
     async def tracking(self, ctx):
         """Tracking related settings"""
         await self.bot.show_cmd_help(ctx)
 
-    @tracking.command()
+    @tracking.command(enabled=False)
     @perms.is_admin()
     async def track(self, ctx):
         await self.boolean_updater(ctx, "tracking", "last_message",
                                    "Enable tracking? (60s timeout)")
 
-    @tracking.command(name="categories")
+    @tracking.command(name="categories", enabled=False)
     @perms.is_admin()
     async def tracking_categories(self, ctx):
         await self.category_updater(ctx, "tracking", "ignore_categories",
                                     "Select categories to be ignored by tracking (60s timeout)")
 
-    @set.group(invoke_without_command=True, name="anti-raid")
+    @set.group(invoke_without_command=True, name="anti-raid", enabled=False)
     @perms.is_admin()
     async def anti_raid(self, ctx):
         """Anti-raid related settings"""
         await self.bot.show_cmd_help(ctx)
 
-    @anti_raid.command(name="categories")
+    @anti_raid.command(name="categories", enabled=False)
     @perms.is_admin()
     async def lockdown_categories(self, ctx):
         await self.category_updater(ctx, "anti-raid", "lockdown_categories",
                                     "Select categories enforce lockdown on during lockdowns (60s timeout)")
 
-    @anti_raid.command(name="roles")
+    @anti_raid.command(name="roles", enabled=False)
     @perms.is_admin()
     async def lockdown_roles(self, ctx):
         await self.role_updater(ctx, "anti-raid", "lockdown_roles",
                                 "Select roles to enforce lockdown on during lockdowns (60s timeout)")
 
-    @anti_raid.command(name="channels")
+    @anti_raid.command(name="channels", enabled=False)
     @perms.is_admin()
     async def lockdown_channels(self, ctx):
         await self.channels_updater(ctx, "anti-raid", "lockdown_channels", "Select channels (60s timeout)")
 
-    @anti_raid.command(name="caution")
+    @anti_raid.command(name="caution", enabled=False)
     @perms.is_admin()
     async def lockdown_caution(self, ctx):
         await self.boolean_updater(ctx, "anti-raid", "caution",
                                    "Cautious booting? (Yes = Kick, No = Ban) (60s timeout)")
 
-    @set.group(invoke_without_command=True)
+    @set.group(invoke_without_command=True, enabled=False)
     @perms.is_admin()
     async def logging(self, ctx):
         """Logging related settings"""
         await self.bot.show_cmd_help(ctx)
 
-    @logging.command(name="join-leave")
+    @logging.command(name="join-leave", enabled=False)
     @perms.is_admin()
     async def join_leave_log_channel(self, ctx):
         await self.single_channel_updater(ctx, "logging", "join_leave_log",
                                           "Select the channel to log joins and leaves to (60s timeout)")
 
-    @logging.command(name="kick-ban")
+    @logging.command(name="kick-ban", enabled=False)
     @perms.is_admin()
     async def kick_ban_log_channel(self, ctx):
         await self.single_channel_updater(ctx, "logging", "kick_ban_log",
