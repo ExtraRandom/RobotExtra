@@ -20,7 +20,6 @@ from discord_components import (
     ButtonStyle,
     Select,
     SelectOption,
-    InteractionType,
     Interaction
 )
 from typing import List, Union
@@ -91,7 +90,7 @@ class Menu:
                 interaction = completed.result()
                 if interaction:
                     if isinstance(interaction, Interaction):
-                        await interaction.respond(type=InteractionType.DeferredUpdateMessage)
+                        await interaction.respond(type=6)
 
                         comp = interaction.component
                         if isinstance(comp, list):

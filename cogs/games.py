@@ -10,8 +10,7 @@ from discord_components import (
     # Button,
     # ButtonStyle,
     Select,
-    SelectOption,
-    InteractionType
+    SelectOption
     # Interaction
 )
 import asyncio
@@ -120,7 +119,7 @@ class Games(commands.Cog):
                     return ctx.author == i_res.user and i_res.channel == ctx.channel
 
                 interaction = await self.bot.wait_for("select_option", check=check, timeout=30)
-                await interaction.respond(type=InteractionType.DeferredUpdateMessage)
+                await interaction.respond(type=6)
                 game_plain = interaction.component[0].value
 
                 if game_plain == "itad_menu_cancel":
