@@ -93,12 +93,14 @@ class Menu:
                         await interaction.respond(type=6)
 
                         comp = interaction.component
-                        if isinstance(comp, list):
+                        print(comp)
+
+                        if isinstance(comp, Select):
                             # select options
                             new_ids = []
-                            for option in comp:
+                            for option in interaction.values:
                                 try:
-                                    new_ids.append(int(option.value))
+                                    new_ids.append(int(option))
                                 except ValueError:
                                     print("Non int in list")
                                     pass

@@ -111,28 +111,31 @@ class Games(commands.Cog):
                 p_value = result['title']
                 plains_title_lookup[p_key] = p_value
 
-            options.append(SelectOption(label="Cancel", value="itad_menu_cancel", emoji="❌"))
+            if len(options) == 1:
+                game_plain = options[0].value
+            else:
+                options.append(SelectOption(label="Cancel", value="itad_menu_cancel", emoji="❌"))
 
-            m = await ctx.send("Pick game (30s)", components=[Select(options=options)])
-            try:
-                def check(i_res):
-                    return ctx.author == i_res.user and i_res.channel == ctx.channel
+                m = await ctx.send("Pick game (30s)", components=[Select(options=options)])
+                try:
+                    def check(i_res):
+                        return ctx.author == i_res.user and i_res.channel == ctx.channel
 
-                interaction = await self.bot.wait_for("select_option", check=check, timeout=30)
-                await interaction.respond(type=6)
-                game_plain = interaction.component[0].value
+                    interaction = await self.bot.wait_for("select_option", check=check, timeout=30)
+                    await interaction.respond(type=6)
+                    game_plain = interaction.values[0]
 
-                if game_plain == "itad_menu_cancel":
-                    await m.edit(content="ITAD Search Canceled",
-                                 components=[])
+                    if game_plain == "itad_menu_cancel":
+                        await m.edit(content="ITAD Search Canceled",
+                                     components=[])
+                        return
+                    else:
+                        await m.delete()
+
+                except asyncio.TimeoutError:
+                    await m.edit(content="Prompt timed out.",
+                                 components=[Select(options=options, disabled=True)])
                     return
-                else:
-                    await m.delete()
-
-            except asyncio.TimeoutError:
-                await m.edit(content="Prompt timed out.",
-                             components=[Select(options=options, disabled=True)])
-                return
 
             deals_url = "https://api.isthereanydeal.com/v01/game/prices/" \
                         "?key={}&plains={}&region=uk&country=gb&shops=&exclude=&added=0" \
@@ -205,11 +208,12 @@ class Games(commands.Cog):
     async def dltime(self, ctx, size_in_gigabytes: float, download_speed_megabytes_per_second: float = 0):
         """Calculate time to download given file size (in GB's)
 
-        Argument size_in_gigabytes should be the download size in gigabytes.
-        For reference, 500 MegaBytes is 0.5 Gigabytes.
+        Argument size_in_gigabytes should be the download size in GigaBytes.
+        For reference, 500 MegaBytes is 0.5 GigaBytes.
 
         OPTIONAL Argument download_speed_megabytes_per_second should be the speed in MegaBytes per second.
-        If you only have access to your speed in MegaBits per second, take the speed and divide it by 8 to get MegaBytes per second.
+        If you only have access to your speed in MegaBits per second,
+        take the speed and divide it by 8 to get MegaBytes per second.
         """
 
         # taken from Blue2

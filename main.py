@@ -315,7 +315,7 @@ class SNBot(commands.Bot):
                 },
                 "anti-raid": {
                     "lockdown_categories": [],  # categories to lockdown
-                    "lockdown_channels": [],  # channels to indiviaully lockdown
+                    "lockdown_channels": [],  # channels to individually lockdown
                     "lockdown_roles": [],  # roles to enforce lockdown on
                     "caution": True,  # if true kick, if false ban
                 }
