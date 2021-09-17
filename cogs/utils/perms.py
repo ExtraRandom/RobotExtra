@@ -42,7 +42,7 @@ def is_admin():
 def is_in_a_server():
     def predicate(ctx):
         if isinstance(ctx.message.channel, discord.DMChannel):
-            raise errors.GuildsOnly("Server only command")
+            raise discord.ext.commands.NoPrivateMessage
         else:
             return True
     return commands.check(predicate)
@@ -53,6 +53,6 @@ def is_in_dms():
         if isinstance(ctx.message.channel, discord.DMChannel):
             return True
         else:
-            raise errors.DMOnly("DMs only command")
+            raise discord.ext.commands.PrivateMessageOnly
 
     return commands.check(predicate)
