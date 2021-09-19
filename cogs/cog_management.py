@@ -1,6 +1,6 @@
 from discord.ext import commands
 import os
-from cogs.utils import perms, IO
+from cogs.utils import perms, IO, ez_utils
 from cogs.utils.logger import Logger
 
 
@@ -13,7 +13,7 @@ class CogManagement(commands.Cog):
     async def load(self, ctx, *, cog: str):
         """Load a cog"""
         cog_list = []
-        for c_file in os.listdir(os.path.join(self.bot.base_directory, "cogs")):
+        for c_file in os.listdir(os.path.join(ez_utils.base_directory(), "cogs")):
             if c_file.endswith(".py"):
                 cog_list.append("cogs.{}".format(c_file.replace(".py", "")))
 

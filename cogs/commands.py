@@ -2,7 +2,7 @@ from discord.ext import commands
 from cogs.utils import time_formatting as timefmt
 from PIL import Image
 from datetime import datetime
-from cogs.utils import perms
+from cogs.utils import perms, ez_utils
 import os
 import io
 import discord
@@ -39,7 +39,7 @@ class Commands(commands.Cog):
         Input emote must be a discord custom emoji.
         Doesn't work with animated emoji or default emoji."""
 
-        img_base = Image.open(os.path.join(self.bot.base_directory, "cogs", "data", "memes", "emote_why.png"))
+        img_base = Image.open(os.path.join(ez_utils.base_directory(), "cogs", "data", "memes", "emote_why.png"))
         res = requests.get(emote.url)
         img_emote = Image.open(io.BytesIO(res.content)).convert("RGBA")
         img_emote = img_emote.resize((400, 400))

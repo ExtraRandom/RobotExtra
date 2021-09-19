@@ -91,14 +91,12 @@ class ChatFilter(commands.Cog):
                             "Your message in {} was deleted because it contains a discord invite.\n"
                             "This is against the rules and has been logged."
                             "".format(message.guild.name))
-                        await ez_utils.send_then_delete("{} your message was deleted as it contained a "
-                                                        "discord invite.\n"
-                                                        "This is against the server rules.\n"
-                                                        "This message will self delete in {} seconds."
-                                                        "".format(message.author.mention,
-                                                                  self.warning_delete_time),
-                                                        message.channel,
-                                                        time=self.warning_delete_time)
+                        await message.channel.send("{} your message was deleted as it contained a "
+                                                   "discord invite.\n"
+                                                   "This is against the server rules.\n"
+                                                   "This message will self delete in {} seconds."
+                                                   "".format(message.author.mention, self.warning_delete_time),
+                                                   delete_after=self.warning_delete_time)
 
                     for old_warning in self.warns:
                         if warn.warn_time > old_warning.warn_time + self.warning_delete_time:

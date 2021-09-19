@@ -1,6 +1,6 @@
 from discord.ext import commands
 from datetime import datetime
-from cogs.utils import IO, errors
+from cogs.utils import IO, errors, ez_utils
 from cogs.utils.logger import Logger
 import discord
 import traceback
@@ -25,15 +25,15 @@ def get_prefix(d_bot, message):
     return commands.when_mentioned_or(*prefixes)(d_bot, message)
 
 
-class SNBot(commands.Bot):
+class RobotExtra(commands.Bot):
     def __init__(self):
-        self.base_directory = os.path.dirname(os.path.realpath(__file__))
+        # self.base_directory = os.path.dirname(os.path.realpath(__file__))
         self.servers_config = {}
 
         self.start_time = None
         self.reconnect_time = None
 
-        db_path = os.path.join(self.base_directory, "db", "testing.sqlite")
+        db_path = os.path.join(ez_utils.base_directory(), "db", "testing.sqlite")
         try:
             s_connection = sqlite3.connect(db_path)  # print("Connected to the DB")
         except Error as e:
@@ -43,7 +43,7 @@ class SNBot(commands.Bot):
         self.connection = s_connection
 
         cursor = self.connection.cursor()
-        sql_file = os.path.join(self.base_directory, "db", "schema.sql")
+        sql_file = os.path.join(ez_utils.base_directory(), "db", "schema.sql")
         with open(sql_file, "r") as rf:
             sql_as_string = rf.read()
             # print("Running SQL Scheme Script")
@@ -215,46 +215,13 @@ class SNBot(commands.Bot):
         return c_list
 
     @staticmethod
-    async def find_member_from_id_or_mention(ctx, user):  # self,
-        """Takes message context to check for mentions and user input to check if its an id and returns
-        the member object should it find one, or none if it does not"""
-        target = None
-
-        if user is None:
-            target = ctx.author
-        else:
-            # Check for mention
-            try:
-                mentions = ctx.message.mentions
-                if len(mentions) == 1:
-                    target = mentions[0]
-                elif len(mentions) > 1:
-                    return None
-            except AttributeError:
-                pass
-
-            # Check for id
-            if target is None:
-                try:
-                    user_id = int(user)
-                    user_find = ctx.message.guild.get_member(user_id)
-                    if user_find is not None:
-                        target = user_find
-                except ValueError:
-                    return None
-                except Exception as e:
-                    Logger.write(e)
-                    return None
-
-        return target
-
-    @staticmethod
     def ensure_all_fields(settings_data: dict):
         fields = \
             {
                 "keys": {
                     "token": None,
-                    "itad_api": None
+                    "itad_api": None,
+                    "youtube_api": None
                 },
                 "cogs":
                     {
@@ -356,7 +323,7 @@ class SNBot(commands.Bot):
         """First time run check"""
         if os.path.isfile(IO.settings_file_path) is False:
             Logger.write_and_print("First Time Run")
-            configs_f = os.path.join(self.base_directory, "configs")
+            configs_f = os.path.join(ez_utils.base_directory(), "configs")
             if not os.path.exists(configs_f):
                 os.mkdir(configs_f)
             first_time = True
@@ -429,5 +396,5 @@ class SNBot(commands.Bot):
 
 
 if __name__ == '__main__':
-    the_bot = SNBot()
+    the_bot = RobotExtra()
     the_bot.run()

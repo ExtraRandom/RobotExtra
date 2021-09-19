@@ -1,5 +1,6 @@
 from discord.ext import commands
 # from cogs.utils import perms
+from cogs.utils import ez_utils
 import discord
 import random
 import json
@@ -15,7 +16,7 @@ class Fun(commands.Cog):
     async def fortune(self, ctx):
         """Fortune Cookie"""
         # https://github.com/larryprice/fortune-cookie-api/tree/master/data]
-        folder = os.path.join(self.bot.base_directory, "cogs", "data", "fortune",)
+        folder = os.path.join(ez_utils.base_directory(), "cogs", "data", "fortune",)
         path = os.path.join(folder, "proverbs.json")
 
         with open(path, "r") as f:

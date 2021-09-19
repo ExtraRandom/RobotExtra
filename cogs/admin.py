@@ -3,7 +3,7 @@ from discord.ext import commands
 from time import time
 from datetime import datetime, timedelta
 from cogs.utils import perms  # , IO
-from cogs.utils import time_formatting as timefmt
+from cogs.utils import time_formatting as timefmt, ez_utils
 from cogs.utils.logger import Logger
 import discord
 import re
@@ -28,7 +28,7 @@ class Admin(commands.Cog):
         Use with a user id or mention to check when a member last spoke.
         Use with one of the below subcommands to list multiple users.
         """
-        target = await self.bot.find_member_from_id_or_mention(ctx, user)  # self,
+        target = await ez_utils.find_member_from_id_or_mention(ctx, user)  # self,
 
         if target is None:
             await ctx.send("Couldn't find that user")
@@ -309,7 +309,7 @@ class Admin(commands.Cog):
     @perms.is_in_somewhere_nice()
     async def purgetxt(self, ctx):
         """purge.txt"""
-        purge_file = os.path.join(self.bot.base_directory, "cogs", "data", "purge.txt")
+        purge_file = os.path.join(ez_utils.base_directory(), "cogs", "data", "purge.txt")
         immune_role = await self.get_role_from_id(ctx, self.purge_immune_role_id)
         with open(purge_file, "w", encoding="utf-8") as fw:
             for member in ctx.guild.members:
@@ -544,7 +544,7 @@ class Admin(commands.Cog):
         No Argument will return your own info"""
         # https://discordpy.readthedocs.io/en/latest/api.html#member
         # target = None
-        target = await self.bot.find_member_from_id_or_mention(ctx, user)  # self,
+        target = await ez_utils.find_member_from_id_or_mention(ctx, user)
 
         if target is None:
             await ctx.send("Couldn't find that user")
@@ -656,7 +656,7 @@ class Admin(commands.Cog):
     @perms.is_dev()
     async def log(self, ctx):
         """DM latest log file"""
-        log_file = os.path.join(self.bot.base_directory, "logs", Logger.get_filename())
+        log_file = os.path.join(ez_utils.base_directory(), "logs", Logger.get_filename())
         await ctx.author.send(file=discord.File(log_file))
         await ctx.send("DM'd latest log file <:somewhere_nice:766664959979159553>")
 
