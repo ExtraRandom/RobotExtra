@@ -1,8 +1,8 @@
 import asyncio
 import discord
 from datetime import datetime
-from typing import Union
 import os
+from cogs.utils.logger import Logger
 
 
 def quick_embed(title: str, description: str, colour=discord.colour.Colour.red(), fields=None, timestamp: bool = False):
