@@ -156,6 +156,7 @@ class RobotExtra(commands.Bot):
 
     @staticmethod
     async def show_cmd_help(ctx, full_doc=False):
+        """Show command help for given command"""
         cmd = ctx.command
         cmd_name = cmd.name
         cmd_help = cmd.help
@@ -197,6 +198,7 @@ class RobotExtra(commands.Bot):
 
     @staticmethod
     def get_cogs_in_folder():
+        """Get list of cogs in the cogs folder"""
         c_dir = os.path.dirname(os.path.realpath(__file__))
         c_list = []
         for file in os.listdir(os.path.join(c_dir, "cogs")):
@@ -206,6 +208,7 @@ class RobotExtra(commands.Bot):
 
     @staticmethod
     def get_cogs_in_settings():
+        """Get list of cogs in the settings json cogs section"""
         c_list = []
         data = IO.read_settings_as_json()
         if data is None:
@@ -216,6 +219,7 @@ class RobotExtra(commands.Bot):
 
     @staticmethod
     def ensure_all_fields(settings_data: dict):
+        """Ensure settings.json has all the necessary settings"""
         fields = \
             {
                 "keys": {
@@ -263,6 +267,7 @@ class RobotExtra(commands.Bot):
             return settings_data
 
     def ensure_all_fields_server(self):
+        """Ensure server settings json has all the necessary settings"""
         servers = self.guilds
         fields = \
             {
@@ -322,7 +327,7 @@ class RobotExtra(commands.Bot):
 
         """First time run check"""
         if os.path.isfile(IO.settings_file_path) is False:
-            Logger.write_and_print("First Time Run")
+            Logger.write("First Time Run", print_log=True)
             configs_f = os.path.join(ez_utils.base_directory(), "configs")
             if not os.path.exists(configs_f):
                 os.mkdir(configs_f)
@@ -351,7 +356,7 @@ class RobotExtra(commands.Bot):
                 try:
                     should_load = s_data['cogs'][folder_cog]
                 except KeyError:
-                    Logger.write_and_print("New Cog '{}'".format(folder_cog))
+                    Logger.write("New Cog '{}'".format(folder_cog), print_log=True)
                     # noinspection PyTypeChecker
                     s_data['cogs'][folder_cog] = True
                     should_load = True
@@ -378,7 +383,7 @@ class RobotExtra(commands.Bot):
         f_cogs = self.get_cogs_in_settings()
         for f_cog in f_cogs:
             if f_cog not in r_cogs:
-                Logger.write_and_print("Cog '{}' no longer exists, removing settings entry".format(f_cog))
+                Logger.write("Cog '{}' no longer exists, removing settings entry".format(f_cog), print_log=True)
                 del s_data['cogs'][f_cog]
 
         """Write settings to file"""
@@ -389,8 +394,8 @@ class RobotExtra(commands.Bot):
             self.start_time = datetime.utcnow()
             super().run(token)
         else:
-            Logger.write_and_print("Token is not set! Go to {} and change the token parameter!"
-                                   "".format(IO.settings_file_path))
+            Logger.write("Token is not set! Go to {} and change the token parameter!"
+                         "".format(IO.settings_file_path), print_log=True)
             print("Waiting 30 seconds before trying again")
             time.sleep(30)
 

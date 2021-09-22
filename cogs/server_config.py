@@ -741,8 +741,7 @@ class ServerSetup(Cog):
                             try:
                                 names_list.append(ctx.guild.get_channel(value).name)
                             except AttributeError as e:
-                                Logger.write_and_print("Couldn't find category with id '{}'".format(value))
-                                Logger.write_and_print(e)
+                                Logger.write(f"Couldn't find category with id '{value}'\nError: {e}", print_log=True)
                                 continue
                         normal_inner_value = ", ".join(names_list)
                     elif list_of == "channels":
@@ -751,8 +750,7 @@ class ServerSetup(Cog):
                             try:
                                 mention_list.append(ctx.guild.get_channel(value).mention)
                             except AttributeError as e:
-                                Logger.write_and_print("Couldn't find channel with id '{}'".format(value))
-                                Logger.write_and_print(e)
+                                Logger.write(f"Couldn't find channel with id '{value}'\nError: {e}", print_log=True)
                                 continue
                         normal_inner_value = ", ".join(mention_list)
                     elif list_of == "roles":
@@ -761,8 +759,7 @@ class ServerSetup(Cog):
                             try:
                                 mention_list.append(ctx.guild.get_role(value).mention)
                             except AttributeError as e:
-                                Logger.write_and_print("Couldn't find role with id '{}'".format(value))
-                                Logger.write_and_print(e)
+                                Logger.write(f"Couldn't find role with id '{value}'\nError: {e}", print_log=True)
                                 continue
                         normal_inner_value = ", ".join(mention_list)
                     else:

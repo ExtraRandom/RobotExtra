@@ -43,15 +43,8 @@ class Logger:
         return file_name
 
     @staticmethod
-    def write_and_print(to_write):
-        # print(to_write)
-        if Logger.write(to_write, print_log=True) is True:
-            return True
-        else:
-            return False
-
-    @staticmethod
-    def log_write(data):
+    def log_write(data: str):
+        """Write to the log"""
         try:
             with open(os.path.join(os.path.join(Logger.get_cwd(), "logs", Logger.get_filename())), "a") as lf:
                 lf.write(data)
@@ -63,6 +56,7 @@ class Logger:
 
     @staticmethod
     def log_read():
+        """Read the log and return it"""
         try:
             with open(os.path.join(os.path.join(Logger.get_cwd(), "logs", Logger.get_filename())), "r") as lr:
                 data = lr.read()
@@ -75,6 +69,7 @@ class Logger:
 
     @staticmethod
     def write(to_write, print_log=False):
+        """Write to the log, optionally printing the input to the console too"""
         if Logger.check_for_folder() is False:
             return False
 

@@ -10,6 +10,10 @@ def day_suffix(day: int):
     return suffix
 
 
+def seconds_to_time(time_input):
+    return "{}".format(str(datetime.timedelta(seconds=time_input)))
+
+
 def time_ago(time_input, brief=False, force_into_utc=False):
     now = datetime.datetime.utcnow()
     now = now.replace(microsecond=0)

@@ -81,11 +81,10 @@ class Games(commands.Cog):
     @commands.command()
     async def itad(self, ctx, *, search_term: str):
         """IsThereAnyDeal.com Search"""
-        key_data = IO.read_settings_as_json()
-        if key_data is None:
+        key = IO.fetch_from_settings('keys', 'itad_api')
+        if key is None:
+            await ctx.send("No ITAD API key in settings config.", delete_after=15)
             return
-        else:
-            key = key_data['keys']['itad_api']
 
         search = parse.quote(search_term)
 

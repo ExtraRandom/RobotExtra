@@ -34,6 +34,7 @@ async def reply_then_delete(message: str, reply_message: discord.Message, time=6
 
 
 def base_directory():
+    """Base file directory of the bot (the folder main.py is in)"""
     return os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 
