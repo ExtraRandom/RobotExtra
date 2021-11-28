@@ -1,10 +1,12 @@
-discord.py
+discord.py[voice]
 # git+https://github.com/Rapptz/discord.py
 requests
 pytz
 Pillow
 fake_useragent
 python-dateutil
-asyncpraw
+# asyncpraw
 beautifulsoup4
 discord-components
+# youtube_dl
+yt-dlp
