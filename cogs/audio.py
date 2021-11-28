@@ -253,7 +253,6 @@ class YTDLSource(discord.PCMVolumeTransformer):
         else:
             return None
 
-
         return links
 
     @classmethod
@@ -262,6 +261,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
         # print("search type: " + LinkCheck.debug[search_type])
 
         links = None
+        player = ctx.command.cog.players[ctx.guild.id]
 
         if search_type == LinkCheck.is_not_yt_link:
             await ctx.send(f"`{search}` is not a valid youtube link.", delete_after=15)
@@ -300,6 +300,14 @@ class YTDLSource(discord.PCMVolumeTransformer):
                 playlist_length = len(data['entries'])
                 final_data = []
                 for entry in data['entries']:
+                    await player.queue.put(Song(
+                        url=entry['webpage_url'],
+                        requester=ctx.author,
+                        title=entry['title'],
+                        duration=entry['duration'],
+                        thumbnail=entry['thumbnail']
+                    ))
+                    continue
                     final_data.append(Song(
                         url=entry['webpage_url'],
                         requester=ctx.author,
@@ -311,7 +319,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
                     await ctx.send(f'```ini\n[Added {playlist_length} videos from playlist to the Queue.]\n```',
                                    delete_after=15)
                 else:
-                    await ctx.send(f'```ini\n[Added {final_data[0].title} to the Queue.]\n```', delete_after=15)
+                    await ctx.send(f'```ini\n[Added {data["entries"][0]["title"]} to the Queue.]\n```', delete_after=15)
             else:
                 final_data = Song(
                     url=data['webpage_url'],
@@ -320,6 +328,13 @@ class YTDLSource(discord.PCMVolumeTransformer):
                     duration=data['duration'],
                     thumbnail=data['thumbnail']
                 )
+                await player.queue.put(Song(
+                    url=data['webpage_url'],
+                    requester=ctx.author,
+                    title=data['title'],
+                    duration=data['duration'],
+                    thumbnail=data['thumbnail']
+                ))
 
                 await ctx.send(f'```ini\n[Added {data["title"]} to the Queue.]\n```', delete_after=15)
 
@@ -340,7 +355,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
                     )
                 )
                 final_data = []
-                player = ctx.command.cog.players[ctx.guild.id]
+
                 await player.queue.put(Song(
                         url=data['webpage_url'],
                         requester=ctx.author,
@@ -351,7 +366,10 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
         await msg.delete()
 
-        return final_data
+        # print("final data")
+        # print(final_data)
+        return None
+        # return final_data
 
     @classmethod
     async def regather_stream(cls, data: Song, *, loop):
@@ -578,6 +596,7 @@ class Audio(commands.Cog):
 
                 for i in range(len(player.queue)):
                     item: Song = player.queue[i]
+                    print(item)
 
                     msg += f"{'#' + str(i + 1):<3} " \
                            f"{str(item.title)[:50]} " \
@@ -605,7 +624,7 @@ class Audio(commands.Cog):
                 await ctx.send("Timed out whilst trying to connect.")
                 return
             except AttributeError:
-                await ctx.send("join a vc first")
+                await ctx.send("Join a voice channel first!")
                 return
 
         player = self.get_player(ctx)
