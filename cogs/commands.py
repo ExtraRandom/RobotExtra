@@ -8,6 +8,8 @@ import io
 import discord
 import requests
 import pytz
+import random
+import json
 from platform import python_version as py_v
 
 
@@ -48,30 +50,6 @@ class Commands(commands.Cog):
         img_base.save(file, format="PNG")
         file.seek(0)
         await ctx.send(file=discord.File(file, "why.png"))
-
-    @commands.command()
-    @perms.is_admin()
-    @perms.is_in_somewhere_nice()
-    async def times(self, ctx):
-        """Get the current time for the admins"""
-        extra_time = datetime.now(tz=pytz.timezone('Europe/London'))
-        john_time = datetime.now(tz=pytz.timezone('Europe/Copenhagen'))
-        nat_time = datetime.now(tz=pytz.timezone('Australia/Victoria'))
-        jacob_time = datetime.now(tz=pytz.timezone('US/Central'))
-
-        fmt = "%a %d %b\n%H:%M:%S\n%z %Z"
-
-        results = discord.Embed(title="Admin/Mod Current Times")
-        results.add_field(name="Jacob",
-                          value="{}".format(jacob_time.strftime(fmt)))
-        results.add_field(name="Extra",
-                          value="{}".format(extra_time.strftime(fmt)))
-        results.add_field(name="JohnDoe",
-                          value="{}".format(john_time.strftime(fmt)))
-        results.add_field(name="Natalie",
-                          value="{}".format(nat_time.strftime(fmt)))
-
-        await ctx.send(embed=results)
 
     @commands.command(hidden=True)
     @perms.is_dev()
@@ -144,6 +122,31 @@ class Commands(commands.Cog):
         res.set_thumbnail(url=avatar)
 
         await ctx.send(embed=res)
+
+    @commands.command()
+    async def ag(self, ctx, *, letters: str):
+        word_file = os.path.join(ez_utils.base_directory(), "cogs", "data", "words_letters.json")
+        with open(word_file, "r") as fr:
+            data = fr.read()
+            words = json.loads(data)
+
+        clean_letters = letters.strip().lower()
+
+        result = ""
+
+        for letter in clean_letters:
+            try:
+                letter_words = words[letter]
+            except IndexError:
+                continue
+            except KeyError:
+                continue
+
+            random.seed()
+            res_word = random.choice(letter_words).capitalize()
+            result += "{} ".format(res_word)
+
+        await ctx.send(f"{letters} means {result}")
 
 
 def setup(bot):
