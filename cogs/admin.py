@@ -555,7 +555,8 @@ class Admin(commands.Cog):
             name += " (aka '{}')".format(target.nick)
 
         result = discord.Embed(title="",
-                               description="[Avatar]({}) - {}".format(target.avatar_url, target.mention),
+                               description="[Avatar]({}) - {} - {}".format(target.avatar_url, target.mention,
+                                                                           target.colour),
                                colour=target.colour)
         result.set_author(name="{}".format(name), icon_url=target.avatar_url)
 
@@ -632,10 +633,11 @@ class Admin(commands.Cog):
         await ctx.reply(content="DB updated with messages from the last {} days. Time taken {}"
                                 "".format(days_ago, end_time - start_time))
 
+    """
     @commands.command(hidden=True)
     @perms.is_dev()
     async def time(self, ctx, *, time_inp: int):
-        """Time testing"""
+        " ""Time testing" ""
         then_ts = datetime.utcnow().timestamp()-time_inp
         await ctx.send("time since {}:\n"
                        "{}".format(datetime.fromtimestamp(then_ts),
@@ -646,12 +648,13 @@ class Admin(commands.Cog):
     @commands.command(hidden=True)
     @perms.is_dev()
     async def timeb(self, ctx, *, time_inp: int):
-        """Time brief testing"""
+        " ""Time brief testing" ""
         then_ts = datetime.utcnow().timestamp() - time_inp
         await ctx.send("time since {}:\n"
                        "{}".format(datetime.fromtimestamp(then_ts),
                                    timefmt.time_ago(then_ts, brief=True)))
 
+    """
     @commands.command(hidden=True)
     @perms.is_dev()
     async def log(self, ctx):
