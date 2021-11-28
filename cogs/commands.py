@@ -125,6 +125,11 @@ class Commands(commands.Cog):
 
     @commands.command()
     async def ag(self, ctx, *, letters: str):
+        """Acronym Generator"""
+        if len(letters) > 50:
+            await ctx.send("This command is limited to 50 characters or less.")
+            return
+
         word_file = os.path.join(ez_utils.base_directory(), "cogs", "data", "words_letters.json")
         with open(word_file, "r") as fr:
             data = fr.read()
