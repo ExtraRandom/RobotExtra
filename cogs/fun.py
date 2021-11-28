@@ -136,9 +136,6 @@ class Fun(commands.Cog):
         random.seed(combined_value)
         value = random.randrange(0, 100)
 
-        if 92562410493202432 in ids and 287420218651967518 in ids:
-            value = 100
-
         await ctx.send("{}\n"
                        ":small_red_triangle_down:{}\n"
                        ":small_red_triangle:{}\n"
