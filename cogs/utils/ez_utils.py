@@ -101,3 +101,21 @@ async def find_member_from_id_or_mention(ctx: discord.ext.commands.Context,
                 Logger.write(e)
                 return None
     return target
+
+
+def english_characters_check(check_string: str):
+    """
+    Checks if the given string contains english characters
+    :param check_string:
+    :return: True if all characters are english, false if not
+    """
+    # https://stackoverflow.com/questions/27084617/detect-strings-with-non-english-characters-in-python
+
+    try:
+        check_string.encode(encoding='utf-8').decode('ascii')
+    except UnicodeDecodeError:
+        return False
+    else:
+        return True
+
+

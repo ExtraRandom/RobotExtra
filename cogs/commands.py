@@ -153,6 +153,35 @@ class Commands(commands.Cog):
 
         await ctx.send(f"{letters} means {result}")
 
+    @commands.command()
+    @perms.is_dev()
+    async def binary(self, ctx, way: str, *, to_convert: str):
+        if len(to_convert) * 9 >= 1000:
+            await ctx.send("Convert string is too long")
+            return
+
+        # converting_to_binary = False
+        if way in ["to", "too", "2"]:
+            converting_to_binary = True
+        elif way in ["from", "form", "back"]:
+            converting_to_binary = False
+        else:
+            await ctx.send("Way '{}' unknown, valid ways are 'to' and 'from'".format(way))
+            return
+
+        if converting_to_binary:
+            if ez_utils.english_characters_check(to_convert) is True:
+                con = ' '.join(format(ord(x), 'b') for x in to_convert)
+                await ctx.send(con)
+
+        else:
+            chars = to_convert.split(" ")
+            conversion = ""
+            for char in chars:
+                conversion += chr(int(char, 2))
+
+            await ctx.send(conversion)
+
 
 def setup(bot):
     bot.add_cog(Commands(bot))
