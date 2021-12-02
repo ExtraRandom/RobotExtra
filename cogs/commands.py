@@ -7,7 +7,7 @@ import os
 import io
 import discord
 import requests
-import pytz
+# import pytz
 import random
 import json
 from platform import python_version as py_v
@@ -95,6 +95,10 @@ class Commands(commands.Cog):
                                                  "{} Bots".format(total_count, member_count, bot_count))
         res.set_footer(text="ID: {}".format(ctx.guild.id))
         res.timestamp = datetime.utcnow()
+
+        icon = ctx.guild.icon_url_as()
+        if icon:
+            res.set_thumbnail(url=icon)
 
         await ctx.send(embed=res)
 

@@ -1,7 +1,7 @@
 discord.py[voice]
 # git+https://github.com/Rapptz/discord.py
 requests
-pytz
+# pytz
 Pillow
 fake_useragent
 python-dateutil
