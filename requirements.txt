@@ -1,7 +1,6 @@
 # py-cord[voice]
 py-cord[voice] @ git+https://github.com/Pycord-Development/pycord
 requests
-Pillow
 fake_useragent
 python-dateutil
 beautifulsoup4
