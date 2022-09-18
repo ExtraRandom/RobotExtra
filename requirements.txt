@@ -1,12 +1,8 @@
-discord.py[voice]
-# git+https://github.com/Rapptz/discord.py
+# py-cord[voice]
+py-cord[voice] @ git+https://github.com/Pycord-Development/pycord
 requests
-# pytz
 Pillow
 fake_useragent
 python-dateutil
-# asyncpraw
 beautifulsoup4
-discord-components
-# youtube_dl
 yt-dlp

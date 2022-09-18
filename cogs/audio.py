@@ -1,14 +1,6 @@
 from discord.ext import commands
 import discord
 from cogs.utils import time_formatting as time_fmt, ez_utils, perms, IO
-from discord_components import (
-    Button,
-    ButtonStyle,
-    ActionRow,
-    # Select,
-    # SelectOption
-    # Interaction
-)
 import asyncio
 from cogs.utils.logger import Logger
 from yt_dlp import YoutubeDL, utils as yt_utils
@@ -30,6 +22,8 @@ import requests
 # https://stackoverflow.com/questions/63036753/discord-py-bot-how-to-play-audio-from-local-files
 # https://gist.github.com/vbe0201/ade9b80f2d3b64643d854938d40a0a2d
 # https://stackoverflow.com/questions/56031159/discord-py-rewrite-what-is-the-source-for-youtubedl-to-play-music
+
+# TODO rework using a view so that we're not trying to respond to an interaction we already responded to repeatedly
 
 
 class Player:
@@ -125,7 +119,6 @@ class SongQueue(asyncio.Queue):
         return self._queue[index]
 
 
-# todo add
 class Song:
     def __init__(self, url: str, requester: discord.Member, title: str, duration: str, thumbnail: str):
         self.url = url
@@ -222,7 +215,6 @@ class YTDLSource(discord.PCMVolumeTransformer):
                 return LinkCheck.is_not_yt_link  # is not a youtube link
         return LinkCheck.is_not_link  # is not a link at all
 
-    # TODO quicker playlist fetching
     @classmethod
     async def __playlist_fetch(cls, ctx, url: str, api_key: str):
         print(url)
@@ -264,7 +256,8 @@ class YTDLSource(discord.PCMVolumeTransformer):
         player = ctx.command.cog.players[ctx.guild.id]
 
         if search_type == LinkCheck.is_not_yt_link:
-            await ctx.send(f"`{search}` is not a valid youtube link.", delete_after=15)
+            await ctx.respond(f"`{search}` is not a valid youtube link.", delete_after=15)
+            # await ctx.send(f"`{search}` is not a valid youtube link.", delete_after=15)
             return None
 
         elif search_type == LinkCheck.is_yt_link:
@@ -276,13 +269,15 @@ class YTDLSource(discord.PCMVolumeTransformer):
                 else:
                     # log then move on
                     print("no key")
-
-                msg = await ctx.send("Fetching songs, may take a moment...")
+                pass
+                # msg = await ctx.send("Fetching songs, may take a moment...")
             else:
-                msg = await ctx.send("Fetching song...")
+                pass
+                # msg = await ctx.send("Fetching song...")
 
         elif search_type == LinkCheck.is_not_link:
-            msg = await ctx.send(f"Fetching first result for '{search}'...")
+            pass
+            # msg = await ctx.send(f"Fetching first result for '{search}'...")
 
         else:  # makes the IDE stop telling me 'msg' might not exist
             await ctx.send("This shouldn't occur, but if it has check the logs to see why.")
@@ -300,6 +295,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
                 playlist_length = len(data['entries'])
                 final_data = []
                 for entry in data['entries']:
+                    print(entry)
                     await player.queue.put(Song(
                         url=entry['webpage_url'],
                         requester=ctx.author,
@@ -316,10 +312,15 @@ class YTDLSource(discord.PCMVolumeTransformer):
                         thumbnail=entry['thumbnail']
                     ))
                 if playlist_length > 1:
-                    await ctx.send(f'```ini\n[Added {playlist_length} videos from playlist to the Queue.]\n```',
-                                   delete_after=15)
+                    await ctx.respond(f'```ini\n[Added {playlist_length} videos from playlist to the Queue.]\n```',
+                                      delete_after=15)
+
+                    #await ctx.send(f'```ini\n[Added {playlist_length} videos from playlist to the Queue.]\n```',
+                    #               delete_after=15)
                 else:
-                    await ctx.send(f'```ini\n[Added {data["entries"][0]["title"]} to the Queue.]\n```', delete_after=15)
+                    await ctx.respond(f'```ini\n[Added {data["entries"][0]["title"]} to the Queue.]\n```',
+                                      delete_after=15)
+                    #await ctx.send(f'```ini\n[Added {data["entries"][0]["title"]} to the Queue.]\n```', delete_after=15)
             else:
                 final_data = Song(
                     url=data['webpage_url'],
@@ -336,7 +337,8 @@ class YTDLSource(discord.PCMVolumeTransformer):
                     thumbnail=data['thumbnail']
                 ))
 
-                await ctx.send(f'```ini\n[Added {data["title"]} to the Queue.]\n```', delete_after=15)
+                await ctx.respond(f'```ini\n[Added {data["title"]} to the Queue.]\n```', delete_after=15)
+                # await ctx.send(f'```ini\n[Added {data["title"]} to the Queue.]\n```', delete_after=15)
 
         else:
             final_data = []
@@ -364,7 +366,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
                         thumbnail=data['thumbnail']
                     ))
 
-        await msg.delete()
+        # await msg.delete()
 
         # print("final data")
         # print(final_data)
@@ -460,38 +462,11 @@ class Audio(commands.Cog):
             await ctx.send(self.msg_same_channel, delete_after=self.delete_after_time)
             return None
 
-    @commands.command()
-    @perms.is_dev()
-    async def buttons(self, ctx):
-        playing_options = ActionRow(
-            [
-                Button(style=ButtonStyle.green, label="Pause playback", custom_id="music_menu_toggle", emoji="⏸️"),
-                Button(style=ButtonStyle.green, label="Skip song", custom_id="music_menu_skip", emoji="⏭️"),
-                Button(style=ButtonStyle.red, label="Stop", custom_id="music_menu_stop", emoji="⏹️")
-            ],
+    audio_group = discord.commands.SlashCommandGroup("audio", "Audio Related Commands")
 
-        )
-        """
-                    [
-                        Button(style=ButtonStyle.red, label="Stop and disconnect", custom_id="music_menu_stop"),
-                        Button(style=ButtonStyle.red, label="Clear queue", custom_id="music_menu_clear"),
-                        Button(style=ButtonStyle.red, label="Remove a song from queue", custom_id="music_menu_remove"),
-                    ]"""
-        paused_options = ActionRow([
-            Button(style=ButtonStyle.blue, label="Resume playback", custom_id="music_menu_play"),
-            Button(style=ButtonStyle.blue, label="Skip song", custom_id="music_menu_skip"),
-            Button(style=ButtonStyle.blue, label="Clear queue", custom_id="music_menu_stop"),
-        ])
-
-        msg = await ctx.send("_ _", components=playing_options)
-
-        # msg = await ctx.send("PLAYBACK OPTIONS", components=playing_options)
-        # msg2 = await ctx.send("QUEUE OPTIONS", components=queue_options)
-
-    @commands.command()
+    @audio_group.command(guild_ids=[223132558609612810])
     @commands.guild_only()
-    @perms.is_dev()
-    async def dc(self, ctx):
+    async def disconnect(self, ctx):
         player = await self.player_check(ctx)
         if player:
             player.queue.clear()
@@ -501,10 +476,10 @@ class Audio(commands.Cog):
             vc.stop()
 
             await self.cleanup(guild)
+            await ctx.respond("Disconnected from Voice", delete_after=self.delete_after_time)
 
-    @commands.command()
+    @audio_group.command(guild_ids=[223132558609612810])
     @commands.guild_only()
-    @perms.is_dev()
     async def resume(self, ctx):
         player = await self.player_check(ctx)
         if player:
@@ -513,9 +488,8 @@ class Audio(commands.Cog):
             vc.resume()
             await ctx.send("Playback resumed", delete_after=self.delete_after_time)
 
-    @commands.command()
+    @audio_group.command(guild_ids=[223132558609612810])
     @commands.guild_only()
-    @perms.is_dev()
     async def pause(self, ctx):
         print(ez_utils.base_directory())
 
@@ -526,9 +500,8 @@ class Audio(commands.Cog):
             vc.pause()
             await ctx.send("Playback paused", delete_after=self.delete_after_time)
 
-    @commands.command()
+    @audio_group.command(guild_ids=[223132558609612810])
     @commands.guild_only()
-    @perms.is_dev()
     async def skip(self, ctx):
         player = await self.player_check(ctx)
         if player:
@@ -540,40 +513,8 @@ class Audio(commands.Cog):
             else:
                 await ctx.send(self.msg_not_playing, delete_after=self.delete_after_time)
 
-    # TODO fix or replace with similar command which actually works
-    """
-    @commands.command()
+    @audio_group.command(guild_ids=[223132558609612810])
     @commands.guild_only()
-    async def skip_to(self, ctx, skip_to_index: int):
-        skip_index = skip_to_index - 1
-        player = await self.player_check(ctx)
-        if player:
-            if player.current and len(player.queue) > 1:
-                try:
-                    print("uh")
-                    print(player.queue.find_from_index(skip_index))
-                except IndexError:
-                    print("nah")
-                    return
-
-                t = player.queue.find_from_index(skip_index)
-                for song_index in range(0, skip_index - 1):
-                    print()
-                    player.queue.remove(song_index)
-
-                guild = ctx.guild
-                vc = guild.voice_client
-                vc.stop()
-
-                await ctx.send("Skipped songs", delete_after=self.delete_after_time)
-
-            else:
-                await ctx.send(self.msg_not_playing, delete_after=self.delete_after_time)
-    """
-
-    @commands.command()
-    @commands.guild_only()
-    @perms.is_dev()
     async def remove(self, ctx, *, index: int):
         player = await self.player_check(ctx)
         if player:
@@ -583,9 +524,8 @@ class Audio(commands.Cog):
             else:
                 await ctx.send("No songs queued", delete_after=self.delete_after_time)
 
-    @commands.command()
+    @audio_group.command(guild_ids=[223132558609612810])
     @commands.guild_only()
-    @perms.is_dev()
     async def queue(self, ctx):
         player = await self.player_check(ctx)
         if player:
@@ -609,10 +549,14 @@ class Audio(commands.Cog):
             else:
                 await ctx.send("No songs queued.", delete_after=self.delete_after_time)
 
-    @commands.command()
+    @audio_group.command(guild_ids=[223132558609612810])
     @commands.guild_only()
-    @perms.is_dev()
-    async def play(self, ctx, *, link_or_search: str):
+    async def play(self, ctx,
+                   link_or_search: discord.Option(
+                       str, "A link to the video or a search term", required=True)):
+
+        # TODO https://stackoverflow.com/questions/69265909/discord-py-edit-the-interaction-message-after-a-timeout-in-discord-ui-select
+        # see if this can be used to help prevent error
         vc = ctx.voice_client
         if not vc:
             try:
@@ -621,10 +565,12 @@ class Audio(commands.Cog):
 
             except asyncio.TimeoutError:
                 print("VC join timeout")
-                await ctx.send("Timed out whilst trying to connect.")
+                await ctx.respond("Timed out whilst trying to connect.")
+                #await ctx.send("Timed out whilst trying to connect.")
                 return
             except AttributeError:
-                await ctx.send("Join a voice channel first!")
+                await ctx.respond("Join a voice channel first!")
+                # await ctx.send("Join a voice channel first!")
                 return
 
         player = self.get_player(ctx)
@@ -640,9 +586,8 @@ class Audio(commands.Cog):
                 # log song
                 await player.queue.put(src)
 
-    @commands.command()
+    @audio_group.command(guild_ids=[223132558609612810])
     @commands.guild_only()
-    @perms.is_dev()
     async def clear(self, ctx):
         player = self.get_player(ctx)
         player.queue.clear()

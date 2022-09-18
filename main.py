@@ -7,11 +7,6 @@ import traceback
 import os
 import time
 
-import sqlite3
-from sqlite3 import Error
-
-from discord_components import DiscordComponents
-
 """
 import sys
 if not sys.warnoptions:
@@ -20,92 +15,45 @@ if not sys.warnoptions:
 """
 
 
-def get_prefix(d_bot, message):
-    prefixes = ["e?", "E?"]
-    return commands.when_mentioned_or(*prefixes)(d_bot, message)
+def testing_check():
+    data = IO.read_settings_as_json()
+    if data is None:
+        print("No settings file, Debug Guilds Off")
+        return []
+    else:
+        try:
+            if data["testing"]["debug"] is True:
+                print("Debug Guilds On")
+                return data["testing"]["ids"]
+            else:
+                print("Debug Guilds Off")
+                return []
+        except KeyError:
+            print("Key Error, Debug Guilds Off")
+            return []
 
 
 class RobotExtra(commands.Bot):
     def __init__(self):
-        # self.base_directory = os.path.dirname(os.path.realpath(__file__))
         self.servers_config = {}
 
         self.start_time = None
         self.reconnect_time = None
 
-        db_path = os.path.join(ez_utils.base_directory(), "db", "testing.sqlite")
-        try:
-            s_connection = sqlite3.connect(db_path)  # print("Connected to the DB")
-        except Error as e:
-            print(f"Error connecting to DB: {e}")
-            raise Exception("Couldn't connect to the DB!")
-
-        self.connection = s_connection
-
-        cursor = self.connection.cursor()
-        sql_file = os.path.join(ez_utils.base_directory(), "db", "schema.sql")
-        with open(sql_file, "r") as rf:
-            sql_as_string = rf.read()
-            # print("Running SQL Scheme Script")
-            cursor.executescript(sql_as_string)
-            # print("Database setup done")
-
         d_intents = discord.Intents.all()
 
-        super().__init__(command_prefix=get_prefix,
+        super().__init__(debug_guilds=testing_check(),
                          description="Bot Developed by @Extra_Random#2564\n"
                                      "Source code: https://github.com/ExtraRandom/RobotExtra",
-                         pm_help=False,
                          intents=d_intents)
 
-    def execute_query(self, query):
-        cursor = self.connection.cursor()
-        try:
-            cursor.execute(query)
-            self.connection.commit()  # print("Query executed successfully")
-            return True
-
-        except Error as e:
-            print(f"Error executing query: {e}")
-            return False
-
-    def execute_read_query(self, query):
-        cursor = self.connection.cursor()
-        try:
-            cursor.execute(query)
-            result = cursor.fetchall()
-            return result
-        except Error as e:
-            print(f"Error executing read query: {e}")
-            return None
-
-    def db_quick_read(self, user_id, server_id):
-        query = """
-        SELECT
-            *
-        FROM
-            activity
-        WHERE
-            user_id = "{}" AND server_id = {}
-        """.format(user_id, server_id)
-        res = self.execute_read_query(query)  # print(res)
-        try:
-            return res[0]
-        except IndexError:
-            return None
-
     async def on_ready(self):
-        DiscordComponents(self)
-
         self.reconnect_time = datetime.utcnow()
         login_msg = "Bot Connected at {} UTC".format(str(datetime.utcnow()))
         Logger.log_write("----------------------------------------------------------\n"
                          "{}\n"
                          "".format(login_msg))
         print(login_msg)
-
-        self.ensure_all_fields_server()
-        IO.write_server(self.servers_config)
 
     async def on_message(self, message):
         bot_msg = message.author.bot
@@ -114,13 +62,29 @@ class RobotExtra(commands.Bot):
 
         await self.process_commands(message)
 
-    """
-    async def on_guild_join(self, guild):
-        self.ensure_all_fields_server()
-        self.update_server_json()
-    """
+    async def on_application_command_error(
+        self, ctx: discord.ApplicationContext, exception: discord.DiscordException
+    ) -> None:
+        cmd = ctx.command
 
-    async def on_command_error(self, ctx, error):
+        if isinstance(exception, commands.errors.CheckFailure):
+            await ctx.respond(content="You do not have permission to use this command.", ephemeral=True)
+            return
+
+        else:
+            err = traceback.format_exception(type(exception), exception, exception.__traceback__)
+            Logger.write(err, True)
+            try:
+                await ctx.respond("**Error in '{}' Command!**\n"
+                                  "{}\n"
+                                  "See the log for more details".format(cmd.name, exception))
+            except discord.NotFound:
+                pass
+            return
+
+    async def on_command_error(
+            self, ctx: discord.ext.commands.Context, error: discord.DiscordException
+    ) -> None:
         channel = ctx.message.channel
         cmd = ctx.command
 
@@ -222,24 +186,19 @@ class RobotExtra(commands.Bot):
         """Ensure settings.json has all the necessary settings"""
         fields = \
             {
+                "testing": {
+                    "debug": False,
+                    "ids": [223132558609612810]
+                },
                 "keys": {
                     "token": None,
                     "itad_api": None,
-                    "youtube_api": None
+                    "youtube_api": None,
+                    "rtt_name": None,
+                    "rtt_key": None
                 },
                 "cogs":
                     {
-
-                },
-                "reddit":
-                    {
-                        "username": None,
-                        "password": None,
-                        "client_id": None,
-                        "client_secret": None,
-                        "user_agent": None,
-                        "post_title": None,
-                        "post_url": None
                 }
             }
         sd_len = len(settings_data)
@@ -251,7 +210,7 @@ class RobotExtra(commands.Bot):
                 if top_field in settings_data:
                     for inner_field in fields[top_field]:
                         if inner_field not in settings_data[top_field]:
-                            settings_data[top_field][inner_field] = None
+                            settings_data[top_field][inner_field] = fields[top_field][inner_field]
                             Logger.write("Settings.json - Added inner field '{}' to category '{}'".format(inner_field,
                                                                                                           top_field))
                 else:
@@ -261,65 +220,10 @@ class RobotExtra(commands.Bot):
 
                     for inner_field in fields[top_field]:
                         if inner_field not in settings_data[top_field]:
-                            settings_data[top_field][inner_field] = None
+                            settings_data[top_field][inner_field] = fields[top_field][inner_field]
                             Logger.write("Settings.json - Added inner field '{}' to category '{}'".format(inner_field,
                                                                                                           top_field))
             return settings_data
-
-    def ensure_all_fields_server(self):
-        """Ensure server settings json has all the necessary settings"""
-        servers = self.guilds
-        fields = \
-            {
-                "tracking": {
-                    "last_message": False,  # track last message from users in db
-                    "ignore_categories": []  # categories to ignore tracking in
-                },
-                "invites": {
-                    "log": None,  # channel to log to
-                    "ignore_channels": [],  # don't delete invites in these channels
-                    "ignore_categories": [],  # don't delete invites in these categories
-                    "ignore_roles": []  # don't delete invites from users with these roles
-                },
-                "logging": {
-                    "join_leave_log": None,  # channel to log joins/leaves to
-                    "kick_ban_log": None  # channel to log kicks/bans to
-                },
-                "anti-raid": {
-                    "lockdown_categories": [],  # categories to lockdown
-                    "lockdown_channels": [],  # channels to individually lockdown
-                    "lockdown_roles": [],  # roles to enforce lockdown on
-                    "caution": True,  # if true kick, if false ban
-                }
-            }
-
-        for server in servers:
-            gid = str(server.id)  # print(gid)
-            try:
-                self.servers_config[gid]
-            except KeyError:
-                self.servers_config[gid] = fields
-                continue
-
-            for top_field in fields:
-                if top_field in self.servers_config[gid]:
-                    for inner_field in fields[top_field]:
-                        if inner_field not in self.servers_config[gid][top_field]:
-                            self.servers_config[gid][top_field][inner_field] = fields[top_field][inner_field]
-                            Logger.write("Servers.json - Added inner field '{}' to category '{}'"
-                                         "".format(inner_field, top_field))
-                else:
-                    self.servers_config[top_field] = {}
-                    Logger.write("Servers.json - Added category '{}'".format(top_field))
-
-                    for inner_field in fields[top_field]:
-                        if inner_field not in self.servers_config[gid][top_field]:
-                            self.servers_config[gid][top_field][inner_field] = fields[top_field][inner_field]
-                            Logger.write("Servers.json - Added inner field '{}' to category '{}'"
-                                         "".format(inner_field, top_field))
-
-    def update_server_json(self):
-        IO.write_server(self.servers_config)
 
     def run(self):
         first_time = False
@@ -338,12 +242,6 @@ class RobotExtra(commands.Bot):
                 raise Exception(IO.settings_fail_read)
 
         s_data = self.ensure_all_fields(s_data)
-
-        """Make sure server configs exists"""
-        if os.path.isfile(IO.server_conf_file_path) is False:
-            IO.write_server({})
-        else:
-            self.servers_config = IO.read_server_as_json()
 
         """Load cogs"""
         folder_cogs = self.get_cogs_in_folder()
@@ -368,7 +266,7 @@ class RobotExtra(commands.Bot):
                         print("Failed to load cog '{}', Reason: {}".format(folder_cog, type(exc).__name__))
                         Logger.write(exc)
                         # noinspection PyTypeChecker
-                        s_data['cogs'][folder_cog] = False
+                        # s_data['cogs'][folder_cog] = False
 
         """Read in discord token"""
         if first_time is True:

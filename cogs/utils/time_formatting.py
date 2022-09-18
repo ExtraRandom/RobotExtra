@@ -1,5 +1,8 @@
 import datetime
 from dateutil.relativedelta import relativedelta
+import pytz
+
+UTC = pytz.utc
 
 
 def day_suffix(day: int):
@@ -28,6 +31,9 @@ def time_ago(time_input, brief=False, force_into_utc=False):
         then = then.replace(microsecond=0)
     else:
         raise TypeError("Wrong type input for time_ago function")
+
+    now = now.replace(tzinfo=UTC)  # print(now)
+    then = then.replace(tzinfo=UTC)  # print(then)
 
     delta = relativedelta(now, then)
 

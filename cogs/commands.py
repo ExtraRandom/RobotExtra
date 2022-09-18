@@ -1,75 +1,41 @@
 from discord.ext import commands
-from cogs.utils import time_formatting as timefmt
-from PIL import Image
+from cogs.utils import time_formatting as timefmt, IO
 from datetime import datetime
-from cogs.utils import perms, ez_utils
-import os
-import io
+from cogs.utils import perms
 import discord
 import requests
-# import pytz
-import random
-import json
 from platform import python_version as py_v
+from cogs.utils import train_stations
 
 
 class Commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @commands.slash_command()
     async def uptime(self, ctx):
         """Shows the bots current uptime"""
         try:
             start = self.bot.start_time
             rc = self.bot.reconnect_time
 
-            await ctx.send("Bot Uptime: {}\n"
-                           "Last Reconnect Time: {}"
-                           "".format(timefmt.time_ago(start.timestamp()),
-                                     timefmt.time_ago(rc.timestamp())))
+            await ctx.respond("Bot Uptime: {}\n"
+                              "Last Reconnect Time: {}"
+                              "".format(timefmt.time_ago(start.timestamp()),
+                                        timefmt.time_ago(rc.timestamp())))
 
         except Exception as e:
-            await ctx.send("Error getting bot uptime. Reason: {}".format(type(e).__name__))
+            await ctx.respond("Error getting bot uptime. Reason: {}".format(type(e).__name__))
 
-    @commands.command()
-    @commands.cooldown(1, 20, commands.BucketType.guild)
-    @perms.is_in_somewhere_nice()
-    async def why(self, ctx, emote: discord.PartialEmoji):
-        """Why does this emote exist?
-
-        Input emote must be a discord custom emoji.
-        Doesn't work with animated emoji or default emoji."""
-
-        img_base = Image.open(os.path.join(ez_utils.base_directory(), "cogs", "data", "memes", "emote_why.png"))
-        res = requests.get(emote.url)
-        img_emote = Image.open(io.BytesIO(res.content)).convert("RGBA")
-        img_emote = img_emote.resize((400, 400))
-        img_base.paste(img_emote, (69, 420), img_emote)  # nice
-        file = io.BytesIO()
-        img_base.save(file, format="PNG")
-        file.seek(0)
-        await ctx.send(file=discord.File(file, "why.png"))
-
-    @commands.command(hidden=True)
+    @commands.slash_command()
     @perms.is_dev()
     async def invite(self, ctx):
         """Get bot invite link"""
-        await ctx.send("https://discord.com/oauth2/authorize?client_id=571947888662413313&scope=bot")
+        await ctx.respond("https://discord.com/oauth2/authorize?client_id=571947888662413313&scope=bot",
+                          ephemeral=True)
 
-    @commands.command(hidden=True, enabled=False)
-    @perms.is_dev()
-    async def servers(self, ctx):
-        """List servers the bot is in"""
-        msg = "I am in these servers: \n"
-
-        for guild in self.bot.guilds:
-            msg += "{}\n".format(guild.name)
-
-        await ctx.send(msg)
-
-    @commands.command(enabled=True)
-    @perms.is_in_a_server()
+    @commands.slash_command(name="server")
+    @commands.guild_only()
     async def server(self, ctx):
         """Server Info"""
         dt = ctx.guild.created_at
@@ -96,28 +62,28 @@ class Commands(commands.Cog):
         res.set_footer(text="ID: {}".format(ctx.guild.id))
         res.timestamp = datetime.utcnow()
 
-        icon = ctx.guild.icon_url_as()
+        icon = ctx.guild.icon
         if icon:
             res.set_thumbnail(url=icon)
 
-        await ctx.send(embed=res)
+        await ctx.respond(embed=res)
 
-    @commands.command()
+    @commands.slash_command(name="bot")
     async def bot(self, ctx):
         """Bot Info"""
         bot_info = await self.bot.application_info()
         bot_name = bot_info.name
         bot_owner = bot_info.owner.mention
-        discord_py_version = discord.__version__
+        discord_version = discord.__version__
         python_version = py_v()
         github_link = "https://github.com/ExtraRandom/RobotExtra"
         uptime = timefmt.time_ago(self.bot.start_time.timestamp())
-        avatar = self.bot.user.avatar_url
+        avatar = self.bot.user.avatar.url
 
         res = discord.Embed(title="Bot Info", colour=discord.colour.Colour.dark_blue())
         res.add_field(name="Name", value="{}".format(bot_name))
         res.add_field(name="Owner", value="{}".format(bot_owner))
-        res.add_field(name="Discord Py Version", value="{}".format(discord_py_version))
+        res.add_field(name="Pycord Version", value="{}".format(discord_version))
         res.add_field(name="Python Version", value="{}".format(python_version))
         res.add_field(name="Source Code", value="{}".format(github_link))
         res.add_field(name="Uptime", value="{}".format(uptime))
@@ -125,66 +91,61 @@ class Commands(commands.Cog):
 
         res.set_thumbnail(url=avatar)
 
-        await ctx.send(embed=res)
+        await ctx.respond(embed=res)
 
-    @commands.command()
-    async def ag(self, ctx, *, letters: str):
-        """Acronym Generator"""
-        if len(letters) > 50:
-            await ctx.send("This command is limited to 50 characters or less.")
-            return
+    @commands.user_command(name="Role Colour")
+    async def colour(self, ctx, user: discord.Member):
+        await ctx.respond(content=user.colour, ephemeral=True)
 
-        word_file = os.path.join(ez_utils.base_directory(), "cogs", "data", "words_letters.json")
-        with open(word_file, "r") as fr:
-            data = fr.read()
-            words = json.loads(data)
+    @commands.user_command(name="Avatar")
+    async def user_avatar(self, ctx, user: discord.Member):
+        # TODO embed similar to carl bot avatar command
+        await ctx.respond(content=user.avatar.url)
+        return
 
-        clean_letters = letters.strip().lower()
+    async def get_stations(self, ctx: discord.AutocompleteContext):
+        res = []
+        data = train_stations.station_names
 
-        result = ""
+        for name in data:
+            # print(name)
+            if name.lower().startswith(ctx.value.lower()) or name is None:
+                res.append(name)
 
-        for letter in clean_letters:
-            try:
-                letter_words = words[letter]
-            except IndexError:
-                continue
-            except KeyError:
-                continue
+        # print(res)
 
-            random.seed()
-            res_word = random.choice(letter_words).capitalize()
-            result += "{} ".format(res_word)
+        return res  # [name for name in r_data if name.startswith(ctx.value)]
 
-        await ctx.send(f"{letters} means {result}")
+    # TODO enable in guilds once finished
+    @commands.slash_command(name="trains", guild_ids=[])
+    async def trains_command(
+            self,
+            ctx: discord.ApplicationContext,
+            station: discord.Option(
+                str,
+                "Station",
+                autocomplete=get_stations
+            )
+    ):
+        # print("station: ", station)
+        station_crs = train_stations.crs_lookup[station]
 
-    @commands.command()
-    @perms.is_dev()
-    async def binary(self, ctx, way: str, *, to_convert: str):
-        if len(to_convert) * 9 >= 1000:
-            await ctx.send("Convert string is too long")
-            return
+        data = IO.read_settings_as_json()
+        auth = (data['keys']['rtt_name'], data['keys']['rtt_key'])
 
-        # converting_to_binary = False
-        if way in ["to", "too", "2"]:
-            converting_to_binary = True
-        elif way in ["from", "form", "back"]:
-            converting_to_binary = False
-        else:
-            await ctx.send("Way '{}' unknown, valid ways are 'to' and 'from'".format(way))
-            return
+        # print(station_crs)
+        # await ctx.respond(f"crs: {station_crs}")
 
-        if converting_to_binary:
-            if ez_utils.english_characters_check(to_convert) is True:
-                con = ' '.join(format(ord(x), 'b') for x in to_convert)
-                await ctx.send(con)
+        res = requests.get(f"https://api.rtt.io/api/v1/json/search/{station_crs}", auth=auth)
+        print(res.text)
 
-        else:
-            chars = to_convert.split(" ")
-            conversion = ""
-            for char in chars:
-                conversion += chr(int(char, 2))
+        res_json = res.json()
 
-            await ctx.send(conversion)
+        loc = res_json['services'][0]['locationDetail']
+
+        msg = f"next train is the {loc['destination'][0]['publicTime']} {loc['origin'][0]['description']} \nto {loc['destination'][0]['description']} train \ncalling or passing {station} at {loc['gbttBookedArrival']}"
+
+        await ctx.respond(msg)
 
 
 def setup(bot):

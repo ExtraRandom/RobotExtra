@@ -11,7 +11,7 @@ c_dir = os.path.dirname(os.path.realpath(__file__))
 cwd = os.path.dirname(os.path.dirname(c_dir))
 
 settings_file_path = os.path.join(cwd, "configs", "settings.json")
-server_conf_file_path = os.path.join(cwd, "configs", "servers.json")
+# server_conf_file_path = os.path.join(cwd, "configs", "servers.json")
 
 
 def fetch_from_settings(top_key: str, inner_key: str):
@@ -35,14 +35,14 @@ def write_settings(data):
     return __write_json(data, settings_file_path)
 
 
-def read_server_as_json():
-    """Read server settings json"""
-    return __read_json(server_conf_file_path)
+#def read_server_as_json():
+#    """Read server settings json"""
+#    return __read_json(server_conf_file_path)
 
 
-def write_server(data):
-    """Write server settings json"""
-    return __write_json(data, server_conf_file_path)
+#def write_server(data):
+#    """Write server settings json"""
+#    return __write_json(data, server_conf_file_path)
 
 
 def __read_json(file_path):

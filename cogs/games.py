@@ -1,19 +1,10 @@
 from discord.ext import commands
-# from cogs.utils import perms
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 import requests
 import discord
 from cogs.utils import IO
 from urllib import parse
-from discord_components import (
-    # Button,
-    # ButtonStyle,
-    Select,
-    SelectOption
-    # Interaction
-)
-import asyncio
 import time
 from cogs.utils.logger import Logger
 
@@ -22,8 +13,9 @@ class Games(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
-    async def hltb(self, ctx, *, game: str):
+    # TODO fix and re-enable
+    @commands.slash_command(guild_ids=[])
+    async def hltb(self, ctx, game: discord.Option(str, "The game to search for", required=True)):
         """HowLongToBeat.com search"""
         # https://github.com/ScrappyCocco/HowLongToBeat-PythonAPI/blob/master/howlongtobeatpy/howlongtobeatpy/HTMLRequests.py
         base_url = "https://howlongtobeat.com/"
@@ -56,34 +48,55 @@ class Games(commands.Cog):
 
             if len(games) == 0:
                 res.add_field(name="No results for search", value="Try again with a different search")
-                await ctx.send(embed=res)
+                await ctx.respond(embed=res)
+                # await ctx.send(embed=res)
                 return
 
             for game_data in games:
                 game_name = game_data.select('a')[0].get_text()
-                game_times = game_data.select('div div div')[0].get_text()
+                game_times = game_data.select('div[class="search_list_details_block"]')[0]
 
                 game_name = str(game_name).strip()
-                game_times = str(game_times).strip()
+
+                full_info = []
+
+                for time_info in game_times:
+                    print("time info", time_info)
+                    t = time_info.get_text()
+                    t = str(t).strip()
+                    full_info.append(t)
+
+                full_info = "\n".join(full_info)
+
+                # TODO fix with minecraft solo/co-op/vs
+
+                print(repr(full_info))
+
+                # game_times = str(game_times).strip()
 
                 # TODO break down game times by line so we can format it better
 
-                res.add_field(name=game_name, value=game_times)
+                res.add_field(name=game_name, value=full_info)  # value=game_times)
 
                 if len(res.fields) >= 5:
                     break
 
-            await ctx.send(embed=res)
+            # await ctx.send(embed=res)
+            await ctx.respond(embed=res)
 
         else:
-            await ctx.send("Failed to fetch data")
+            await ctx.respond(content="Failed to fetch data")
+            # await ctx.send("Failed to fetch data")
 
-    @commands.command()
-    async def itad(self, ctx, *, search_term: str):
+    # TODO fix/maybe even rewrite if necessary
+
+    @commands.slash_command()
+    async def itad(self, ctx, search_term: discord.Option(str, "The term to search for", required=True)):
         """IsThereAnyDeal.com Search"""
+
         key = IO.fetch_from_settings('keys', 'itad_api')
         if key is None:
-            await ctx.send("No ITAD API key in settings config.", delete_after=15)
+            await ctx.respond("No ITAD API key in settings config.", delete_after=15)
             return
 
         search = parse.quote(search_term)
@@ -94,128 +107,71 @@ class Games(commands.Cog):
 
         res = requests.get(search_url)
         res_code = res.status_code
+        title_lookup = {}
         if res is not None and res_code == 200:
             plains_data = res.json()
-
-            if len(plains_data['data']['results']) == 0:
-                await ctx.send("No results found for '{}'".format(search_term))
-                return
-
-            plains_title_lookup = {}
-
-            options = []
+            plains_list = []
             for result in plains_data['data']['results']:
-                options.append(SelectOption(label=result['title'], value=result['plain'], emoji="🎮"))
-                p_key = result['plain']
-                p_value = result['title']
-                plains_title_lookup[p_key] = p_value
-
-            if len(options) == 1:
-                game_plain = options[0].value
-            else:
-                options.append(SelectOption(label="Cancel", value="itad_menu_cancel", emoji="❌"))
-
-                m = await ctx.send("Pick game (30s)", components=[Select(options=options)])
-                try:
-                    def check(i_res):
-                        return ctx.author == i_res.user and i_res.channel == ctx.channel
-
-                    interaction = await self.bot.wait_for("select_option", check=check, timeout=30)
-                    await interaction.respond(type=6)
-                    game_plain = interaction.values[0]
-
-                    if game_plain == "itad_menu_cancel":
-                        await m.edit(content="ITAD Search Canceled",
-                                     components=[])
-                        return
-                    else:
-                        await m.delete()
-
-                except asyncio.TimeoutError:
-                    await m.edit(content="Prompt timed out.",
-                                 components=[Select(options=options, disabled=True)])
-                    return
-
-            deals_url = "https://api.isthereanydeal.com/v01/game/prices/" \
-                        "?key={}&plains={}&region=uk&country=gb&shops=&exclude=&added=0" \
-                        "".format(key, game_plain)
-
-            deals_res = requests.get(deals_url)
-            deals_res_code = deals_res.status_code
-            if deals_res is not None and deals_res_code == 200:
-                deals_data = deals_res.json()
-                deals = deals_data['data'][game_plain]
-                embed = discord.Embed(title="Prices for {}".format(plains_title_lookup[game_plain]),
-                                      colour=discord.Colour.dark_blue())
-                embed.url = deals['urls']['game']
-
-                stores_msg = ""
-                had_to_shorten = False
-                break_store = None
-
-                for deal in deals['list']:
-                    add = "[{}]({})\n".format(deal['shop']['name'], deal['url'])
-                    if len(add) + len(stores_msg) >= 1024:
-                        had_to_shorten = True
-                        break_store = deal['shop']['name']
-                        break
-                    stores_msg += add
-
-                prices_msg = ""
-                for deal in deals['list']:
-                    if had_to_shorten is True and deal['shop']['name'] == break_store:
-                        break
-
-                    percent = ""
-                    """
-                    if deal['price_cut'] != 0:
-                        percent = "({}% off)".format(deal['price_cut'])
-                    """
-
-                    prices_msg += "£{:.2f} {}\n".format(deal['price_new'], percent)
-
-                drm_msg = ""
-                for deal in deals['list']:
-                    if had_to_shorten is True and deal['shop']['name'] == break_store:
-                        break
-
-                    drm = deal['drm']
-                    drm_neat = []
-                    for name in drm:
-                        drm_neat.append(str(name).capitalize())
-
-                    if len(drm) == 0:
-                        f_drm = "-"
-                    else:
-                        f_drm = ", ".join(drm_neat)
-
-                    drm_msg += "{}\n".format(f_drm)
-
-                embed.add_field(name="Seller", value=stores_msg)
-                embed.add_field(name="Price", value=prices_msg)
-                embed.add_field(name="DRM", value=drm_msg)
-
-                await ctx.send(embed=embed)
-
-            else:
-                await ctx.send("Failed to fetch deals data. (Code: {})".format(deals_res_code))
-                return
+                plains_list.append(result['plain'])
+                title_lookup[result['plain']] = result['title']
         else:
-            await ctx.send("Search failed. (Code: {})".format(res_code))
+            await ctx.respond("ITAD Search Failed, See logs for more info")
+            Logger.write(f"--------------\nITAD Search Failed\nURL: {search_url}\nStatus Code: {res_code}"
+                         f"\n--------------", print_log=True)
+            return
 
-    @commands.command()
-    async def dltime(self, ctx, size_in_gigabytes: float, download_speed_megabytes_per_second: float = 0):
-        """Calculate time to download given file size (in GB's)
+        overview_url = "https://api.isthereanydeal.com/v01/game/overview/?key={}&region=uk&country=GB" \
+                       "&plains={}".format(key, ",".join(plains_list))
+        overview_res = requests.get(overview_url)
+        overview_res_code = overview_res.status_code
 
-        Argument size_in_gigabytes should be the download size in GigaBytes.
-        For reference, 500 MegaBytes is 0.5 GigaBytes.
+        if overview_res is not None and overview_res_code == 200:
+            overview_data = overview_res.json()
 
-        OPTIONAL Argument download_speed_megabytes_per_second should be the speed in MegaBytes per second.
-        If you only have access to your speed in MegaBits per second,
-        take the speed and divide it by 8 to get MegaBytes per second.
-        """
+            embed = discord.Embed(title=f"IsThereAnyDeal.com Search for '{search_term}'", colour=discord.Colour.blue())
 
-        # taken from Blue2
+            for game in overview_data['data']:
+                # print(overview_data['data'][game])
+
+                title = title_lookup[str(game)]
+                try:
+                    price = overview_data['data'][game]['price']['price_formatted']
+                    if price == "£0.00":
+                        price = "Free"
+                except TypeError:
+                    price = "Free or Unavailable"
+
+                try:
+                    url = overview_data['data'][game]['price']['url']
+                except TypeError:
+                    url = overview_data['data'][game]['urls']['info']
+
+                info_url = overview_data['data'][game]['urls']['info']
+
+                try:
+                    store = overview_data['data'][game]['price']['store']
+                except TypeError:
+                    store = "Not Available"
+
+                embed.add_field(name=title,
+                                value=f"Price: **{price}**\n"
+                                      f"Store: [**{store}**]({url})\n"
+                                      f"Info: [**All Prices**]({info_url})\n")
+
+            await ctx.respond(embed=embed)
+
+        else:
+            await ctx.respond("ITAD Search Failed, See logs for more info")
+            Logger.write(f"--------------\nITAD Search Failed\nURL: {overview_url}\nStatus Code: {res_code}"
+                         f"\n--------------", print_log=True)
+            return
+
+    @commands.slash_command()
+    async def dltime(
+            self, ctx,
+            size_in_gigabytes: discord.Option(float, "Download size in GigaBytes", required=True),
+            download_speed_mbps: discord.Option(float, "Download speed in MegaBytes per second", required=False)):
+        """Calculate time to download given file size"""
 
         def secs_to_days(seconds):
             return round(seconds / 86400)
@@ -227,7 +183,7 @@ class Games(commands.Cog):
             await ctx.send("{} GigaBytes?! Now you're just being silly...".format(size_in_gigabytes))
             return
 
-        if download_speed_megabytes_per_second == 0:
+        if download_speed_mbps is None:
             speeds = {'3MB/s (24Mb/s)': 24,
                       '4MB/s (32Mb/s)': 32,
                       '5MB/s (40Mb/s)': 40,
@@ -272,13 +228,13 @@ class Games(commands.Cog):
 
                     except Exception as e:
                         Logger.write(e)
-                        await ctx.send("An error occurred whilst calculating.")
+                        await ctx.respond("An error occurred whilst calculating.")
                         return
 
-            await ctx.send(embed=embed)
+            await ctx.respond(embed=embed)
 
         else:
-            speed = download_speed_megabytes_per_second * 8
+            speed = download_speed_mbps * 8
             value = (((1048576 * size_in_gigabytes) * 1024) * 8) / (speed * 1000000)
 
             if 60 > value:
@@ -300,10 +256,10 @@ class Games(commands.Cog):
                                   colour=discord.Colour.dark_green(),
                                   description="Actual times taken may vary. Speed is MegaBytes per second")
 
-            embed.add_field(name="{} MB/s".format(download_speed_megabytes_per_second),
+            embed.add_field(name="{} MB/s".format(download_speed_mbps),
                             value="{}".format(fmt_value))
 
-            await ctx.send(embed=embed)
+            await ctx.respond(embed=embed)
 
 
 def setup(bot):

@@ -11,7 +11,13 @@ def is_server_owner():
 
 def is_dev():
     def predicate(ctx):
-        return ctx.message.author.id == 92562410493202432
+        if isinstance(ctx, discord.ext.commands.Context):
+            return ctx.message.author.id == 92562410493202432
+        elif isinstance(ctx, discord.ApplicationContext):
+            if ctx.author.id == 92562410493202432:
+                return True
+            else:
+                raise discord.ext.commands.CheckFailure
     return commands.check(predicate)
 
 
@@ -24,6 +30,7 @@ def is_server_owner_or_dev():
     return commands.check(predicate)
 
 
+"""
 def is_in_somewhere_nice():
     def predicate(ctx):
         if ctx.message.guild.id == 750689226382901288:
@@ -31,11 +38,18 @@ def is_in_somewhere_nice():
         else:
             raise errors.WrongGuild("Command cannot be used in this server")
     return commands.check(predicate)
+"""
 
 
 def is_admin():
     def predicate(ctx):
-        return ctx.message.author.guild_permissions.administrator
+        if isinstance(ctx, discord.ext.commands.Context):
+            return ctx.message.author.guild_permissions.administrator
+        elif isinstance(ctx, discord.ApplicationContext):
+            if ctx.author.guild_permissions.administrator:
+                return True
+            else:
+                raise discord.ext.commands.CheckFailure
     return commands.check(predicate)
 
 

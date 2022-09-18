@@ -7,60 +7,11 @@ from cogs.utils.logger import Logger
 from typing import List, Union, Optional
 
 
-def quick_embed(title: str,
-                description: str,
-                colour=discord.colour.Colour.red(),
-                fields=None,
-                timestamp: bool = False):
-    """
-
-    :param title:
-    :param description:
-    :param colour:
-    :param fields:
-    :param timestamp:
-    :return:
-    """
-    embed = discord.Embed(
-        title=title,
-        description=description,
-        colour=colour
-    )
-    if fields is not None:
-        try:
-            for field in fields:
-                name, value = field
-                embed.add_field(name=name, value=value)
-        except ValueError:
-            name, value = fields
-            embed.add_field(name=name, value=value)
-
-    if timestamp is True:
-        embed.timestamp = datetime.utcnow()
-
-    return embed
-
-
-async def reply_then_delete(message: str, reply_message: discord.Message, time=60):
-    """
-    Reply to a message and then delete after time (default 60s)
-
-    :param message: the message being sent
-    :param reply_message: the message being replied to
-    :param time: time before deletion
-    :return: None
-    """
-    msg = await reply_message.reply(message)
-    await asyncio.sleep(time)
-    await msg.delete()
-    return
-
-
 def base_directory():
     """
     Base file directory of the bot (the folder main.py is in)
 
-    :return: The bots file path
+    :return: Base file directory
     """
     return os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
@@ -119,3 +70,16 @@ def english_characters_check(check_string: str):
         return True
 
 
+def capitalise_every_word(input_string: str, split_char=" "):
+    """
+    Capitalise every word in a string
+    :param input_string: The string
+    :param split_char: The character that defines a space between words. A space by default
+    :return: String with capitalised words
+    """
+    as_list = input_string.split(split_char)
+    output_string = ""
+    for word in as_list:
+        output_string += "{} ".format(word.capitalize())
+    output_string = output_string.strip()  # remove trailing space
+    return output_string
