@@ -462,7 +462,8 @@ class Audio(commands.Cog):
             await ctx.send(self.msg_same_channel, delete_after=self.delete_after_time)
             return None
 
-    audio_group = discord.commands.SlashCommandGroup("audio", "Audio Related Commands")
+    audio_group = discord.commands.SlashCommandGroup("audio", "Audio Related Commands",
+                                                     guild_ids=[223132558609612810])
 
     @audio_group.command(guild_ids=[223132558609612810])
     @commands.guild_only()
