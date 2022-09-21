@@ -64,7 +64,6 @@ class CogManagement(commands.Cog):
     @commands.slash_command(name="cog_unload")
     # @cogs.command()
     @perms.is_dev()
-    # async def unload(self, ctx, *, cog: str):
     async def unload(self, ctx, cog: discord.Option(str,
                                                     "Cog to Unload",
                                                     autocomplete=loadable_cogs,
@@ -98,13 +97,12 @@ class CogManagement(commands.Cog):
             return
 
     @commands.slash_command(name="cog_reload")
-    # @commands.command()
+    # @cogs.command()
     @perms.is_dev()
     async def reload(self, ctx, cog: discord.Option(str,
                                                     "Cog to Reload",
                                                     autocomplete=loadable_cogs,
                                                     required=True)):
-    #async def reload(self, ctx, *, cog: str):
 
         """Reload a cog"""
         ext_list = self.bot.extensions

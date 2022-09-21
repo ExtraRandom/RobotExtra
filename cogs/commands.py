@@ -108,44 +108,65 @@ class Commands(commands.Cog):
         data = train_stations.station_names
 
         for name in data:
-            # print(name)
-            if name.lower().startswith(ctx.value.lower()) or name is None:
+            if name is not None:
+                if ctx.value.lower() in name.lower():
+                    res.append(name)
+            else:
                 res.append(name)
 
-        # print(res)
+        return res
 
-        return res  # [name for name in r_data if name.startswith(ctx.value)]
+    def time_colon(self, time):
+        return str(time)[:2] + ":" + str(time)[2:]
 
-    # TODO enable in guilds once finished
-    @commands.slash_command(name="trains", guild_ids=[])
+    @commands.slash_command(name="trains")
     async def trains_command(
             self,
             ctx: discord.ApplicationContext,
             station: discord.Option(
                 str,
-                "Station",
+                "The Station to check for train times at",
                 autocomplete=get_stations
             )
     ):
-        # print("station: ", station)
+        """Find when the next train to call at a station is"""
         station_crs = train_stations.crs_lookup[station]
 
         data = IO.read_settings_as_json()
         auth = (data['keys']['rtt_name'], data['keys']['rtt_key'])
 
-        # print(station_crs)
-        # await ctx.respond(f"crs: {station_crs}")
-
-        res = requests.get(f"https://api.rtt.io/api/v1/json/search/{station_crs}", auth=auth)
-        print(res.text)
+        res = requests.get(f"https://api.rtt.io/api/v1/json/search/{station_crs}", auth=auth)  # print(res.text)
 
         res_json = res.json()
 
         loc = res_json['services'][0]['locationDetail']
 
-        msg = f"next train is the {loc['destination'][0]['publicTime']} {loc['origin'][0]['description']} \nto {loc['destination'][0]['description']} train \ncalling or passing {station} at {loc['gbttBookedArrival']}"
+        origin_station = loc['origin'][0]['description']
+        origin_departure = self.time_colon(loc['origin'][0]['publicTime'])
 
-        await ctx.respond(msg)
+        station_name = res_json['location']['name']
+        try:
+            station_arrival = loc['realtimeArrival']
+        except KeyError:  # Service starts here
+            station_arrival = loc['realtimeDeparture']
+
+        station_arrival = self.time_colon(station_arrival)
+
+        destination_station = loc['destination'][0]['description']
+        destination_arrival = self.time_colon(loc['destination'][0]['publicTime'])
+
+        train_operator = res_json['services'][0]['atocName']
+
+        embed = discord.Embed(title=f"The Next Train Calling at {station_name}", description="Actual times may vary",
+                              colour=discord.Colour.blue())
+        embed.add_field(name=f"{train_operator}",
+                        value=f"Calling at {station_name}: **{station_arrival}**")
+        embed.add_field(name="Origin", value=f"Started at: {origin_station}\n"
+                                             f"At: *{origin_departure}*")
+        embed.add_field(name="Destination", value=f"Terminating at: {destination_station}\n"
+                                                  f"At: *{destination_arrival}*")
+
+        await ctx.respond(embed=embed)
 
 
 def setup(bot):

@@ -33,7 +33,7 @@ class Player:
         self._channel = ctx.channel
         self._cog = ctx.cog
 
-        self.queue = SongQueue()  # asyncio.Queue()
+        self.queue = SongQueue()
         self.next = asyncio.Event()
 
         self.np = None
@@ -414,6 +414,7 @@ class Audio(commands.Cog):
             player = self.players[ctx.guild.id]
         except KeyError:
             if create:
+
                 player = Player(ctx)
                 self.players[ctx.guild.id] = player
             else:
