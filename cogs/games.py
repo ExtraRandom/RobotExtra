@@ -39,8 +39,12 @@ class Games(commands.Cog):
                 title_lookup[result['plain']] = result['title']
         else:
             await ctx.respond("ITAD Search Failed, See logs for more info")
-            Logger.write(f"--------------\nITAD Search Failed\nURL: {search_url}\nStatus Code: {res_code}"
+            Logger.write(f"--------------\nITAD Plain Search Failed\nURL: {search_url}\nStatus Code: {res_code}"
                          f"\n--------------", print_log=True)
+            return
+
+        if len(plains_list) == 0:
+            await ctx.respond(f"No games with title '{search_term}' found. Try a different search term.")
             return
 
         overview_url = "https://api.isthereanydeal.com/v01/game/overview/?key={}&region=uk&country=GB" \
@@ -85,7 +89,7 @@ class Games(commands.Cog):
 
         else:
             await ctx.respond("ITAD Search Failed, See logs for more info")
-            Logger.write(f"--------------\nITAD Search Failed\nURL: {overview_url}\nStatus Code: {res_code}"
+            Logger.write(f"--------------\nITAD Game Search Failed\nURL: {overview_url}\nStatus Code: {res_code}"
                          f"\n--------------", print_log=True)
             return
 
