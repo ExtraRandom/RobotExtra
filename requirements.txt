@@ -5,3 +5,4 @@ fake_useragent
 python-dateutil
 beautifulsoup4
 yt-dlp
+tinytuya
