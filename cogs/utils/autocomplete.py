@@ -1,5 +1,6 @@
 from discord import AutocompleteContext
 
+
 async def autocomplete(ctx: AutocompleteContext, auto_complete_list: list):
     res = []
     for list_item in auto_complete_list:

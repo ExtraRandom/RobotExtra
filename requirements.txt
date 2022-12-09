@@ -8,3 +8,4 @@ beautifulsoup4
 yt-dlp
 tinytuya
 pytz
+numpy
