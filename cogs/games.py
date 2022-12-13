@@ -1,6 +1,6 @@
 from discord.ext import commands
-from bs4 import BeautifulSoup
-from fake_useragent import UserAgent
+# from bs4 import BeautifulSoup
+# from fake_useragent import UserAgent
 import requests
 import discord
 from cogs.utils import IO

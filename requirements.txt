@@ -6,6 +6,6 @@ fake_useragent
 python-dateutil
 beautifulsoup4
 yt-dlp
-tinytuya
+# tinytuya
 pytz
-numpy
+# numpy

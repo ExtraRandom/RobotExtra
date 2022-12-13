@@ -105,6 +105,30 @@ class Commands(commands.Cog):
 
     async def get_stations(self, ctx: discord.AutocompleteContext):
         res = []
+        data = train_stations.crs_lookup
+
+        if len(ctx.value) >= 2:
+            index = 0
+            for crs in data.values():
+                if ctx.value.upper() in crs:
+                    name = list(data.keys())[index]
+                    if name not in res:
+                        res.append(name)
+
+                index += 1
+
+        for name in data.keys():
+            if name is not None:
+                if ctx.value.lower() in name.lower():
+                    if name not in res:
+                        res.append(name)
+            else:
+                if len(res) < 25:
+                    res.append(name)
+                else:
+                    break
+
+        """
         data = train_stations.station_names
 
         for name in data:
@@ -113,7 +137,7 @@ class Commands(commands.Cog):
                     res.append(name)
             else:
                 res.append(name)
-
+        """
         return res
 
     def time_colon(self, time):
@@ -138,6 +162,10 @@ class Commands(commands.Cog):
         res = requests.get(f"https://api.rtt.io/api/v1/json/search/{station_crs}", auth=auth)  # print(res.text)
 
         res_json = res.json()
+
+        if res_json['services'] is None:
+            await ctx.respond("There are no trains running from this station right now.")
+            return
 
         loc = res_json['services'][0]['locationDetail']
 

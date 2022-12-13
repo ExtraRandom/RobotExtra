@@ -106,8 +106,6 @@ class Admin(commands.Cog):
 
         if message is None:
             for channel in channels:
-                if channel.category_id in self.bot.servers_config[str(ctx.guild.id)]['tracking']['ignore_categories']:
-                    continue
                 if channel == msg_channel:
                     continue
                 try:

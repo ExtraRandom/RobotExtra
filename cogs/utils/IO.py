@@ -35,12 +35,12 @@ def write_settings(data):
     return __write_json(data, settings_file_path)
 
 
-#def read_server_as_json():
+# def read_server_as_json():
 #    """Read server settings json"""
 #    return __read_json(server_conf_file_path)
 
 
-#def write_server(data):
+# def write_server(data):
 #    """Write server settings json"""
 #    return __write_json(data, server_conf_file_path)
 

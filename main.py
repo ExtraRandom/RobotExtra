@@ -35,8 +35,6 @@ def testing_check():
 
 class RobotExtra(commands.Bot):
     def __init__(self):
-        self.servers_config = {}
-
         self.start_time = None
         self.reconnect_time = None
 

@@ -1,11 +1,7 @@
 from discord.ext import commands
-from cogs.utils import time_formatting as timefmt, IO
-from datetime import datetime
-from cogs.utils import perms
+from cogs.utils import IO
 from cogs.utils.autocomplete import autocomplete
 import discord
-import requests
-import numpy
 
 
 class Shoes(commands.Cog):
@@ -13,8 +9,13 @@ class Shoes(commands.Cog):
         self.bot = bot
         self.guild_ids = []
 
-    shoes = discord.commands.SlashCommandGroup("shoes", "Shoe Related Commands",
-                                               guild_ids=[223132558609612810])   # 956806641892859904,
+    debug = IO.fetch_from_settings("testing", "debug")
+    if debug is True:
+        shoes = discord.commands.SlashCommandGroup("shoes", "Shoe Related Commands",
+                                                   guild_ids=[223132558609612810])   # 956806641892859904,
+    else:
+        shoes = discord.commands.SlashCommandGroup("shoes", "Shoe Related Commands",
+                                                   guild_ids=[956806641892859904, 223132558609612810])
 
     class ShoeModal(discord.ui.Modal):
         def __init__(self, *args, **kwargs) -> None:
@@ -54,128 +55,61 @@ class Shoes(commands.Cog):
     """
 
     async def brands_autocomplete(self, ctx: discord.AutocompleteContext):
-        return await autocomplete(ctx, ['Nike'])
-
-    async def size_region_autocomplete(self, ctx: discord.AutocompleteContext):
-        return await autocomplete(ctx, ['UK', 'US M', 'US W', 'EU'])
-
-    async def regional_size_autocomplete(self, ctx: discord.AutocompleteContext):
-        region = ctx.options["region"]
-        sizes = []
-
-        if region == "UK":
-            sizes = numpy.arange(3, 21, 0.5).tolist()
-
-        elif region == "US M":
-            sizes = numpy.arange(3.5, 22, 0.5).tolist()
-
-        elif region == "US W":
-            sizes = numpy.arange(5, 23.5, 0.5).tolist()
-
-        elif region == "EU":
-            sizes = numpy.arange(35.5, 56.5, 0.5).tolist()
-
-        return await autocomplete(ctx, sizes)
+        return await autocomplete(ctx, ['Nike Men', 'Nike Women', 'Nike GS', 'Nike PS', 'Nike TD'])
 
     @shoes.command(name="size")
     async def shoe_size_conversion(self,
                                    ctx: discord.ApplicationContext,
-                                   # brand: discord.Option(
-                                   #    str,
-                                   #    "Shoe Brand to get sizes for",
-                                   #    autocomplete=brands_autocomplete
-                                   # ),
-                                   region: discord.Option(
+                                   brand: discord.Option(
                                        str,
-                                       "Region of size to convert from",
-                                       autocomplete=size_region_autocomplete
+                                       "Shoe Brand to get sizes for",
+                                       autocomplete=brands_autocomplete,
+                                       required=True
                                    ),
-                                   shoe_size: discord.Option(
-                                       float,
-                                       "Shoe Size",
-                                       autocomplete=regional_size_autocomplete
-                                   )):
-        """WIP - Shoe size converter"""
+                                   ):
+        """Shoe sizes"""
+        if brand == "Nike Men":
+            size_us = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 10.5, 11, 11.5, 12, 12.5, 13,
+                       13.5, 14, 15]
+            size_eu = [38.5, 39, 40, 40.5, 41, 42, 42.5, 43, 44, 44.5, 45, 45.5, 46, 47,
+                       47.5, 48, 48.5, 49.5]
+            size_uk = [5.5, 6, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 10.5, 11, 11.5, 12,
+                       12.5, 13, 13.5]
+        elif brand == "Nike Women":
+            size_us = [5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 10.5, 11, 11.5, 12]
+            size_eu = [35.5, 36, 36.5, 37.5, 38, 38.5, 39, 40, 40.5, 41, 42, 42.5, 43,
+                       44, 44.5]
+            size_uk = [2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5]
+        elif brand == "Nike GS":
+            size_us = [3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7]
+            size_eu = [35, 36, 36.5, 37.5, 38, 38.5, 39, 40]
+            size_uk = [3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5]
+        elif brand == "Nike PS":
+            size_us = ["10.5C", "11C", "11.5C", "12C", "12.5C", "13C", "13.5C", "1Y",
+                       "1.5Y", "2Y", "2.5Y", "3Y"]
+            size_eu = [27.5, 28, 28.5, 29.5, 30, 31, 31.5, 32, 33, 33.5, 34, 35]
+            size_uk = [10, 10.5, 11, 11.5, 12, 12.5, 13, 13.5, 1, 1.5, 2, 2.5]
+        elif brand == "Nike TD":
+            size_us = ["2C", "3C", "4C", "5C", "6C", "7C", "8C", "9C", "10C"]
+            size_eu = [17, 18.5, 19.5, 21, 22, 23.5, 25, 26, 27]
+            size_uk = [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5]
+        else:
+            await ctx.respond("Invalid Brand Given")  # todo more helpful error
+            return
 
-        """
-        Nike
-        - Mens https://www.nike.com/gb/size-fit/mens-footwear
-        - Womens https://www.nike.com/gb/size-fit/womens-footwear
-        - Unisex https://www.nike.com/gb/size-fit/unisex-footwear-mens-based
-        - https://www.nike.com/gb/size-fit/kids-footwear
-        """
-        brand = "Nike"
-        size_table = {
-            "Nike":
-                [
-                    {"US M": 3.5, "US W": 5, "UK": 3, "EU": 35.5},
-                    {"US M": 4, "US W": 5.5, "UK": 3.5, "EU": 36},
-                    {"US M": 4.5, "US W": 6, "UK": 4, "EU": 36.5},
-                    {"US M": 5, "US W": 6.5, "UK": 4.5, "EU": 37.5},
-                    {"US M": 5.5, "US W": 7, "UK": 5, "EU": 38},
-                    {"US M": 6, "US W": 7.5, "UK": 5.5, "EU": 38.5},
-                    {"US M": 6.5, "US W": 8, "UK": 6, "EU": 39},
-                    {"US M": 7, "US W": 8.5, "UK": 6, "EU": 40},
-                    {"US M": 7.5, "US W": 9, "UK": 6.5, "EU": 40.5},
-                    {"US M": 8, "US W": 9.5, "UK": 7, "EU": 41},
-                    {"US M": 8.5, "US W": 10, "UK": 7.5, "EU": 42},
-                    {"US M": 9, "US W": 10.5, "UK": 8, "EU": 42.5},
-                    {"US M": 9.5, "US W": 11, "UK": 8.5, "EU": 43},
-                    {"US M": 10, "US W": 11.5, "UK": 9, "EU": 44},
-                    {"US M": 10.5, "US W": 12, "UK": 9.5, "EU": 44.5},
-                    {"US M": 11, "US W": 12.5, "UK": 10, "EU": 45},
-                    {"US M": 11.5, "US W": 13, "UK": 10.5, "EU": 45.5},
-                    {"US M": 12, "US W": 13.5, "UK": 11, "EU": 46},
-                    {"US M": 12.5, "US W": 14, "UK": 11.5, "EU": 47},
-                    {"US M": 13, "US W": 14.5, "UK": 12, "EU": 47.5},
-                    {"US M": 13.5, "US W": 15, "UK": 12.5, "EU": 48},
-                    {"US M": 14, "US W": 15.5, "UK": 13, "EU": 48.5},
-                    {"US M": 14.5, "US W": 16, "UK": 13.5, "EU": 49},
-                    {"US M": 15, "US W": 16.5, "UK": 14, "EU": 49.5},
-                    {"US M": 15.5, "US W": 17, "UK": 14.5, "EU": 50},
-                    {"US M": 16, "US W": 17.5, "UK": 15, "EU": 50.5},
-                    {"US M": 16.5, "US W": 18, "UK": 15.5, "EU": 51},
-                    {"US M": 17, "US W": 18.5, "UK": 16, "EU": 51.5},
-                    {"US M": 17.5, "US W": 19, "UK": 16.5, "EU": 52},
-                    {"US M": 18, "US W": 19.5, "UK": 17, "EU": 52.5},
-                    {"US M": 18.5, "US W": 20, "UK": 17.5, "EU": 53},
-                    {"US M": 19, "US W": 20.5, "UK": 18, "EU": 53.5},
-                    {"US M": 19.5, "US W": 21, "UK": 18.5, "EU": 54},
-                    {"US M": 20, "US W": 21.5, "UK": 19, "EU": 54.5},
-                    {"US M": 20.5, "US W": 22, "UK": 19.5, "EU": 55},
-                    {"US M": 21, "US W": 22.5, "UK": 20, "EU": 55.5},
-                    {"US M": 21.5, "US W": 23, "UK": 20.5, "EU": 56},
-                    {"US M": 22, "US W": 23.5, "UK": 21, "EU": 56.5},
-                ]
-        }
+        msg = f"```{str('UK'):10s}{str('US'):10s}{str('EU'):10s}\n"
+        for size in range(len(size_us)):
+            msg += f"{str(size_uk[size]):10s}{str(size_us[size]):10s}{str(size_eu[size]):10s}"
 
-        shoe_size = round(shoe_size * 2) / 2  # rounded to nearest half int
-        if region == "UK":
-            if 3 > shoe_size: shoe_size = 3
-            elif shoe_size > 21: shoe_size = 21
-        elif region == "US M":
-            if 3.5 > shoe_size: shoe_size = 3.5
-            elif shoe_size > 22: shoe_size = 22
-        elif region == "US W":
-            if 5 > shoe_size: shoe_size = 5
-            elif shoe_size > 23.5: shoe_size = 23.5
-        elif region == "EU":
-            if 35.5 > shoe_size: shoe_size = 35.5
-            elif shoe_size > 56.5: shoe_size = 56.5
-
-        msg = f"Shoe size **{region}** **{shoe_size}** Matches:\n\n"
-
-        for sizes in size_table[brand]:
-            if (region, shoe_size) in sizes.items():
-                del sizes[region]
-
-                for s_region in sizes:
-                    msg += f"{s_region}: {sizes[s_region]}\n"
-
+            if size is not len(size_us) - 1:
                 msg += "\n"
+        msg += "```"
 
-        msg += "\nWork in Progress Command"
-        await ctx.respond(msg)
+        embed = discord.Embed(title=f"{brand} Sizes")
+        embed.add_field(name="\u200b", value=msg)
+        embed.set_footer(text="Work in Progress Command")
+
+        await ctx.respond(embed=embed)
 
     @shoes.command(name="stockx_payout")
     async def stockx_payout(self,
@@ -229,6 +163,7 @@ class Shoes(commands.Cog):
                               f"Fees Total: £{round(fees, 2)}*")
         embed.set_footer(text="This is an estimate, the actual payout may vary")
         await ctx.respond(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(Shoes(bot))
