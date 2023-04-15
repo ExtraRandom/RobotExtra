@@ -196,9 +196,6 @@ class Commands(commands.Cog):
             if services_added_count == 5:
                 break
 
-            print(services_added_count)
-            print(service['runningIdentity'])
-
             loc_detail = service['locationDetail']
             time_this_station = loc_detail.get("gbttBookedDeparture", None)
             if time_this_station is None:
@@ -228,10 +225,9 @@ class Commands(commands.Cog):
                 destination_time = destination_detail[0]['publicTime']
             else:
                 destination_location_list = []
-                for loc in origin_detail:
+                for loc in destination_detail:
                     destination_location_list.append(loc['description'])
-
-                destination_location = "&".join(destination_location_list)
+                destination_location = " & ".join(destination_location_list[::-1])
                 destination_time = destination_detail[len(destination_detail) - 1]['publicTime']
 
             destination_time = self.time_colon(destination_time)
