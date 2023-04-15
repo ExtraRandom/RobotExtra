@@ -10,20 +10,17 @@ class CogManagement(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # can't name cog_group for some reason??
 
-    # TODO see below, re-enable when issue fixed
-    # cogs = discord.commands.SlashCommandGroup("cog", "Cog Management Commands")
+    cogs = discord.commands.SlashCommandGroup("cog", "Cog Management Commands")
 
     async def loadable_cogs(self, ctx):
         all_cogs: List = self.bot.get_cogs_in_folder()
         return all_cogs
 
-    # TODO Update these to be group commands when below issue is fixed
     # https://github.com/Pycord-Development/pycord/issues/1630
 
-    @commands.slash_command(name="cog_load")
-    # @cogs.command()
+    #@commands.slash_command(name="cog_load")
+    @cogs.command(name="load")
     @perms.is_dev()
     async def load(self, ctx, cog: discord.Option(str,
                                                   "Cog to Load",
@@ -61,8 +58,8 @@ class CogManagement(commands.Cog):
             await ctx.send(IO.settings_fail_write)
             return
 
-    @commands.slash_command(name="cog_unload")
-    # @cogs.command()
+    # @commands.slash_command(name="cog_unload")
+    @cogs.command(name="unload")
     @perms.is_dev()
     async def unload(self, ctx, cog: discord.Option(str,
                                                     "Cog to Unload",
@@ -96,8 +93,8 @@ class CogManagement(commands.Cog):
             await ctx.send(IO.settings_fail_write)
             return
 
-    @commands.slash_command(name="cog_reload")
-    # @cogs.command()
+    # @commands.slash_command(name="cog_reload")
+    @cogs.command(name="reload")
     @perms.is_dev()
     async def reload(self, ctx, cog: discord.Option(str,
                                                     "Cog to Reload",
@@ -128,7 +125,8 @@ class CogManagement(commands.Cog):
             await ctx.respond("Failed to reload cog '{}'".format(cog))
             return
 
-    @commands.slash_command(name="cogs")
+    # @commands.slash_command(name="cogs")
+    @cogs.command(name="list")
     @perms.is_dev()
     async def the_cog_list(self, ctx):
         """List all loaded and unloaded cogs"""

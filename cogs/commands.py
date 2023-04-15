@@ -107,7 +107,7 @@ class Commands(commands.Cog):
         res = []
         data = train_stations.crs_lookup
 
-        if len(ctx.value) >= 2:
+        if len(ctx.value) == 2 or len(ctx.value) == 3:
             index = 0
             for crs in data.values():
                 if ctx.value.upper() in crs:
@@ -118,6 +118,9 @@ class Commands(commands.Cog):
                 index += 1
 
         for name in data.keys():
+            #if len(res) > 5:
+            #    break
+
             if name is not None:
                 if ctx.value.lower() in name.lower():
                     if name not in res:
@@ -141,7 +144,11 @@ class Commands(commands.Cog):
         return res
 
     def time_colon(self, time):
-        return str(time)[:2] + ":" + str(time)[2:]
+        """Add a colon to time, or return given value if not a time"""
+        if len(time) == 4:
+            return str(time)[:2] + ":" + str(time)[2:]
+        else:
+            return time
 
     @commands.slash_command(name="trains")
     async def trains_command(
@@ -160,12 +167,91 @@ class Commands(commands.Cog):
         auth = (data['keys']['rtt_name'], data['keys']['rtt_key'])
 
         res = requests.get(f"https://api.rtt.io/api/v1/json/search/{station_crs}", auth=auth)  # print(res.text)
-
         res_json = res.json()
 
         if res_json['services'] is None:
-            await ctx.respond("There are no trains running from this station right now.")
+            await ctx.respond("There are no trains running to or from this station right now.")
             return
+        # else:
+        #     print(res.text)
+
+        # print(res_json['services'][0])
+        # print(res.text)
+
+        # service_id = res_json['services'][0]['serviceUid']
+        # run_date = str(res_json['services'][0]['runDate']).replace("-", "/")
+
+        # res2 = requests.get(f"https://api.rtt.io/api/v1/json/service/{service_id}/{run_date}", auth=auth)  # print(res.text)
+        # print(res2.text)
+
+        services = res_json['services']
+        services_added_count = 0
+
+        embed = discord.Embed(title=f"The next trains calling at {station}",
+                              description="Actual times may vary",
+                              colour=discord.Colour.blue())
+
+        for service in services:
+            services_added_count = services_added_count + 1
+            if services_added_count == 5:
+                break
+
+            print(services_added_count)
+            print(service['runningIdentity'])
+
+            loc_detail = service['locationDetail']
+            time_this_station = loc_detail.get("gbttBookedDeparture", None)
+            if time_this_station is None:
+                time_this_station = loc_detail.get("gbttBookedArrival", "Not Found")
+
+            time_this_station = self.time_colon(time_this_station)
+
+            origin_detail = loc_detail['origin']
+
+            if len(origin_detail) == 1:
+                origin_location = origin_detail[0]['description']
+                origin_time = origin_detail[0]['publicTime']
+            else:
+                origin_location_list = []
+                for loc in origin_detail:
+                    origin_location_list.append(loc['description'])
+
+                origin_location = " & ".join(origin_location_list)
+                origin_time = origin_detail[0]['publicTime']
+
+            origin_time = self.time_colon(origin_time)
+
+            destination_detail = loc_detail['destination']
+
+            if len(destination_detail) == 1:
+                destination_location = destination_detail[0]['description']
+                destination_time = destination_detail[0]['publicTime']
+            else:
+                destination_location_list = []
+                for loc in origin_detail:
+                    destination_location_list.append(loc['description'])
+
+                destination_location = "&".join(destination_location_list)
+                destination_time = destination_detail[len(destination_detail) - 1]['publicTime']
+
+            destination_time = self.time_colon(destination_time)
+
+
+            headcode = service['runningIdentity']
+            toc = service['atocName']
+
+            embed.add_field(name=f"{headcode}",
+                            value=f"**Time at {station}:** \n{time_this_station}\n"
+                                  f"**Origin:** \n{origin_location} \nAt {origin_time}\n"
+                                  f"**Destination:** \n{destination_location} \nAt {destination_time}\n"
+                                  f"**Operator:** \n{toc}")
+
+            # await ctx.send(f"{station} : {time_this_station}\n{origin_location} : {origin_time}\n{headcode}, {toc}")
+
+
+
+        """
+
 
         loc = res_json['services'][0]['locationDetail']
 
@@ -173,6 +259,9 @@ class Commands(commands.Cog):
         origin_departure = self.time_colon(loc['origin'][0]['publicTime'])
 
         station_name = res_json['location']['name']
+
+
+
         try:
             station_arrival = loc['realtimeArrival']
         except KeyError:  # Service starts here
@@ -185,7 +274,8 @@ class Commands(commands.Cog):
 
         train_operator = res_json['services'][0]['atocName']
 
-        embed = discord.Embed(title=f"The Next Train Calling at {station_name}", description="Actual times may vary",
+        embed = discord.Embed(title=f"The Next Train Calling at {station_name}",
+                              description="Actual times may vary",
                               colour=discord.Colour.blue())
         embed.add_field(name=f"{train_operator}",
                         value=f"Calling at {station_name}: **{station_arrival}**")
@@ -193,7 +283,7 @@ class Commands(commands.Cog):
                                              f"At: *{origin_departure}*")
         embed.add_field(name="Destination", value=f"Terminating at: {destination_station}\n"
                                                   f"At: *{destination_arrival}*")
-
+        """
         await ctx.respond(embed=embed)
 
 

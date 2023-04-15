@@ -188,6 +188,5 @@ class Games(commands.Cog):
 
             await ctx.respond(embed=embed)
 
-
 def setup(bot):
     bot.add_cog(Games(bot))
