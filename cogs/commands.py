@@ -121,15 +121,22 @@ class Commands(commands.Cog):
             #if len(res) > 5:
             #    break
 
+            print(len(res))
+
             if name is not None:
                 if ctx.value.lower() in name.lower():
                     if name not in res:
                         res.append(name)
-            else:
-                if len(res) < 5:
-                    res.append(name)
-                else:
-                    break
+
+            if len(res) >= 5:
+                break
+
+            #else:
+            #    if len(res) < 5:
+            #        print(len(res))
+            #        res.append(name)
+            #    else:
+            #        break
 
         """
         data = train_stations.station_names
