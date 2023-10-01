@@ -1,6 +1,7 @@
 # py-cord[voice]
 # py-cord[voice] @ git+https://github.com/Pycord-Development/pycord
-py-cord[voice]
+# py-cord[voice]
+py-cord-dev[voice]==2.5.0rc5
 requests
 fake_useragent
 python-dateutil
