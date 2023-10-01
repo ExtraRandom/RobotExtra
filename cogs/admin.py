@@ -57,6 +57,7 @@ class Admin(commands.Cog):
     @perms.is_admin()
     async def emoji_please(self, ctx, message):
         """Steal emoji from a message"""
+        await ctx.defer()
         custom_emojis = re.findall(r'<\w*:\w*:\d*>', message.content)
         custom_emojis = list(dict.fromkeys(custom_emojis))
 
@@ -81,13 +82,15 @@ class Admin(commands.Cog):
         else:
             await ctx.respond(content="Selected message contains no custom emoji.", ephemeral=True)
 
+    """
     @commands.slash_command()
     @perms.is_admin()
     async def emotepls(self, ctx,
                        message_id: discord.Option(str, "ID of Message to get emoji from", required=True)):
-        """Steal emotes from a message
+        " ""Steal emotes from a message
 
-        Input must be a message id"""
+        Input must be a message id" ""
+        # await ctx.defer()
         msg_channel = ctx.channel
 
         try:
@@ -156,17 +159,19 @@ class Admin(commands.Cog):
             if len(reacts.fields) >= 1:
                 await ctx.respond(embed=reacts)
 
+    """
     @commands.slash_command(name="info")
     async def info_slash_command(self, ctx,
                                  user: discord.Option(discord.Member, "Member to get info of", required=True)):
         """Show a user's info"""
-
+        await ctx.defer()
         result = user_info_embed(user)
 
         await ctx.respond(embed=result)
 
     @commands.user_command(name="User Info")
     async def info_user_command(self, ctx, user: discord.Member):
+        await ctx.defer()
         target = user
 
         if target is None:
@@ -181,6 +186,7 @@ class Admin(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def log(self, ctx):
         """Get the latest log file"""
+        await ctx.defer()
         log_file = os.path.join(ez_utils.base_directory(), "logs", Logger.get_filename())
         await ctx.author.send(file=discord.File(log_file))
         await ctx.respond("Check your DMs :D")

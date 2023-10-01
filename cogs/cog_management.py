@@ -27,6 +27,7 @@ class CogManagement(commands.Cog):
                                                   autocomplete=loadable_cogs,
                                                   required=True)):
         """Load a cog"""
+        await ctx.defer()
 
         cog_list = []
         for c_file in os.listdir(os.path.join(ez_utils.base_directory(), "cogs")):
@@ -66,6 +67,7 @@ class CogManagement(commands.Cog):
                                                     autocomplete=loadable_cogs,
                                                     required=True)):
         """Unload a cog"""
+        await ctx.defer()
         ext_list = self.bot.extensions
         cog_list = []
         for cogs in ext_list:
@@ -102,6 +104,7 @@ class CogManagement(commands.Cog):
                                                     required=True)):
 
         """Reload a cog"""
+        await ctx.defer()
         ext_list = self.bot.extensions
         cog_list = [cog for cog in ext_list]
 
@@ -130,6 +133,7 @@ class CogManagement(commands.Cog):
     @perms.is_dev()
     async def the_cog_list(self, ctx):
         """List all loaded and unloaded cogs"""
+        await ctx.defer()
         ext_list = self.bot.extensions
         loaded = []
         unloaded = []

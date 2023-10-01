@@ -16,6 +16,7 @@ class Games(commands.Cog):
     @commands.slash_command()
     async def itad(self, ctx, search_term: discord.Option(str, "The term to search for", required=True)):
         """IsThereAnyDeal.com Search"""
+        await ctx.defer()
 
         key = IO.fetch_from_settings('keys', 'itad_api')
         if key is None:
@@ -99,6 +100,7 @@ class Games(commands.Cog):
             size_in_gigabytes: discord.Option(float, "Download size in GigaBytes", required=True),
             download_speed_mbps: discord.Option(float, "Download speed in MegaBytes per second", required=False)):
         """Calculate time to download given file size"""
+        await ctx.defer()
 
         def secs_to_days(seconds):
             return round(seconds / 86400)

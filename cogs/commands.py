@@ -15,6 +15,7 @@ class Commands(commands.Cog):
     @commands.slash_command()
     async def uptime(self, ctx):
         """Shows the bots current uptime"""
+        await ctx.defer()
         try:
             start = self.bot.start_time
             rc = self.bot.reconnect_time
@@ -38,6 +39,7 @@ class Commands(commands.Cog):
     @commands.guild_only()
     async def server(self, ctx):
         """Server Info"""
+        await ctx.defer()
         dt = ctx.guild.created_at
         year = dt.year
         # month = f'{dt.month:02}'
@@ -71,6 +73,7 @@ class Commands(commands.Cog):
     @commands.slash_command(name="bot")
     async def bot(self, ctx):
         """Bot Info"""
+        await ctx.defer()
         bot_info = await self.bot.application_info()
         bot_name = bot_info.name
         bot_owner = bot_info.owner.mention

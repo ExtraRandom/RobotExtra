@@ -29,6 +29,15 @@ def is_server_owner_or_dev():
             return False
     return commands.check(predicate)
 
+"""
+def is_admin_or_dev():
+    def predicate(ctx):
+        if ctx.message.author.guild_permissions.administrator or ctx.message.author.id == 92562410493202432:
+            return True
+        else:
+            return False
+    return commands.check(predicate)
+"""
 
 """
 def is_in_somewhere_nice():
