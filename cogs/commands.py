@@ -161,6 +161,7 @@ class Commands(commands.Cog):
             )
     ):
         """Find when the next train to call at a station is"""
+        await ctx.defer()
         station_crs = train_stations.crs_lookup[station]
 
         data = IO.read_settings_as_json()
