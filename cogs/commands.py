@@ -117,13 +117,12 @@ class Commands(commands.Cog):
                     name = list(data.keys())[index]
                     if name not in res:
                         res.append(name)
+                        if len(res) >= 5:
+                            break
 
                 index += 1
 
         for name in data.keys():
-            #if len(res) > 5:
-            #    break
-
             if name is not None:
                 if ctx.value.lower() in name.lower():
                     if name not in res:
@@ -131,24 +130,6 @@ class Commands(commands.Cog):
 
             if len(res) >= 5:
                 break
-
-            #else:
-            #    if len(res) < 5:
-            #        print(len(res))
-            #        res.append(name)
-            #    else:
-            #        break
-
-        """
-        data = train_stations.station_names
-
-        for name in data:
-            if name is not None:
-                if ctx.value.lower() in name.lower():
-                    res.append(name)
-            else:
-                res.append(name)
-        """
         return res
 
     def time_colon(self, time):
@@ -256,8 +237,6 @@ class Commands(commands.Cog):
 
 
         """
-
-
         loc = res_json['services'][0]['locationDetail']
 
         origin_station = loc['origin'][0]['description']
