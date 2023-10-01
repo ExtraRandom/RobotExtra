@@ -126,7 +126,7 @@ class Commands(commands.Cog):
                     if name not in res:
                         res.append(name)
             else:
-                if len(res) < 25:
+                if len(res) < 5:
                     res.append(name)
                 else:
                     break
