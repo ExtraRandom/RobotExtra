@@ -121,8 +121,6 @@ class Commands(commands.Cog):
             #if len(res) > 5:
             #    break
 
-            print(len(res))
-
             if name is not None:
                 if ctx.value.lower() in name.lower():
                     if name not in res:
