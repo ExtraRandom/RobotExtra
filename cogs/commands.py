@@ -222,9 +222,14 @@ class Commands(commands.Cog):
 
             destination_time = self.time_colon(destination_time)
 
-
-            headcode = service['runningIdentity']
+            # print(service)
+            # headcode = service['runningIdentity']
+            headcode = service['trainIdentity']
             toc = service['atocName']
+
+            service_type = service['serviceType']
+            if service_type != "train":
+                headcode += f" ({str(service_type).capitalize()})"
 
             embed.add_field(name=f"{headcode}",
                             value=f"**Time at {station}:** \n{time_this_station}\n"
