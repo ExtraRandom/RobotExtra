@@ -11,7 +11,7 @@ class CogManagement(commands.Cog):
         self.bot = bot
 
 
-    cogs = discord.commands.SlashCommandGroup("cog", "Cog Management Commands")
+    cogs = discord.commands.SlashCommandGroup("cogs", "Cog Management Commands")
 
     async def loadable_cogs(self, ctx):
         all_cogs: List = self.bot.get_cogs_in_folder()

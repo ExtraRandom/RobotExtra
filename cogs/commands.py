@@ -1,4 +1,4 @@
-from discord.ext import commands
+from discord.ext import commands, tasks
 from cogs.utils import time_formatting as timefmt, IO
 from datetime import datetime
 from cogs.utils import perms
@@ -6,7 +6,8 @@ import discord
 import requests
 from platform import python_version as py_v
 from cogs.utils import train_stations
-
+# import re
+# from time import time
 
 class Commands(commands.Cog):
     def __init__(self, bot):
@@ -132,12 +133,28 @@ class Commands(commands.Cog):
                 break
         return res
 
-    def time_colon(self, time):
+    def time_colon(self, inp_time):
         """Add a colon to time, or return given value if not a time"""
-        if len(time) == 4:
-            return str(time)[:2] + ":" + str(time)[2:]
+        if len(inp_time) == 4:
+            return str(inp_time)[:2] + ":" + str(inp_time)[2:]
         else:
-            return time
+            return inp_time
+
+    """
+    @commands.slash_command(name="traininfo")
+    async def train_info_command(
+            self,
+            ctx: discord.ApplicationContext,
+            station: discord.Option(
+                str,
+                description="The Station to check for train at",
+                autocomplete=get_stations
+            ),
+    ):
+        print("test")
+        """
+        # todo info on a specific train from realtime trains
+        # todo figure way of presenting info in a concise manner
 
     @commands.slash_command(name="trains")
     async def trains_command(
@@ -145,12 +162,27 @@ class Commands(commands.Cog):
             ctx: discord.ApplicationContext,
             station: discord.Option(
                 str,
-                "The Station to check for train times at",
+                description="The Station to check for train times at",
                 autocomplete=get_stations
+            ),
+            detailed: discord.Option(
+                bool,
+                description="Whether to include extra details or not ",
+                required=False,
+                default=False
+            ),
+            services_count: discord.Option(
+                int,
+                description="Max number of services to include - Limited to 25",
+                required=False,
+                default=4,
+                max_value=25,
+                min_value=1
             )
     ):
-        """Find when the next train to call at a station is"""
+        """Find when the next trains to call at a UK rail station are"""
         await ctx.defer()
+
         station_crs = train_stations.crs_lookup[station]
 
         data = IO.read_settings_as_json()
@@ -162,15 +194,14 @@ class Commands(commands.Cog):
         if res_json['services'] is None:
             await ctx.respond("There are no trains running to or from this station right now.")
             return
+
         # else:
         #     print(res.text)
-
         # print(res_json['services'][0])
         # print(res.text)
 
         # service_id = res_json['services'][0]['serviceUid']
         # run_date = str(res_json['services'][0]['runDate']).replace("-", "/")
-
         # res2 = requests.get(f"https://api.rtt.io/api/v1/json/service/{service_id}/{run_date}", auth=auth)  # print(res.text)
         # print(res2.text)
 
@@ -183,7 +214,7 @@ class Commands(commands.Cog):
 
         for service in services:
             services_added_count = services_added_count + 1
-            if services_added_count == 5:
+            if services_added_count == services_count + 1:
                 break
 
             loc_detail = service['locationDetail']
@@ -231,48 +262,21 @@ class Commands(commands.Cog):
             if service_type != "train":
                 headcode += f" ({str(service_type).capitalize()})"
 
+            msg = f"**Due:** \n{time_this_station}\n"
+            if detailed:
+                msg += f"**Origin:** \n{origin_location} \nAt {origin_time}\n"
+            msg += f"**Destination:** \n{destination_location}"
+            if detailed:
+                msg += f"\nAt {destination_time}"
+            msg += f"\n**Operator:** \n{toc}"
+
             embed.add_field(name=f"{headcode}",
-                            value=f"**Time at {station}:** \n{time_this_station}\n"
-                                  f"**Origin:** \n{origin_location} \nAt {origin_time}\n"
-                                  f"**Destination:** \n{destination_location} \nAt {destination_time}\n"
-                                  f"**Operator:** \n{toc}")
+                            value=msg)
+                            # value=f"**Time at {station}:** \n{time_this_station}\n"
+                            #      f"**Origin:** \n{origin_location} \nAt {origin_time}\n"
+                            #      f"**Destination:** \n{destination_location} \nAt {destination_time}\n"
+                            #      f"**Operator:** \n{toc}")
 
-            # await ctx.send(f"{station} : {time_this_station}\n{origin_location} : {origin_time}\n{headcode}, {toc}")
-
-
-
-        """
-        loc = res_json['services'][0]['locationDetail']
-
-        origin_station = loc['origin'][0]['description']
-        origin_departure = self.time_colon(loc['origin'][0]['publicTime'])
-
-        station_name = res_json['location']['name']
-
-
-
-        try:
-            station_arrival = loc['realtimeArrival']
-        except KeyError:  # Service starts here
-            station_arrival = loc['realtimeDeparture']
-
-        station_arrival = self.time_colon(station_arrival)
-
-        destination_station = loc['destination'][0]['description']
-        destination_arrival = self.time_colon(loc['destination'][0]['publicTime'])
-
-        train_operator = res_json['services'][0]['atocName']
-
-        embed = discord.Embed(title=f"The Next Train Calling at {station_name}",
-                              description="Actual times may vary",
-                              colour=discord.Colour.blue())
-        embed.add_field(name=f"{train_operator}",
-                        value=f"Calling at {station_name}: **{station_arrival}**")
-        embed.add_field(name="Origin", value=f"Started at: {origin_station}\n"
-                                             f"At: *{origin_departure}*")
-        embed.add_field(name="Destination", value=f"Terminating at: {destination_station}\n"
-                                                  f"At: *{destination_arrival}*")
-        """
         await ctx.respond(embed=embed)
 
 
