@@ -75,7 +75,7 @@ class Games(commands.Cog):
                 if price_raw == 0:
                     price_clean = "Free"
                 else:
-                    price_clean = f"£{price_raw}"
+                    price_clean = f"£{price_raw:.2f}"
 
                 voucher = ""
                 if prices['current']['voucher']:
