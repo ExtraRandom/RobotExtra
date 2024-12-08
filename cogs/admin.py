@@ -53,8 +53,13 @@ class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.message_command(name="Steal Emoji")
-    @perms.is_admin()
+    @commands.message_command(
+        name="Steal Emoji",
+        integration_types={
+            discord.IntegrationType.guild_install,
+            discord.IntegrationType.user_install
+        }
+    )
     async def emoji_please(self, ctx, message):
         """Steal emoji from a message"""
         await ctx.defer()
