@@ -14,8 +14,13 @@ settings_file_path = os.path.join(cwd, "configs", "settings.json")
 # server_conf_file_path = os.path.join(cwd, "configs", "servers.json")
 
 
-def fetch_from_settings(top_key: str, inner_key: str):
+def fetch_from_settings(top_key: str, inner_key: str, docker_env_name):  # =None):
     """Fetch a single setting from settings.json"""
+    if docker_env_name is not None:
+        docker_env_value = os.getenv(docker_env_name, None)
+        if docker_env_value is not None and docker_env_value != 0:
+            return docker_env_value
+
     data = read_settings_as_json()
     if data is None:
         return None

@@ -1,6 +1,6 @@
-from discord.ext import commands, tasks
+from discord.ext import commands  # , tasks
 from cogs.utils import time_formatting as timefmt, IO
-from datetime import datetime
+import datetime
 from cogs.utils import perms
 import discord
 import requests
@@ -8,6 +8,7 @@ from platform import python_version as py_v
 from cogs.utils import train_stations
 # import re
 # from time import time
+
 
 class Commands(commands.Cog):
     def __init__(self, bot):
@@ -63,7 +64,7 @@ class Commands(commands.Cog):
                                                  "{} Users\n"
                                                  "{} Bots".format(total_count, member_count, bot_count))
         res.set_footer(text="ID: {}".format(ctx.guild.id))
-        res.timestamp = datetime.utcnow()
+        res.timestamp = datetime.datetime.now(datetime.UTC)
 
         icon = ctx.guild.icon
         if icon:
@@ -105,6 +106,17 @@ class Commands(commands.Cog):
     async def user_avatar(self, ctx, user: discord.Member):
         # TODO embed similar to carl bot avatar command
         await ctx.respond(content=user.avatar.url)
+        return
+
+    @commands.user_command(name="Server Avatar")
+    async def user_server_avatar(self, ctx, user: discord.Member):
+        # TODO embed similar to carl bot avatar command
+        if user.guild_avatar is None:
+            link = user.avatar.url
+        else:
+            link = user.guild_avatar.url
+
+        await ctx.respond(content=link)
         return
 
     async def get_stations(self, ctx: discord.AutocompleteContext):
@@ -185,8 +197,11 @@ class Commands(commands.Cog):
 
         station_crs = train_stations.crs_lookup[station]
 
-        data = IO.read_settings_as_json()
-        auth = (data['keys']['rtt_name'], data['keys']['rtt_key'])
+        # data = IO.read_settings_as_json()
+        # auth = (data['keys']['rtt_name'], data['keys']['rtt_key'])
+        rtt_name = IO.fetch_from_settings("keys", "rtt_name", "DOCKER_RTT_NAME")
+        rtt_key = IO.fetch_from_settings("keys", "rtt_key", "DOCKER_RTT_KEY")
+        auth = (rtt_name, rtt_key)
 
         res = requests.get(f"https://api.rtt.io/api/v1/json/search/{station_crs}", auth=auth)  # print(res.text)
         res_json = res.json()
@@ -208,7 +223,7 @@ class Commands(commands.Cog):
         services = res_json['services']
         services_added_count = 0
 
-        embed = discord.Embed(title=f"The next trains calling at {station}",
+        embed = discord.Embed(title=f"The next trains calling at {station} [{station_crs}]",
                               description="Actual times may vary",
                               colour=discord.Colour.blue())
 
@@ -254,7 +269,6 @@ class Commands(commands.Cog):
             destination_time = self.time_colon(destination_time)
 
             # print(service)
-            # headcode = service['runningIdentity']
             headcode = service['trainIdentity']
             toc = service['atocName']
 
@@ -272,10 +286,7 @@ class Commands(commands.Cog):
 
             embed.add_field(name=f"{headcode}",
                             value=msg)
-                            # value=f"**Time at {station}:** \n{time_this_station}\n"
-                            #      f"**Origin:** \n{origin_location} \nAt {origin_time}\n"
-                            #      f"**Destination:** \n{destination_location} \nAt {destination_time}\n"
-                            #      f"**Operator:** \n{toc}")
+
 
         await ctx.respond(embed=embed)
 

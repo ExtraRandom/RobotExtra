@@ -1,5 +1,5 @@
 from discord.ext import commands
-from datetime import datetime
+import datetime
 from cogs.utils import IO, errors, ez_utils
 from cogs.utils.logger import Logger
 import discord
@@ -17,6 +17,7 @@ if not sys.warnoptions:
 
 def testing_check():
     data = IO.read_settings_as_json()
+    
     if data is None:
         print("No settings file, Debug Guilds Off")
         return []
@@ -43,11 +44,12 @@ class RobotExtra(commands.Bot):
         super().__init__(debug_guilds=testing_check(),
                          description="Bot Developed by @Extra_Random#2564\n"
                                      "Source code: https://github.com/ExtraRandom/RobotExtra",
-                         intents=d_intents)
+                         intents=d_intents,
+                         command_prefix=commands.when_mentioned)
 
     async def on_ready(self):
-        self.reconnect_time = datetime.utcnow()
-        login_msg = "Bot Connected at {} UTC".format(str(datetime.utcnow()))
+        self.reconnect_time = datetime.datetime.now(datetime.UTC)
+        login_msg = "Bot Connected at {} UTC".format(str(self.reconnect_time))
         Logger.log_write("----------------------------------------------------------\n"
                          "{}\n"
                          "".format(login_msg))
@@ -266,13 +268,27 @@ class RobotExtra(commands.Bot):
                         # noinspection PyTypeChecker
                         # s_data['cogs'][folder_cog] = False
 
-        """Read in discord token"""
+        """Check for environment variables (docker)"""
+        env_token = os.getenv("DISCORD_BOT_TOKEN", default=None)
+        if env_token is None:
+            if first_time is True:
+                if IO.write_settings(s_data) is False:
+                    raise Exception(IO.settings_fail_write)
+                token = None
+            else:
+                token = s_data['keys']['token']
+        else:
+            token = env_token
+
+
+        """ Read in discord token
         if first_time is True:
             if IO.write_settings(s_data) is False:
                 raise Exception(IO.settings_fail_write)
             token = None
         else:
             token = s_data['keys']['token']
+        """
 
         """Clean up removed cogs from settings"""
         r_cogs = self.get_cogs_in_folder()
@@ -287,7 +303,7 @@ class RobotExtra(commands.Bot):
             raise Exception(IO.settings_fail_write)
 
         if token:
-            self.start_time = datetime.utcnow()
+            self.start_time = datetime.datetime.now(datetime.UTC)
             super().run(token)
         else:
             Logger.write("Token is not set! Go to {} and change the token parameter!"

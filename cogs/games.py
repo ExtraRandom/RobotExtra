@@ -26,7 +26,7 @@ class Games(commands.Cog):
 
         allow_vouchers = True  # todo decide what to do with this
 
-        key = IO.fetch_from_settings('keys', 'itad_api')
+        key = IO.fetch_from_settings('keys', 'itad_api', "DOCKER_ITAD_TOKEN")
         if key is None:
             # TODO write to log (maybe?)
             await ctx.respond("No ITAD API key in settings config.", delete_after=15)
@@ -95,116 +95,6 @@ class Games(commands.Cog):
         embed.set_footer(text="This is a reworked version of the ITAD command using the new API, "
                               "it may still have some bugs!")
         await ctx.respond(embed=embed)
-
-    @commands.slash_command(guild_ids=[223132558609612810])
-    async def itad_old(self, ctx,
-                   search_term: discord.Option(str, "The term to search for", required=True)
-                   ):
-        """IsThereAnyDeal.com Search"""
-        await ctx.defer()
-
-        # await ctx.respond("Command temporarily disabled whilst it is being updated for the new ITAD API. Sorry.")
-        # return
-
-        use_new_api = True
-
-        key = IO.fetch_from_settings('keys', 'itad_api')
-        if key is None:
-            await ctx.respond("No ITAD API key in settings config.", delete_after=15)
-            return
-
-        search = parse.quote(search_term)
-        limit = 4
-
-        # TODO - NEW API REQUIRES TESTING WHEN IT IS LIVE
-        # API DOCS - https://docs.isthereanydeal.com/#tag/games/operation/games-overview-v2
-        # MIGRATION GUIDE - https://github.com/IsThereAnyDeal/API/blob/draft/migration.md
-
-        if use_new_api == True:  # TODO TEST NEW API
-            search_url = f"https://api.isthereanydeal.com/games/search/v1?key={key}&title={search}&results={limit}"
-        else:
-            search_url = ("https://api.isthereanydeal.com/v02/search/search/?key={}&q={}&limit={}&strict=0"
-                          "").format(key, search, limit)
-
-        res = requests.get(search_url)
-        res_code = res.status_code
-        title_lookup = {}
-
-        if res is not None and res_code == 200:
-            plains_data = res.json()
-            plains_list = []
-
-            for result in plains_data['data']['results']:
-                if use_new_api == True:  # TODO TEST NEW API
-                    plains_list.append(result['id'])  # Plains wont be used on the new API, ID used instead
-                    # change "plains" to "id" later
-                    title_lookup[result['id']] = result['title']
-                else:
-                    plains_list.append(result['plain'])
-                    title_lookup[result['plain']] = result['title']
-        else:
-            await ctx.respond("ITAD Search Failed, See logs for more info")
-            Logger.write(f"--------------\nITAD Plain Search Failed\nURL: {search_url}\nStatus Code: {res_code}"
-                         f"\n--------------", print_log=True)
-            return
-
-        if len(plains_list) == 0:
-            await ctx.respond(f"No games with title '{search_term}' found. Try a different search term.")
-            return
-
-
-        if use_new_api == True:
-            overview_url = f"https://api.isthereanydeal.com/games/overview/v2/?key={key}&country=GB"
-
-
-        overview_url = "https://api.isthereanydeal.com/v01/game/overview/?key={}&region=uk&country=GB" \
-                       "&plains={}".format(key, ",".join(plains_list))
-
-
-
-        overview_res = requests.get(overview_url)
-        overview_res_code = overview_res.status_code
-
-        if overview_res is not None and overview_res_code == 200:
-            overview_data = overview_res.json()
-
-            embed = discord.Embed(title=f"IsThereAnyDeal.com Search for '{search_term}'", colour=discord.Colour.blue())
-
-            for game in overview_data['data']:
-                # print(overview_data['data'][game])
-
-                title = title_lookup[str(game)]
-                try:
-                    price = overview_data['data'][game]['price']['price_formatted']
-                    if price == "£0.00":
-                        price = "Free"
-                except TypeError:
-                    price = "Free or Unavailable"
-
-                try:
-                    url = overview_data['data'][game]['price']['url']
-                except TypeError:
-                    url = overview_data['data'][game]['urls']['info']
-
-                info_url = overview_data['data'][game]['urls']['info']
-
-                try:
-                    store = overview_data['data'][game]['price']['store']
-                except TypeError:
-                    store = "Not Available"
-
-                embed.add_field(name=title,
-                                value=f"Price: **{price}**\n"
-                                      f"Store: [**{store}**]({url})\n"
-                                      f"Info: [**All Prices**]({info_url})\n")
-
-            await ctx.respond(embed=embed)
-
-        else:
-            await ctx.respond("ITAD Search Failed, See logs for more info")
-            Logger.write(f"--------------\nITAD Game Search Failed\nURL: {overview_url}\nStatus Code: {res_code}"
-                         f"\n--------------", print_log=True)
-            return
 
     @commands.slash_command()
     async def dltime(

@@ -18,7 +18,7 @@ def seconds_to_time(time_input):
 
 
 def time_ago(time_input, brief=False, force_into_utc=False):
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.UTC)
     now = now.replace(microsecond=0)
 
     if type(time_input) is datetime.datetime:
@@ -27,7 +27,7 @@ def time_ago(time_input, brief=False, force_into_utc=False):
         if not force_into_utc:
             then = datetime.datetime.fromtimestamp(time_input)
         else:
-            then = datetime.datetime.utcfromtimestamp(time_input)
+            then = datetime.datetime.fromtimestamp(time_input, datetime.UTC)
         then = then.replace(microsecond=0)
     else:
         raise TypeError("Wrong type input for time_ago function")

@@ -6,7 +6,6 @@ from cogs.utils.logger import Logger
 from yt_dlp import YoutubeDL, utils as yt_utils
 # from youtube_dl import YoutubeDL, utils as yt_utils
 from functools import partial
-from async_timeout import timeout
 import itertools
 import random
 import re
@@ -41,6 +40,9 @@ class Player:
         self.volume = 1
         self.current = None
 
+        self.message = None
+        self.view = None
+
         ctx.bot.loop.create_task(self.player_loop())
 
     async def player_loop(self):
@@ -49,8 +51,11 @@ class Player:
         while not self.bot.is_closed():
             self.next.clear()
 
+
+
+
             try:
-                async with timeout(300):
+                async with asyncio.timeout(300):
                     source = await self.queue.get()
             except asyncio.TimeoutError:
                 return self.destroy(self._guild)
@@ -395,7 +400,7 @@ class Audio(commands.Cog):
         self.msg_not_playing = "The bot isn't currently playing anything."
         self.msg_same_channel = "The bot must be in a channel and you must be in the same channel to use this command."
 
-        self.yt_api_key = IO.fetch_from_settings("keys", "youtube_api")
+        self.yt_api_key = IO.fetch_from_settings("keys", "youtube_api", "DISCORD_YOUTUBE_TOKEN")
 
     async def cleanup(self, guild):
         try:
@@ -414,6 +419,7 @@ class Audio(commands.Cog):
             player = self.players[ctx.guild.id]
         except KeyError:
             if create:
+
 
                 player = Player(ctx)
                 self.players[ctx.guild.id] = player
@@ -597,6 +603,41 @@ class Audio(commands.Cog):
         guild = ctx.guild
         vc = guild.voice_client
         vc.stop()
+
+
+    @audio_group.command(guild_ids=[223132558609612810])
+    @commands.guild_only()
+    async def test(self, ctx):
+        await ctx.respond(content="big ol beans", view=AudioView())
+
+    """
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.bot.add_view(AudioView())
+    """
+class AudioView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(
+        label="Skip this song",
+        style=discord.ButtonStyle.green,
+        custom_id="audio_view:skip",
+    )
+    async def skip(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("This is skip", ephemeral=True)
+
+    @discord.ui.button(
+        label="View song queue", style=discord.ButtonStyle.red, custom_id="audio_view:song_list"
+    )
+    async def view_queue(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("this is the song queue", ephemeral=True)
+
+    @discord.ui.button(
+        label="Stop Music", style=discord.ButtonStyle.grey, custom_id="audio_view:stop"
+    )
+    async def stop(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("this is music stop.", ephemeral=True)
 
 
 def setup(bot):
