@@ -63,6 +63,21 @@ class Admin(commands.Cog):
     async def emoji_please(self, ctx, message):
         """Steal emoji from a message"""
         await ctx.defer()
+        await self.emoji_stealer(ctx, message, silent=False)
+
+    @commands.message_command(
+        name="Steal Emoji Silent",
+        integration_types={
+            discord.IntegrationType.guild_install,
+            discord.IntegrationType.user_install,
+        }
+    )
+    async def emoji_please_silent(self, ctx, message):
+        """Steal emoji from a message"""
+        await ctx.defer(ephemeral=True)
+        await self.emoji_stealer(ctx, message, silent=True)
+
+    async def emoji_stealer(self, ctx, message, silent):
         custom_emojis = re.findall(r'<\w*:\w*:\d*>', message.content)
         custom_emojis = list(dict.fromkeys(custom_emojis))
 
@@ -83,7 +98,7 @@ class Admin(commands.Cog):
                 result.add_field(name="{}".format(str(emote.split(":")[-2])),
                                  value="[Link]({})".format(link))
 
-            await ctx.respond(embed=result)
+            await ctx.respond(embed=result, ephemeral=silent)
         else:
             await ctx.respond(content="Selected message contains no custom emoji.", ephemeral=True)
 

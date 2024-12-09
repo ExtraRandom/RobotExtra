@@ -26,7 +26,13 @@ class Fun(commands.Cog):
         response = "**My Response is:** {}".format(random.choice(answers))
         await ctx.respond(response)
 
-    @commands.slash_command(name="pick")
+    @commands.slash_command(
+        name="pick",
+        integration_types={
+            discord.IntegrationType.guild_install,
+            discord.IntegrationType.user_install,
+        }
+    )
     async def pick_random(self, ctx,
                           first_option: discord.Option(str, "The first option to pick from", required=True),
                           second_option: discord.Option(str, "The second option to pick from", required=True),
