@@ -57,7 +57,7 @@ class Admin(commands.Cog):
         name="Steal Emoji",
         integration_types={
             discord.IntegrationType.guild_install,
-            discord.IntegrationType.user_install
+            discord.IntegrationType.user_install,
         }
     )
     async def emoji_please(self, ctx, message):

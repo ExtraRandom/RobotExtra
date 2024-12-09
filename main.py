@@ -17,7 +17,7 @@ if not sys.warnoptions:
 
 def testing_check():
     data = IO.read_settings_as_json()
-    
+
     if data is None:
         print("No settings file, Debug Guilds Off")
         return []
@@ -41,11 +41,17 @@ class RobotExtra(commands.Bot):
 
         d_intents = discord.Intents.all()
 
-        super().__init__(debug_guilds=testing_check(),
-                         description="Bot Developed by @Extra_Random#2564\n"
-                                     "Source code: https://github.com/ExtraRandom/RobotExtra",
-                         intents=d_intents,
-                         command_prefix=commands.when_mentioned)
+        check = testing_check()
+        if check:  # testing mode
+            super().__init__(debug_guilds=testing_check(),
+                             description="Bot Developed by @Extra_Random#2564\n"
+                                         "Source code: https://github.com/ExtraRandom/RobotExtra",
+                             intents=d_intents,
+                             command_prefix=commands.when_mentioned)
+        else:  # live build
+            super().__init__(description="Bot Developed by @Extra_Random#2564\n"
+                                         "Source code: https://github.com/ExtraRandom/RobotExtra",
+                             intents=d_intents)
 
     async def on_ready(self):
         self.reconnect_time = datetime.datetime.now(datetime.UTC)
