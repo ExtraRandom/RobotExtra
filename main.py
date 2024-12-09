@@ -43,7 +43,7 @@ class RobotExtra(commands.Bot):
 
         check = testing_check()
         if check:  # testing mode
-            super().__init__(debug_guilds=testing_check(),
+            super().__init__(debug_guilds=check,
                              description="Bot Developed by @Extra_Random#2564\n"
                                          "Source code: https://github.com/ExtraRandom/RobotExtra",
                              intents=d_intents,
