@@ -72,3 +72,10 @@ def time_ago(time_input, brief=False, force_into_utc=False):
     if last_comma_index != -1:
         result_str = result_str[:last_comma_index] + " and " + result_str[last_comma_index+2:]
     return result_str
+
+def datetime_string_reformat(datetime_string, old_format, new_format):
+    """Reformat a datetime string by converting to and from a datetime object using the given formatting"""
+    return datetime.datetime.strptime(datetime_string, old_format).strftime(new_format)
+
+
+
