@@ -1,9 +1,9 @@
 from discord.ext import commands
-# from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup
 # from fake_useragent import UserAgent
 import requests
 import discord
-from cogs.utils import IO
+from cogs.utils import IO, time_formatting
 from urllib import parse
 import time
 from cogs.utils.logger import Logger
@@ -191,6 +191,23 @@ class Games(commands.Cog):
                             value="{}".format(fmt_value))
 
             await ctx.respond(embed=embed)
+
+    @commands.slash_command()
+    async def proton_ge(self, ctx):
+        """Check for the latest version of Proton Glorious Eggroll"""
+        await ctx.defer()
+
+        api_url = "https://api.github.com/repos/GloriousEggroll/proton-ge-custom/releases/latest"
+        res = requests.get(api_url, timeout=5)  # TODO add a timeout to every get request throughout the code
+        if res:
+            data = res.json()
+            new_date = time_formatting.datetime_string_reformat(data['published_at'],
+                                                                old_format='%Y-%m-%dT%H:%M:%SZ',
+                                                                new_format='%d/%m/%Y')
+            await ctx.respond(f"Latest Version: [{data['tag_name']}](<{data['html_url']}>) \nReleased: {new_date}")
+            # example of time format: 2025-01-17T22:34:54Z
+        else:
+            await ctx.respond("Error fetching data, try again later")
 
 def setup(bot):
     bot.add_cog(Games(bot))
