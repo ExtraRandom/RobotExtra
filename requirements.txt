@@ -1,7 +1,7 @@
 # py-cord[voice] @ git+https://github.com/Pycord-Development/pycord
 py-cord[voice]
 requests
-fake_useragent
+# fake_useragent
 python-dateutil
 beautifulsoup4
 yt-dlp
