@@ -6,6 +6,9 @@ import discord
 import requests
 from platform import python_version as py_v
 from cogs.utils import train_stations
+from cogs.utils.logger import Logger
+
+
 # import re
 # from time import time
 
@@ -203,12 +206,18 @@ class Commands(commands.Cog):
         rtt_key = IO.fetch_from_settings("keys", "rtt_key", "DISCORD_RTT_KEY")
         auth = (rtt_name, rtt_key)
 
-        if len(rtt_name) < 3:
-            await ctx.respond("The RealTime Trains API keys are not configured. Extra please fix")
+        try:
+            res = requests.get(f"https://api.rtt.io/api/v1/json/search/{station_crs}", auth=auth)  # print(res.text)
+            res_json = res.json()
+
+        except Exception as e:
+            Logger.write(e, True)
+            await ctx.respond("An error occurred whilst making a request to the RealTime Trains API.\n"
+                              "This could be because the the RealTime Trains API keys are not configured (extra pls fix),"
+                              "or that API is down. This error has been logged.")
             return
 
-        res = requests.get(f"https://api.rtt.io/api/v1/json/search/{station_crs}", auth=auth)  # print(res.text)
-        res_json = res.json()
+
 
         if res_json['services'] is None:
             await ctx.respond("There are no trains running to or from this station right now.")
