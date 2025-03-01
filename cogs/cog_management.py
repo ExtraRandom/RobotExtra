@@ -13,13 +13,19 @@ class CogManagement(commands.Cog):
 
     cogs = discord.commands.SlashCommandGroup("cogs", "Cog Management Commands")
 
-    async def loadable_cogs(self, ctx):
+    async def loadable_cogs(self, ctx: discord.AutocompleteContext):
         all_cogs: List = self.bot.get_cogs_in_folder()
-        return all_cogs
+        hit_cogs = []
 
-    # https://github.com/Pycord-Development/pycord/issues/1630
+        for cog in all_cogs:
+            if ctx.value.lower() in cog.lower():
+                hit_cogs.append(cog)
 
-    #@commands.slash_command(name="cog_load")
+        if len(hit_cogs) > 0:
+            return hit_cogs
+        else:
+            return all_cogs
+
     @cogs.command(name="load")
     @perms.is_dev()
     async def load(self, ctx, cog: discord.Option(str,
@@ -59,7 +65,7 @@ class CogManagement(commands.Cog):
             await ctx.send(IO.settings_fail_write)
             return
 
-    # @commands.slash_command(name="cog_unload")
+
     @cogs.command(name="unload")
     @perms.is_dev()
     async def unload(self, ctx, cog: discord.Option(str,
@@ -95,7 +101,7 @@ class CogManagement(commands.Cog):
             await ctx.send(IO.settings_fail_write)
             return
 
-    # @commands.slash_command(name="cog_reload")
+
     @cogs.command(name="reload")
     @perms.is_dev()
     async def reload(self, ctx, cog: discord.Option(str,
@@ -128,7 +134,7 @@ class CogManagement(commands.Cog):
             await ctx.respond("Failed to reload cog '{}'".format(cog))
             return
 
-    # @commands.slash_command(name="cogs")
+
     @cogs.command(name="list")
     @perms.is_dev()
     async def the_cog_list(self, ctx):
