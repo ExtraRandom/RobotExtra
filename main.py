@@ -16,12 +16,27 @@ if not sys.warnoptions:
 
 
 def testing_check():
-    data = IO.read_settings_as_json()
+    """Return none for testing to be off, return list of ids for testing to be on"""
+    # data = IO.read_settings_as_json()
+    debug = IO.fetch_from_settings("testing", "debug", "DISCORD_DEBUG_MODE")
 
-    if data is None:
-        print("No settings file, Debug Guilds Off")
+    if debug is None:
+        print("No settings file, or env not set. Debug Guilds will be Off")
         return []
     else:
+        if debug in ["true", "True", "t", "T", "y", "Y", "Yes", "yes"]:
+            guilds = IO.fetch_from_settings("testing", "ids", "DISCORD_DEBUG_GUILDS")
+            if type(guilds) == list:
+                print ("Debug guilds set. Debug Guilds will be On")
+                return guilds
+            elif type(guilds) == str:
+                print("Debug guilds set. Debug Guilds will be On")
+                return guilds.split(",")
+            else:
+                print("Debug guild set to true but no guild ids set. Debug Guilds will be off")
+                return None
+
+        """
         try:
             if data["testing"]["debug"] is True:
                 print("Debug Guilds On")
@@ -32,7 +47,7 @@ def testing_check():
         except KeyError:
             print("Key Error, Debug Guilds Off")
             return []
-
+        """
 
 class RobotExtra(commands.Bot):
     def __init__(self):
@@ -275,6 +290,7 @@ class RobotExtra(commands.Bot):
                         # s_data['cogs'][folder_cog] = False
 
         """Check for environment variables (docker)"""
+        docker_check = os.getenv("DOCKER", default=None)
         env_token = os.getenv("DISCORD_BOT_TOKEN", default=None)
         if env_token is None:
             if first_time is True:
@@ -283,7 +299,12 @@ class RobotExtra(commands.Bot):
                 token = None
             else:
                 token = s_data['keys']['token']
+                if docker_check is not None:
+                    print("Bot is running on docker using settings.json")
+                else:
+                    print("Bot is not running on docker, settings.json will be used")
         else:
+            print("Bot is running on docker using env's")
             token = env_token
 
 
@@ -308,14 +329,18 @@ class RobotExtra(commands.Bot):
         if IO.write_settings(s_data) is False:
             raise Exception(IO.settings_fail_write)
 
+        if first_time:
+            print("Set tokens in the configs before running again")
+            return
+
         if token:
             self.start_time = datetime.datetime.now(datetime.UTC)
             super().run(token)
         else:
             Logger.write("Token is not set! Go to {} and change the token parameter!"
                          "".format(IO.settings_file_path), print_log=True)
-            print("Waiting 30 seconds before trying again")
-            time.sleep(30)
+            # print("Waiting 30 seconds before trying again")
+            # time.sleep(30)
 
 
 if __name__ == '__main__':

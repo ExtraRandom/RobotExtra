@@ -11,20 +11,28 @@ c_dir = os.path.dirname(os.path.realpath(__file__))
 cwd = os.path.dirname(os.path.dirname(c_dir))
 
 settings_file_path = os.path.join(cwd, "configs", "settings.json")
-# server_conf_file_path = os.path.join(cwd, "configs", "servers.json")
 
+debug = False
 
 def fetch_from_settings(top_key: str, inner_key: str, docker_env_name):  # =None):
     """Fetch a single setting from settings.json"""
     if docker_env_name is not None:
         docker_env_value = os.getenv(docker_env_name, None)
         if docker_env_value is not None and docker_env_value != 0:
+            if debug:
+                msg = f"used docker env {docker_env_name} was {docker_env_value}"
+                print(msg)
+                Logger.log_write(msg)
             return docker_env_value
 
     data = read_settings_as_json()
     if data is None:
         return None
     try:
+        if debug:
+            msg = f"used settings json {top_key} {inner_key} was {data[top_key][inner_key]}"
+            print(msg)
+            Logger.log_write(msg)
         return data[top_key][inner_key]
     except IndexError:
         return None

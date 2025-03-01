@@ -25,7 +25,7 @@ class Games(commands.Cog):
 
         allow_vouchers = True  # todo decide what to do with this
 
-        key = IO.fetch_from_settings('keys', 'itad_api', "DOCKER_ITAD_TOKEN")
+        key = IO.fetch_from_settings('keys', 'itad_api', "DISCORD_ITAD_TOKEN")
         if key is None:
             # TODO write to log (maybe?)
             await ctx.respond("No ITAD API key in settings config.", delete_after=15)

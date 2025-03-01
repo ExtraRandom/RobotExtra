@@ -199,8 +199,8 @@ class Commands(commands.Cog):
 
         # data = IO.read_settings_as_json()
         # auth = (data['keys']['rtt_name'], data['keys']['rtt_key'])
-        rtt_name = IO.fetch_from_settings("keys", "rtt_name", "DOCKER_RTT_NAME")
-        rtt_key = IO.fetch_from_settings("keys", "rtt_key", "DOCKER_RTT_KEY")
+        rtt_name = IO.fetch_from_settings("keys", "rtt_name", "DISCORD_RTT_NAME")
+        rtt_key = IO.fetch_from_settings("keys", "rtt_key", "DISCORD_RTT_KEY")
         auth = (rtt_name, rtt_key)
 
         res = requests.get(f"https://api.rtt.io/api/v1/json/search/{station_crs}", auth=auth)  # print(res.text)
@@ -217,14 +217,15 @@ class Commands(commands.Cog):
 
         # service_id = res_json['services'][0]['serviceUid']
         # run_date = str(res_json['services'][0]['runDate']).replace("-", "/")
-        # res2 = requests.get(f"https://api.rtt.io/api/v1/json/service/{service_id}/{run_date}", auth=auth)  # print(res.text)
+        # res2 = requests.get(f"https://api.rtt.io/api/v1/json/service/{service_id}/{run_date}", auth=auth)
+        # print(res.text)
         # print(res2.text)
 
         services = res_json['services']
         services_added_count = 0
 
         embed = discord.Embed(title=f"The next trains calling at {station} [{station_crs}]",
-                              description="Actual times may vary",
+                              description="Actual times may vary - All data from Realtime Trains",
                               colour=discord.Colour.blue())
 
         for service in services:
@@ -267,7 +268,6 @@ class Commands(commands.Cog):
                 destination_time = destination_detail[len(destination_detail) - 1]['publicTime']
 
             destination_time = self.time_colon(destination_time)
-
             # print(service)
             headcode = service['trainIdentity']
             toc = service['atocName']
@@ -286,7 +286,6 @@ class Commands(commands.Cog):
 
             embed.add_field(name=f"{headcode}",
                             value=msg)
-
 
         await ctx.respond(embed=embed)
 

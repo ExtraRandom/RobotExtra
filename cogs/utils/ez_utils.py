@@ -1,7 +1,5 @@
-import asyncio
 import discord
 from discord.ext import commands
-from datetime import datetime
 import os
 from cogs.utils.logger import Logger
 from typing import List, Union, Optional
