@@ -339,8 +339,8 @@ class RobotExtra(commands.Bot):
         else:
             Logger.write("Token is not set! Go to {} and change the token parameter!"
                          "".format(IO.settings_file_path), print_log=True)
-            # print("Waiting 30 seconds before trying again")
-            # time.sleep(30)
+            print("Waiting 10 seconds...")
+            time.sleep(10)
 
 
 if __name__ == '__main__':
