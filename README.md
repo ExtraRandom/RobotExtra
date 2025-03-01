@@ -9,16 +9,13 @@ The bot is now able to be ran on docker.
 Below are some commands used for doing so.
 
 
-
-### Build docker image
+### Build docker image locally
 ````shell
 docker build -f Dockerfile -t robot_extra .
 ````
 
 
 ### Run docker image
-
-
 
 ````shell
 docker run -d \
@@ -28,6 +25,7 @@ docker run -d \
     -v /path_to_docker_volumes_folder/discord/config:/app/configs \
     ghcr.io/extrarandom/robotextra:master
 ````
+
 
 ### Updating
 Remove the old image
