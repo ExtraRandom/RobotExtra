@@ -203,6 +203,10 @@ class Commands(commands.Cog):
         rtt_key = IO.fetch_from_settings("keys", "rtt_key", "DISCORD_RTT_KEY")
         auth = (rtt_name, rtt_key)
 
+        if len(rtt_name) < 3:
+            await ctx.respond("The RealTime Trains API keys are not configured. Extra please fix")
+            return
+
         res = requests.get(f"https://api.rtt.io/api/v1/json/search/{station_crs}", auth=auth)  # print(res.text)
         res_json = res.json()
 
