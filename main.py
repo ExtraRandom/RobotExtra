@@ -24,7 +24,7 @@ def testing_check():
         print("No settings file, or env not set. Debug Guilds will be Off")
         return []
     else:
-        if debug in ["true", "True", "t", "T", "y", "Y", "Yes", "yes"]:
+        if debug in ["true", "True", "t", "T", "y", "Y", "Yes", "yes", True]:
             guilds = IO.fetch_from_settings("testing", "ids", "DISCORD_DEBUG_GUILDS")
             if type(guilds) == list:
                 print ("Debug guilds set. Debug Guilds will be On")
