@@ -15,8 +15,6 @@ env:
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
-    # runner name taken from this blog
-    # https://www.blacksmith.sh/blog/building-multi-platform-docker-images-for-arm64-in-github-actions
 
     # Sets the permissions granted to the `GITHUB_TOKEN` for the actions in this job.
     permissions:
