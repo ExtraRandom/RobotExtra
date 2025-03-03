@@ -1,11 +1,7 @@
-# py-cord[voice] @ git+https://github.com/Pycord-Development/pycord
-py-cord[voice]
+# py-cord[voice,speed] @ git+https://github.com/Pycord-Development/pycord
+py-cord[voice,speed]
 requests
-# fake_useragent
-python-dateutil
+python-dateutil  # used in time_formatting util only
 beautifulsoup4
 yt-dlp
-# tinytuya
 pytz
-# numpy
-# audioop-lts
