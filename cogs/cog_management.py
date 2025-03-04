@@ -9,7 +9,9 @@ from typing import List
 class CogManagement(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.msg = "This command is temporarily disabled to due to a bug causing it to not work as intended."
 
+    # TODO figure out why cogs reloading doesn't work
 
     cogs = discord.commands.SlashCommandGroup("cogs", "Cog Management Commands")
 
@@ -33,6 +35,11 @@ class CogManagement(commands.Cog):
                                                   autocomplete=loadable_cogs,
                                                   required=True)):
         """Load a cog"""
+
+        # remove when fixed
+        await ctx.respond(self.msg)
+        return
+
         await ctx.defer()
 
         cog_list = []
@@ -73,6 +80,11 @@ class CogManagement(commands.Cog):
                                                     autocomplete=loadable_cogs,
                                                     required=True)):
         """Unload a cog"""
+
+        # remove when fixed
+        await ctx.respond(self.msg)
+        return
+
         await ctx.defer()
         ext_list = self.bot.extensions
         cog_list = []
@@ -110,6 +122,11 @@ class CogManagement(commands.Cog):
                                                     required=True)):
 
         """Reload a cog"""
+
+        # remove when fixed
+        await ctx.respond(self.msg)
+        return
+
         await ctx.defer()
         ext_list = self.bot.extensions
         cog_list = [cog for cog in ext_list]
@@ -117,7 +134,9 @@ class CogManagement(commands.Cog):
         cog_n = "cogs.{}".format(cog)
         if cog_n in cog_list:
             try:
-                self.bot.unload_extension(cog_n)
+                # self.bot.reload_cog(cog_n)
+                self.bot.reload_extension(cog_n)
+                await ctx.respond("Cog Reloaded")
             except Exception as e:
                 Logger.write(e)
                 await ctx.respond("Failed to unload cog '{}'".format(cog))
@@ -125,14 +144,14 @@ class CogManagement(commands.Cog):
         else:
             await ctx.respond("No loaded cogs called '{}'".format(cog))
             return
-
+        """
         try:
             self.bot.load_extension(cog_n)
             await ctx.respond("Successfully reloaded cog '{}'".format(cog))
         except Exception as e:
             Logger.write(e)
             await ctx.respond("Failed to reload cog '{}'".format(cog))
-            return
+            return"""
 
 
     @cogs.command(name="list")
