@@ -1,4 +1,5 @@
-from discord.ext import commands  # , tasks
+from discord.ext import commands
+import re
 from cogs.utils import time_formatting as timefmt, IO
 import datetime
 from cogs.utils import perms
@@ -118,13 +119,14 @@ class Commands(commands.Cog):
             link = user.avatar.url
         else:
             link = user.guild_avatar.url
-
         await ctx.respond(content=link)
         return
+
 
     async def get_stations(self, ctx: discord.AutocompleteContext):
         res = []
         data = train_stations.crs_lookup
+        # discord.OptionChoice(station_name, station_crs)
 
         if len(ctx.value) == 2 or len(ctx.value) == 3:
             index = 0
@@ -132,7 +134,7 @@ class Commands(commands.Cog):
                 if ctx.value.upper() in crs:
                     name = list(data.keys())[index]
                     if name not in res:
-                        res.append(name)
+                        res.append(discord.OptionChoice(name, data[name]))
                         if len(res) >= 5:
                             break
 
@@ -142,7 +144,7 @@ class Commands(commands.Cog):
             if name is not None:
                 if ctx.value.lower() in name.lower():
                     if name not in res:
-                        res.append(name)
+                        res.append(discord.OptionChoice(name, data[name]))
 
             if len(res) >= 5:
                 break
@@ -155,28 +157,16 @@ class Commands(commands.Cog):
         else:
             return inp_time
 
-    """
-    @commands.slash_command(name="traininfo")
-    async def train_info_command(
-            self,
-            ctx: discord.ApplicationContext,
-            station: discord.Option(
-                str,
-                description="The Station to check for train at",
-                autocomplete=get_stations
-            ),
-    ):
-        print("test")
-        """
-        # todo info on a specific train from realtime trains
-        # todo figure way of presenting info in a concise manner
+    # todo perhaps an advanced version of the below command that allows for filtering a TO station, and date/time
+    #  see the api page for more https://www.realtimetrains.co.uk/about/developer/pull/docs/locationlist/
 
     @commands.slash_command(name="trains")
     async def trains_command(
             self,
             ctx: discord.ApplicationContext,
-            station: discord.Option(
+            station_crs: discord.Option(
                 str,
+                name="station",
                 description="The Station to check for train times at",
                 autocomplete=get_stations
             ),
@@ -193,15 +183,11 @@ class Commands(commands.Cog):
                 default=4,
                 max_value=25,
                 min_value=1
-            )
+            ),
     ):
         """Find when the next trains to call at a UK rail station are"""
         await ctx.defer()
 
-        station_crs = train_stations.crs_lookup[station]
-
-        # data = IO.read_settings_as_json()
-        # auth = (data['keys']['rtt_name'], data['keys']['rtt_key'])
         rtt_name = IO.fetch_from_settings("keys", "rtt_name", "DISCORD_RTT_NAME")
         rtt_key = IO.fetch_from_settings("keys", "rtt_key", "DISCORD_RTT_KEY")
         auth = (rtt_name, rtt_key)
@@ -217,25 +203,13 @@ class Commands(commands.Cog):
                               "or that API is down. This error has been logged.")
             return
 
-
-
         if res_json['services'] is None:
             await ctx.respond("There are no trains running to or from this station right now.")
             return
 
-        # else:
-        #     print(res.text)
-        # print(res_json['services'][0])
-        # print(res.text)
-
-        # service_id = res_json['services'][0]['serviceUid']
-        # run_date = str(res_json['services'][0]['runDate']).replace("-", "/")
-        # res2 = requests.get(f"https://api.rtt.io/api/v1/json/service/{service_id}/{run_date}", auth=auth)
-        # print(res.text)
-        # print(res2.text)
-
         services = res_json['services']
         services_added_count = 0
+        station = res_json['location']['name']
 
         embed = discord.Embed(title=f"The next trains calling at {station} [{station_crs}]",
                               description="Actual times may vary - All data from Realtime Trains",
@@ -280,8 +254,7 @@ class Commands(commands.Cog):
                 destination_location = " & ".join(destination_location_list[::-1])
                 destination_time = destination_detail[len(destination_detail) - 1]['publicTime']
 
-            destination_time = self.time_colon(destination_time)
-            # print(service)
+            destination_time = self.time_colon(destination_time)  # print(service)
             headcode = service['trainIdentity']
             toc = service['atocName']
 
@@ -297,10 +270,150 @@ class Commands(commands.Cog):
                 msg += f"\nAt {destination_time}"
             msg += f"\n**Operator:** \n{toc}"
 
+            if detailed:
+                msg += f"\n**Service ID:**\n{service['serviceUid']}"
+
             embed.add_field(name=f"{headcode}",
                             value=msg)
 
         await ctx.respond(embed=embed)
+
+    @commands.slash_command(name="train_service_info")
+    async def specific_train_command(
+            self,
+            ctx: discord.ApplicationContext,
+            service_id: discord.Option(
+                str,
+                description="The service ID of the train",
+                required=True
+            ),
+            start_date: discord.Option(
+                str,
+                description="The date the service started on - FORMAT YYYY/MM/DD",
+                required=False,
+                default=None
+            )
+            # todo better date input
+    ):
+        """Information about a specific train service"""
+        await ctx.defer()
+
+        valid_id = re.search("[A-Z][0-9]{5}", service_id)
+
+        if valid_id is None:
+            await ctx.respond("The given service ID is not a valid service ID. ")
+            return
+
+
+        rtt_name = IO.fetch_from_settings("keys", "rtt_name", "DISCORD_RTT_NAME")
+        rtt_key = IO.fetch_from_settings("keys", "rtt_key", "DISCORD_RTT_KEY")
+        auth = (rtt_name, rtt_key)
+
+        if len(rtt_name) < 3:
+            await ctx.respond("RTT Name and Key are not set, or incorrectly set. Extra pls fix")
+            return
+
+        if start_date is None:
+            run_date = datetime.datetime.now().strftime("%Y/%m/%d")
+        else:
+            valid_date_basic = re.search("[0-9]{4}/[0-9]{2}/[0-9]{2}", start_date)
+            if valid_date_basic:
+                run_date = start_date
+            else:
+                await ctx.respond("Invalid date")
+                return
+
+        res = requests.get(f"https://api.rtt.io/api/v1/json/service/{service_id}/{run_date}", auth=auth)
+        # print(res.text)
+        try:
+            data = res.json()
+        except requests.JSONDecodeError:
+            await ctx.respond("Error whilst fetching service. Please make sure to use a valid service ID, "
+                              "especially if setting a custom date.")
+            return
+
+
+        # set up some variables
+        displayed_as_cancelled = "CANCELLED_CALL"
+        # displayed_as_starts_short = "STARTS"
+        # part_cancelled = False
+        # cancelled_origin = None
+        # cancelled_reason = None
+        origin = data['origin'][0]['description']
+        service_current_station_text = "*The Train is here*"
+
+        loc_data = ""
+        loc_index = 0
+
+        # todo make this less of a complete abomination
+        #  the presentation on the discord side is okay but the way we get to that here is really just a mess
+        #  so if we can make it more readable that would be great
+
+        for location in data['locations']:
+            station_name = location['description']
+
+            current_station = ""
+            if 'serviceLocation' in location:
+                current_station = service_current_station_text
+
+            if "realtimeDeparture" in location:
+                has_departed = location['realtimeDepartureActual']
+                has_arrived = location.get('realtimeArrivalActual', False)
+                display_as = location['displayAs'] # print(f"{station_name} {display_as}")
+
+                if display_as == displayed_as_cancelled:
+                    if loc_index == 0:
+                        part_cancelled = True
+                        cancelled_origin = station_name
+                        cancelled_reason = f"{str(location['cancelReasonLongText']).capitalize()} \n"
+
+                        loc_data += (f"\n***Cancelled between {cancelled_origin} "
+                                     f"and {origin} due to {cancelled_reason}***\n")
+                    else:
+                        pass
+                else:
+                    if has_departed:
+                        depature_time = location['realtimeDeparture']
+                        loc_data += f"- **{station_name}:** Departed at {depature_time}\n"
+                    elif has_departed is False and loc_index > 0:
+                        # print(location)
+                        arrival_time = location['realtimeArrival']
+                        loc_data += f"- **{station_name}:** Due to arrive at {arrival_time}\n"
+                    else:
+                        if has_arrived:
+                            arrival_time = location['realtimeArrival']
+                            loc_data += f"- **{station_name}:** Arrived at {arrival_time} {current_station}\n"
+            else:
+                arrived = location['realtimeArrivalActual']
+                if arrived:
+                    arrival_time = location['realtimeArrival']
+                    loc_data += f"- **{station_name}:** Arrived at {arrival_time} {current_station}\n"
+                else:
+                    arrival_time = location['realtimeArrival']
+                    loc_data += f"- **{station_name}:** Due to arrive at {arrival_time}\n"
+
+
+            loc_index += 1
+
+            """ 
+            if "realtimeDeparture" in location:
+                loc_data += (f"dep time: {location['realtimeDeparture']}, "
+                             f"has left: {location['realtimeDepartureActual']}, "
+                             f"was booked for: {location['gbttBookedDeparture']}")
+            else:
+                loc_data += (f"arr time: {location['realtimeArrival']}, "
+                             f"has arr: {location['realtimeArrivalActual']}, "
+                             f"was booked for: {location['gbttBookedArrival']}")
+            if 'serviceLocation' in location:
+                loc_data += ", train is currently here"
+
+            loc_data += "\n"
+            """
+
+        await ctx.respond(
+            f"**__{data['atocName']} Service ({data['trainIdentity']}) Calling at:__**\n"
+            f"{loc_data}"
+        )
 
 
 def setup(bot):
