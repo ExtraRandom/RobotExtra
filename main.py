@@ -7,12 +7,6 @@ import traceback
 import os
 import time
 
-"""
-import sys
-if not sys.warnoptions:
-    import warnings
-    warnings.simplefilter("default")
-"""
 
 
 def testing_check():
@@ -24,7 +18,7 @@ def testing_check():
         print("No settings file, or env not set. Debug Guilds will be Off")
         return []
     else:
-        if debug in ["true", "True", "t", "T", "y", "Y", "Yes", "yes", True]:
+        if debug in ["true", "True", "t", "T", "y", "Y", "yes", "Yes", True]:
             guilds = IO.fetch_from_settings("testing", "ids", "DISCORD_DEBUG_GUILDS")
             if type(guilds) == list:
                 print ("Debug guilds set. Debug Guilds will be On")
@@ -35,19 +29,10 @@ def testing_check():
             else:
                 print("Debug guild set to true but no guild ids set. Debug Guilds will be off")
                 return None
+        else:
+            print(f"Debug mode set to an non-true value '{debug}', Debug Guilds will be off")
+            return None
 
-        """
-        try:
-            if data["testing"]["debug"] is True:
-                print("Debug Guilds On")
-                return data["testing"]["ids"]
-            else:
-                print("Debug Guilds Off")
-                return []
-        except KeyError:
-            print("Key Error, Debug Guilds Off")
-            return []
-        """
 
 class RobotExtra(commands.Bot):
     def __init__(self):
@@ -216,7 +201,8 @@ class RobotExtra(commands.Bot):
                     "itad_api": None,
                     "youtube_api": None,
                     "rtt_name": None,
-                    "rtt_key": None
+                    "rtt_key": None,
+#                    "home_assistant_api": None
                 },
                 "cogs":
                     {
@@ -263,6 +249,15 @@ class RobotExtra(commands.Bot):
                 raise Exception(IO.settings_fail_read)
 
         s_data = self.ensure_all_fields(s_data)
+        IO.write_settings(s_data)
+        """
+        Write settings to file after ensure all fields exists
+        This prevents a new/updated cog from failing to load the first time if a new settings is added,
+        and it attempts to get that setting on cog start (as of writing, this only applies to home assistant
+        as it gets the api key on cog start) 
+        
+        HOME ASSISTANT COG REMOVED - will need to decide if this is still needed
+        """
 
         """Load cogs"""
         folder_cogs = self.get_cogs_in_folder()
@@ -290,7 +285,7 @@ class RobotExtra(commands.Bot):
                         # s_data['cogs'][folder_cog] = False
 
         """Check for environment variables (docker)"""
-        docker_check = os.getenv("DOCKER", default=None)
+        docker_check = os.getenv("DOCKER", default=None)  # if this is set, we are on docker
         env_token = os.getenv("DISCORD_BOT_TOKEN", default=None)
         if env_token is None:
             if first_time is True:

@@ -11,6 +11,7 @@ c_dir = os.path.dirname(os.path.realpath(__file__))
 cwd = os.path.dirname(os.path.dirname(c_dir))
 
 settings_file_path = os.path.join(cwd, "configs", "settings.json")
+# ha_entity_file_path = os.path.join(cwd, "cogs", "data", "ha_entity_list.json")
 
 debug = False
 
@@ -47,16 +48,18 @@ def write_settings(data):
     """Write settings json"""
     return __write_json(data, settings_file_path)
 
+"""
 
-# def read_server_as_json():
-#    """Read server settings json"""
-#    return __read_json(server_conf_file_path)
+def read_ha_as_json():
+    " ""Read home assistant entity list json" ""
+    return __read_json(ha_entity_file_path)
 
 
-# def write_server(data):
-#    """Write server settings json"""
-#    return __write_json(data, server_conf_file_path)
+def write_ha(data):
+    " ""Write home assistant entity list json" ""
+    return __write_json(data, ha_entity_file_path)
 
+"""
 
 def __read_json(file_path):
     """Read the file at file_path and then return as python object
