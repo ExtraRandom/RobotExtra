@@ -9,7 +9,8 @@ from typing import List
 class CogManagement(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.msg = "This command is temporarily disabled to due to a bug causing it to not work as intended."
+        self.msg = ("This command is temporarily disabled to due to a bug causing it to not work as intended.\n"
+                    "Github Issue Page: <https://github.com/Pycord-Development/pycord/issues/2015>")
 
     # TODO figure out why cogs reloading doesn't work
 
@@ -37,6 +38,7 @@ class CogManagement(commands.Cog):
         """Load a cog"""
 
         # remove when fixed
+        # https://github.com/Pycord-Development/pycord/issues/2015
         await ctx.respond(self.msg)
         return
 
@@ -82,6 +84,7 @@ class CogManagement(commands.Cog):
         """Unload a cog"""
 
         # remove when fixed
+        # https://github.com/Pycord-Development/pycord/issues/2015
         await ctx.respond(self.msg)
         return
 
@@ -124,8 +127,8 @@ class CogManagement(commands.Cog):
         """Reload a cog"""
 
         # remove when fixed
-        await ctx.respond(self.msg)
-        return
+        # await ctx.respond(self.msg)
+        # return
 
         await ctx.defer()
         ext_list = self.bot.extensions
