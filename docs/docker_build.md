@@ -2,7 +2,7 @@
 
 Log in
 ```shell
-docker login
+sudo docker login
 ```
 
 Setting up a new builder
@@ -18,7 +18,7 @@ docker buildx create \
 
 Build
 ```shell
-docker buildx build \
+sudo docker buildx build \
   -t extrarandom/robot_extra:master \
   --progress plain \
   --platform linux/amd64,linux/arm64 \
