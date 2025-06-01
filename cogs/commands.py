@@ -193,7 +193,8 @@ class Commands(commands.Cog):
         auth = (rtt_name, rtt_key)
 
         try:
-            res = requests.get(f"https://api.rtt.io/api/v1/json/search/{station_crs}", auth=auth)  # print(res.text)
+            res = requests.get(f"https://api.rtt.io/api/v1/json/search/{station_crs}", auth=auth)
+            # print(res.text)
             res_json = res.json()
 
         except Exception as e:
@@ -220,10 +221,33 @@ class Commands(commands.Cog):
             if services_added_count == services_count + 1:
                 break
 
+            # realtimeDeparture
+
             loc_detail = service['locationDetail']
-            time_this_station = loc_detail.get("gbttBookedDeparture", None)
+            time_this_station = loc_detail.get("realtimeDeparture", None)   # was gbttBookedDeparture
             if time_this_station is None:
-                time_this_station = loc_detail.get("gbttBookedArrival", "Not Found")
+                time_this_station = loc_detail.get("realtimeArrival", "Not Found")  # was gbttBookedArrival
+
+            # delay = loc_detail.get("realtimeGbttDepartureLateness", None)
+            # if delay is None:
+            #    delay = loc_detail.get("realtimeGbttArrivalLateness", None)
+
+            time_booked = loc_detail.get("gbttBookedDeparture", None)
+            time_realtime = loc_detail.get("realtimeDeparture", None)
+
+            if time_booked is None:
+                time_booked = loc_detail.get("gbttBookedArrival", 0)
+            if time_realtime is None:
+                time_realtime = loc_detail.get("realtimeArrival", 0)
+
+            delay = int(time_realtime) - int(time_booked)
+
+            show_delay = False
+
+            # print("delay is ", delay)
+            if delay is not None:
+                if delay > 6:
+                    show_delay = True
 
             time_this_station = self.time_colon(time_this_station)
 
@@ -258,11 +282,20 @@ class Commands(commands.Cog):
             headcode = service['trainIdentity']
             toc = service['atocName']
 
+            platform = loc_detail.get("platform", -1)
+            platform_msg = ""
+            if platform != -1:
+                platform_msg = f"Platform {platform}\n"
+
             service_type = service['serviceType']
             if service_type != "train":
                 headcode += f" ({str(service_type).capitalize()})"
 
-            msg = f"**Due:** \n{time_this_station}\n"
+            if show_delay is False:
+                msg = f"**Expected:** \n{time_this_station}\n{platform_msg}"  # final new line is in platform msg
+            else: # show delay
+                msg = f"**Expected:** \n{time_this_station} - {delay} minutes late\n{platform_msg}"
+
             if detailed:
                 msg += f"**Origin:** \n{origin_location} \nAt {origin_time}\n"
             msg += f"**Destination:** \n{destination_location}"
@@ -333,6 +366,9 @@ class Commands(commands.Cog):
             return
 
 
+        # ABOVE IS CODE FOR CALLING THE API
+        # ALL LOGIC FOR PROCESSING THE DATA IS BELOW THIS
+
         # set up some variables
         displayed_as_cancelled = "CANCELLED_CALL"
         # displayed_as_starts_short = "STARTS"
@@ -340,7 +376,8 @@ class Commands(commands.Cog):
         # cancelled_origin = None
         # cancelled_reason = None
         origin = data['origin'][0]['description']
-        service_current_station_text = "*The Train is here*"
+
+
 
         loc_data = ""
         loc_index = 0
@@ -351,19 +388,49 @@ class Commands(commands.Cog):
 
         for location in data['locations']:
             station_name = location['description']
+            # print(station_name)
+
+            approaching = False  # is the train approaching a station
+            standing = False  # is the train standing at a platform
+            platform = location.get("platform", -1)
+            # platform_text = ""
 
             current_station = ""
             if 'serviceLocation' in location:
+                service_location_type = location['serviceLocation']
+                service_current_station_text = "***<-- The Train is here***"
+
+                # print(station_name)
+                # print(service_location_type)
+
+                if service_location_type == "APPR_STAT": # show arriving at  + approaching msg
+                    approaching = True
+                elif service_location_type == "APPR_PLAT": # show arriving at + approaching msg
+                    approaching = True
+                elif service_location_type == "AT_PLAT": # show departing at (or arrived at)
+                    standing = True
+                elif service_location_type == "DEP_PREP": # show departing at
+                    standing = True
+                elif service_location_type == "DEP_READY": # show departing at
+                    standing = True
+
                 current_station = service_current_station_text
 
+            if platform != -1:
+                station_name += f" [P{platform}]"
+
             if "realtimeDeparture" in location:
-                has_departed = location['realtimeDepartureActual']
-                has_arrived = location.get('realtimeArrivalActual', False)
-                display_as = location['displayAs'] # print(f"{station_name} {display_as}")
+                has_departed = location['realtimeDepartureActual']  # has this train departed
+                has_arrived = location.get('realtimeArrivalActual', False)  # has this train arrived
+                display_as = location['displayAs']
+                # print(f"{station_name} {display_as}")
+
+                if approaching or standing:
+                    has_departed = False
 
                 if display_as == displayed_as_cancelled:
                     if loc_index == 0:
-                        part_cancelled = True
+                        # part_cancelled = True
                         cancelled_origin = station_name
                         cancelled_reason = f"{str(location['cancelReasonLongText']).capitalize()} \n"
 
@@ -372,43 +439,55 @@ class Commands(commands.Cog):
                     else:
                         pass
                 else:
-                    if has_departed:
-                        depature_time = location['realtimeDeparture']
-                        loc_data += f"- **{station_name}:** Departed at {depature_time}\n"
-                    elif has_departed is False and loc_index > 0:
-                        # print(location)
-                        arrival_time = location['realtimeArrival']
-                        loc_data += f"- **{station_name}:** Due to arrive at {arrival_time}\n"
+                    if has_departed: # has left the station
+                        departure_time = location['realtimeDeparture']
+                        loc_data += f"- **{station_name}:** Departed at {departure_time}\n"
+
+                    elif has_departed is False and loc_index > 0: # hasn't left this station and isn't the first in list
+                        # add logic to say "due to depart" if this is the current station
+
+                        if approaching is True:
+                            current_station = "***<-- Train Approaching***"
+                            arrival_time = location['realtimeArrival']
+                            loc_data += f"- **{station_name}:** Expected to arrive at {arrival_time} {current_station}\n"
+                        elif standing is True:
+                            current_station = "***<-- The Train is here***"
+
+                            departure_time = location['realtimeDeparture']   # change to .get
+                            loc_data += f"- **{station_name}:** Expected to depart at {departure_time} {current_station}\n"
+
+                        else:
+                            arrival_time = location['realtimeArrival']
+                            loc_data += f"- **{station_name}:** Expected to arrive at {arrival_time}\n"
+
+
+                    elif has_departed is False and loc_index == 0: # the first location service hasn't started or hasn't left origin yet
+                        departure_time = location['realtimeDeparture']
+                        loc_data += f"- **{station_name}:** Expected to depart at {departure_time} {current_station}\n"
+
                     else:
                         if has_arrived:
                             arrival_time = location['realtimeArrival']
                             loc_data += f"- **{station_name}:** Arrived at {arrival_time} {current_station}\n"
-            else:
-                arrived = location['realtimeArrivalActual']
-                if arrived:
-                    arrival_time = location['realtimeArrival']
-                    loc_data += f"- **{station_name}:** Arrived at {arrival_time} {current_station}\n"
+
+            else:  # "realtimeDeparture" doesn't exist in location data
+                if approaching is True:
+                    current_station = "***<-- Train Approaching***"
+                elif standing is True:
+                    current_station = "***<-- The Train is here***"
                 else:
-                    arrival_time = location['realtimeArrival']
-                    loc_data += f"- **{station_name}:** Due to arrive at {arrival_time}\n"
+                    current_station = ""
+
+                arrived = location['realtimeArrivalActual']  # has the service arrived to this location?
+                if arrived: # yes
+                    arrival_time = location['realtimeArrival'] # when
+                    loc_data += f"- **{station_name}:** Arrived at {arrival_time} {current_station}\n"
+                else: # no
+                    arrival_time = location['realtimeArrival'] # when is it due
+                    loc_data += f"- **{station_name}:** Expected to arrive at {arrival_time} {current_station}\n"
 
 
             loc_index += 1
-
-            """ 
-            if "realtimeDeparture" in location:
-                loc_data += (f"dep time: {location['realtimeDeparture']}, "
-                             f"has left: {location['realtimeDepartureActual']}, "
-                             f"was booked for: {location['gbttBookedDeparture']}")
-            else:
-                loc_data += (f"arr time: {location['realtimeArrival']}, "
-                             f"has arr: {location['realtimeArrivalActual']}, "
-                             f"was booked for: {location['gbttBookedArrival']}")
-            if 'serviceLocation' in location:
-                loc_data += ", train is currently here"
-
-            loc_data += "\n"
-            """
 
         await ctx.respond(
             f"**__{data['atocName']} Service ({data['trainIdentity']}) Calling at:__**\n"
