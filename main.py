@@ -8,7 +8,6 @@ import os
 import time
 
 
-
 def testing_check():
     """Return none for testing to be off, return list of ids for testing to be on"""
     # data = IO.read_settings_as_json()
@@ -202,7 +201,8 @@ class RobotExtra(commands.Bot):
                     "youtube_api": None,
                     "rtt_name": None,
                     "rtt_key": None,
-#                    "home_assistant_api": None
+                    "rtt_ng_refresh_key": None,
+#                    "home_assistant_api": None,
                 },
                 "cogs":
                     {
@@ -264,14 +264,12 @@ class RobotExtra(commands.Bot):
         for folder_cog in folder_cogs:
             cog_path = "cogs.{}".format(folder_cog)
             if first_time is True:
-                # noinspection PyTypeChecker
                 s_data['cogs'][folder_cog] = True
             else:
                 try:
                     should_load = s_data['cogs'][folder_cog]
                 except KeyError:
                     Logger.write("New Cog '{}'".format(folder_cog), print_log=True)
-                    # noinspection PyTypeChecker
                     s_data['cogs'][folder_cog] = True
                     should_load = True
 
@@ -281,7 +279,6 @@ class RobotExtra(commands.Bot):
                     except Exception as exc:
                         print("Failed to load cog '{}', Reason: {}".format(folder_cog, type(exc).__name__))
                         Logger.write(exc)
-                        # noinspection PyTypeChecker
                         # s_data['cogs'][folder_cog] = False
 
         """Check for environment variables (docker)"""

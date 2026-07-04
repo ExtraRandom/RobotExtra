@@ -16,12 +16,22 @@ docker buildx create \
 
 ```
 
-Build
+Build amd64 and arm
 ```shell
 sudo docker buildx build \
-  -t extrarandom/robot_extra:master \
+  -t extrarandom/robot_extra:latest \
   --progress plain \
   --platform linux/amd64,linux/arm64 \
+  --push \
+  .
+```
+
+Build amd64 only
+```shell
+sudo docker buildx build \
+  -t extrarandom/robot_extra:latest \
+  --progress plain \
+  --platform linux/amd64 \
   --push \
   .
 ```
